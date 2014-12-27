@@ -100,6 +100,10 @@ input[type="checkbox"] {
 	cursor: pointer;
 }
 
+#keyList li:hover {
+	background: #ddd;
+}
+
 .description, .key {
 	width: 250px;
 	word-break: break-all;
