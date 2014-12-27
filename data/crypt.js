@@ -2,11 +2,12 @@
 
 var startTag = '~~crypt~~';
 var endTag = '~~/crypt~~';
-var secret;
+var secret, keyList = [];
 var panelMode = false;
 
-self.port.on("secret", function(the_secret){
-	secret = the_secret;
+self.port.on("secret", function(secret_obj){
+	secret = secret_obj.active;
+	keyList = secret_obj.keys;
 });
 
 self.port.on("panelMode", function(){
@@ -143,19 +144,29 @@ function decrypt(elem){
 		index2 = val.toLowerCase().indexOf(endTag);
 	}
 	var ciphertext = index2>0 ? val.substring(index1+startTag.length, index2) : val.substring(index1+startTag.length);
-	var plaintext = CryptoJS.AES.decrypt(ciphertext, secret);
-	try{
-		plaintext = plaintext.toString(CryptoJS.enc.Utf8);
-		if(!$.trim(plaintext)){
-			throw true;
+	
+	for(var i=0; i<keyList.length; i++){
+		var validDecryption = true;
+		try{
+			var plaintext = CryptoJS.AES.decrypt(ciphertext, keyList[i].key);
+			plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+			if(!$.trim(plaintext)){
+				throw true;
+			}
+			break;
 		}
-		
+		catch(e){
+			validDecryption = false;
+		}
+	}
+	
+	if(validDecryption){
 		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
 		var start = html.substring(0, html.indexOf(startTag));
 		val = start + linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>")) + end;
 		elem.html(val);
 	}
-	catch(e){
+	else{
 		index2 = 1;
 		elem.html(val.substring(0, index1) + "[Unable to decrypt message] "+val.replace(startTag, "[start tag]").replace(endTag, "[end tag]"));
 	}
