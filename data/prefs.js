@@ -28,7 +28,7 @@ $("#addKey").on("submit", function(e){
 
 $("#keyGen").on("click", function(){
 	/* BROWSER COMPATIBILITY IS IFFY */
-	var length = Math.floor(Math.random()*22+8);
+	var length = Math.floor(Math.random()*24+8);
 	var randArray = new Uint32Array(length);
 	var rand = "";
 	window.crypto.getRandomValues(randArray);
