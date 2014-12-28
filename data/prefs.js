@@ -13,18 +13,27 @@ $("#addKeyError, #pubKeyError").hide();
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
 	$("#addKeyError, #pubKeyError").stop(true).hide();
-	var key = $("#ecc").is(":checked")? JSON.parse($("#key").val()) : $.trim($("#key").val());
+	try{
+		var key = $("#ecc").is(":checked")? JSON.parse($("#key").val()) : $.trim($("#key").val());
+	}
+	catch(e){
+		$("#pubKeyError").fadeIn();
+		return;
+	}
 	var description = $.trim($("#description").val());
 	if(!key || !description){
 		$("#addKeyError").fadeIn();
 		return;
 	}
-	if(typeof key === "object"){
+	var hexRegex = /[^A-F0-9]/gi;
+	if(typeof key === "object" && key.priv){
 		/* Check that it's a valid public/private key */
 		var plaintext = "Hello World";
 		try{
-			var ciphertext = ecc.encrypt(key.pub, plaintext);
-			if(plaintext != ecc.decrypt(key.priv, ciphertext)){
+			var pub = key.pub.replace(hexRegex, "");
+			var priv = key.priv.replace(hexRegex, "");
+			var ciphertext = ecc.encrypt(pub, plaintext);
+			if(plaintext != ecc.decrypt(priv, ciphertext)){
 				throw true;
 			}
 		}
@@ -32,6 +41,20 @@ $("#addKey").on("submit", function(e){
 			$("#pubKeyError").fadeIn();
 			return;
 		}
+		key = {pub: pub, priv: priv}
+	}
+	else if(typeof key === "object"){
+		try{
+			key.pub = key.pub.replace(hexRegex, "");
+			if(!key.pub){
+				throw true;
+			}
+		}
+		catch(e){
+			$("#pubKeyError").fadeIn();
+			return;
+		}
+		key = {pub: key.pub};
 	}
 	$("#key").val("").focus();
 	$("#description").val("");
@@ -93,7 +116,7 @@ self.port.on("displayKeys", function(keys){
 	for(var i=0; i<keys.length; i++){
 		newKeyList.append("<li index='"+i+"' "+(i===activeIndex? "class='active'" : "")+">"+
 							"<div class='key'>Key: <span>"+
-							(typeof keys[i].key === "object"? "<br><b>pub</b>: "+keys[i].key.pub+"<br><b>priv</b>: "+keys[i].key.priv : $("<i></i>").text(keys[i].key).html())+
+							(typeof keys[i].key === "object"? "<br><b>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
 							"</span></div>"+
 							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+"</div>"+
 							(i? "<div class='delete'>x</div>" : "")+

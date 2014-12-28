@@ -149,7 +149,7 @@ function decrypt(elem){
 	for(var i=0; i<keyList.length; i++){
 		var validDecryption = true;
 		try{
-			if(typeof keyList[i].key === "object"){
+			if(typeof keyList[i].key === "object" && keyList[i].key.priv){
 				plaintext = ecc.decrypt(keyList[i].key.priv, ciphertext);
 			}
 			else{
