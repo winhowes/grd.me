@@ -84,7 +84,9 @@ self.port.on("displayKeys", function(keys){
 	var newKeyList = $("<ul></ul>");
 	for(var i=0; i<keys.length; i++){
 		newKeyList.append("<li index='"+i+"' "+(i===activeIndex? "class='active'" : "")+">"+
-							"<div class='key'>Key: <span>"+$("<i></i>").text(keys[i].key).html()+"</span></div>"+
+							"<div class='key'>Key: <span>"+
+							(typeof keys[i].key === "object"? "<b>pub</b>: "+keys[i].key.pub+"<br><b>priv</b>: "+keys[i].key.priv : $("<i></i>").text(keys[i].key).html())+
+							"</span></div>"+
 							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+"</div>"+
 							(i? "<div class='delete'>x</div>" : "")+
 							"<div class='activeIndicator'></div>"+

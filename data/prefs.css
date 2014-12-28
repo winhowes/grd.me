@@ -116,6 +116,10 @@ input[type="checkbox"] {
 	word-break: break-all;
 }
 
+.description {
+	margin-top: 5px;
+}
+
 .active .delete {
 	display: none;
 }
