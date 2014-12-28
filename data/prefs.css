@@ -6,7 +6,7 @@
 	font-size: 15px;
 }
 
-#addKey input {
+#addKey input:not([type='checkbox']) {
 	font-size: inherit;
 	margin-bottom: 5px;
 	width: calc(100% - 10px);
@@ -34,6 +34,13 @@ input:focus, textarea:focus {
 input[type="checkbox"] {
     box-shadow: none;
     -webkit-box-shadow: none;
+}
+
+#eccLabel {
+	display: inline-block;
+	font-size: 11px;
+	width: 43px;
+	vertical-align: middle;
 }
 
 #addKeyError {

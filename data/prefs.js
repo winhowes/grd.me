@@ -2,12 +2,19 @@
 
 var activeIndex = 0;
 
+function generateECCKeys() {
+	var curve = "secp256k1";
+	var ec = new KJUR.crypto.ECDSA({"curve": curve});
+	var keypair = ec.generateKeyPairHex();
+	return {pub: keypair.ecpubhex, priv: keypair.ecprvhex};
+}
+
 $("#addKeyError").hide();
 
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
 	$("#addKeyError").stop(true).hide();
-	var key = $.trim($("#key").val());
+	var key = $("#ecc").is(":checked")? $("#key").data("key") : $.trim($("#key").val());
 	var description = $.trim($("#description").val());
 	if(!key || !description){
 		$("#addKeyError").fadeIn();
@@ -26,16 +33,34 @@ $("#addKey").on("submit", function(e){
 	});
 });
 
+$("#ecc").on("click", function(){
+	if($(this).is(":checked")){
+		var keyPair = generateECCKeys();
+		$("#key").val(JSON.stringify(keyPair)).removeAttr("maxlength", "").attr("readonly", true).data("key", keyPair);
+		$("#description").focus();
+	}
+	else {
+		$("#key").val("").focus().attr("maxlength", 32).removeAttr("readonly");
+	}
+});
+
 $("#keyGen").on("click", function(){
-	/* BROWSER COMPATIBILITY IS IFFY */
-	var length = Math.floor(Math.random()*24+8);
-	var randArray = new Uint32Array(length);
-	var rand = "";
-	window.crypto.getRandomValues(randArray);
-	for (var i = 0; i < randArray.length; i++) {
-		var character = String.fromCharCode((randArray[i] % 42) + 48);
-		character = (randArray[i] % 2) ? character : character.toLowerCase();
-		rand += character;
+	if($("#ecc").is(":checked")){
+		var keypair = generateECCKeys();
+		var rand = JSON.stringify(keypair);
+		$("#ecc").data("key", keypair);
+	}
+	else{
+		/* BROWSER COMPATIBILITY IS IFFY */
+		var length = Math.floor(Math.random()*24+8);
+		var randArray = new Uint32Array(length);
+		var rand = "";
+		window.crypto.getRandomValues(randArray);
+		for (var i = 0; i < randArray.length; i++) {
+			var character = String.fromCharCode((randArray[i] % 42) + 48);
+			character = (randArray[i] % 2) ? character : character.toLowerCase();
+			rand += character;
+		}
 	}
 	$("#key").val(rand);
 	$("#description").focus();
