@@ -1,7 +1,7 @@
 grd.me
 ======
 
-A browser plugin that provides encrypted communication across any web platform.  We support aes and ecc
+A browser plugin that provides encrypted communication across any web platform.  We support aes and ecc.
 
 How to Use
 ==========
