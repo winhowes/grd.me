@@ -3,10 +3,9 @@
 var activeIndex = 0;
 
 function generateECCKeys() {
-	var curve = "secp256k1";
-	var ec = new KJUR.crypto.ECDSA({"curve": curve});
-	var keypair = ec.generateKeyPairHex();
-	return {pub: keypair.ecpubhex, priv: keypair.ecprvhex};
+	var curve = 256;
+	var keys = ecc.generate(ecc.ENC_DEC, 256);
+	return {pub: keys.enc, priv: keys.dec};
 }
 
 $("#addKeyError").hide();
