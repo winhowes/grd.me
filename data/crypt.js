@@ -68,7 +68,7 @@ function encrypt(){
 		}
 		plaintext = $("<div></div>").text(plaintext.replace(/<br\s*[\/]?>/gi, "\n")).html();
 	}
-	var ciphertext = startTag+CryptoJS.AES.encrypt(plaintext, secret) + endTag;
+	var ciphertext = startTag+(typeof secret === "object" ? ecc.encrypt(secret.pub, plaintext) : CryptoJS.AES.encrypt(plaintext, secret)) + endTag;
 	if(panelMode){
 		self.port.emit("copy_ciphertext", ciphertext);
 		$("#clipboard").stop(true, true).fadeIn().delay(1000).fadeOut();
@@ -145,11 +145,17 @@ function decrypt(elem){
 	}
 	var ciphertext = index2>0 ? val.substring(index1+startTag.length, index2) : val.substring(index1+startTag.length);
 	
+	var plaintext;
 	for(var i=0; i<keyList.length; i++){
 		var validDecryption = true;
 		try{
-			var plaintext = CryptoJS.AES.decrypt(ciphertext, keyList[i].key);
-			plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+			if(typeof keyList[i].key === "object"){
+				plaintext = ecc.decrypt(keyList[i].key.priv, ciphertext);
+			}
+			else{
+				plaintext = CryptoJS.AES.decrypt(ciphertext, keyList[i].key);
+				plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+			}
 			if(!$.trim(plaintext)){
 				throw true;
 			}
