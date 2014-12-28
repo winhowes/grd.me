@@ -1,7 +1,7 @@
 grd.me
 ======
 
-A browser plugin that provides encrypted communication across any web platform.
+A browser plugin that provides encrypted communication across any web platform.  We support aes and ecc
 
 How to Use
 ==========
@@ -14,4 +14,3 @@ How to Use
 Compatibility/Limitations
 ==============
 Right now this browser plugin is only supported in Firefox. We hope to add Chrome soon!
-Additionally, this only works for symmetric encryption with AES, we hope to add asymmetric encryption soon using ECC.
