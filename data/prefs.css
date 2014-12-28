@@ -43,7 +43,7 @@ input[type="checkbox"] {
 	vertical-align: middle;
 }
 
-#addKeyError {
+#addKeyError, #pubKeyError {
 	margin: 5px 0px;
 	color: #d61f1f;
 }
@@ -114,6 +114,11 @@ input[type="checkbox"] {
 .description, .key {
 	width: 250px;
 	word-break: break-all;
+}
+
+.key b{
+	margin-top: 5px;
+	display: inline-block;
 }
 
 .description {

@@ -8,22 +8,31 @@ function generateECCKeys() {
 	return {pub: keys.enc, priv: keys.dec};
 }
 
-$("#addKeyError").hide();
+$("#addKeyError, #pubKeyError").hide();
 
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
-	$("#addKeyError").stop(true).hide();
-	var key = $("#ecc").is(":checked")? $("#key").data("key") : $.trim($("#key").val());
+	$("#addKeyError, #pubKeyError").stop(true).hide();
+	var key = $("#ecc").is(":checked")? JSON.parse($("#key").val()) : $.trim($("#key").val());
 	var description = $.trim($("#description").val());
 	if(!key || !description){
 		$("#addKeyError").fadeIn();
 		return;
 	}
-	var btn = $(this).find("#addKeyBtn");
-	btn.text("Key Added");
-	setTimeout(function(){
-		btn.text("Add Key");
-	}, 1500);
+	if(typeof key === "object"){
+		/* Check that it's a valid public/private key */
+		var plaintext = "Hello World";
+		try{
+			var ciphertext = ecc.encrypt(key.pub, plaintext);
+			if(plaintext != ecc.decrypt(key.priv, ciphertext)){
+				throw true;
+			}
+		}
+		catch(e){
+			$("#pubKeyError").fadeIn();
+			return;
+		}
+	}
 	$("#key").val("").focus();
 	$("#description").val("");
 	self.port.emit("addKey", {
@@ -35,11 +44,11 @@ $("#addKey").on("submit", function(e){
 $("#ecc").on("click", function(){
 	if($(this).is(":checked")){
 		var keyPair = generateECCKeys();
-		$("#key").val(JSON.stringify(keyPair)).removeAttr("maxlength", "").attr("readonly", true).data("key", keyPair);
+		$("#key").val(JSON.stringify(keyPair)).removeAttr("maxlength", "").data("key", keyPair);
 		$("#description").focus();
 	}
 	else {
-		$("#key").val("").focus().attr("maxlength", 32).removeAttr("readonly");
+		$("#key").val("").focus().attr("maxlength", 32);
 	}
 });
 
@@ -84,7 +93,7 @@ self.port.on("displayKeys", function(keys){
 	for(var i=0; i<keys.length; i++){
 		newKeyList.append("<li index='"+i+"' "+(i===activeIndex? "class='active'" : "")+">"+
 							"<div class='key'>Key: <span>"+
-							(typeof keys[i].key === "object"? "<b>pub</b>: "+keys[i].key.pub+"<br><b>priv</b>: "+keys[i].key.priv : $("<i></i>").text(keys[i].key).html())+
+							(typeof keys[i].key === "object"? "<br><b>pub</b>: "+keys[i].key.pub+"<br><b>priv</b>: "+keys[i].key.priv : $("<i></i>").text(keys[i].key).html())+
 							"</span></div>"+
 							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+"</div>"+
 							(i? "<div class='delete'>x</div>" : "")+
