@@ -11,8 +11,9 @@
 			<button id="keyGen" class="blue_btn" type="button">Generate Key</button>
 			<input type="checkbox" id="ecc"><label for="ecc" id="eccLabel">Pub/Priv Key Pair</label>
 			<div id="addKeyError">Please enter both a key and a description</div>
-			<div id="pubKeyError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"} or {"pub": "x"} with valid hex keys x and y</div>
+			<div id="pubKeyError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, {"pub": "x"}, or x with valid hex keys x and y</div>
 		</form>
+		<div class="header">Your Keys <span>(shift-select for multiple active keys)</span>:</div>
 		<ul id="keyList"></ul>
 	</body>
 </html>

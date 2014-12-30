@@ -1,6 +1,6 @@
 /** This file handles the preferences panel */
 
-var activeIndex = 0;
+var activeIndex = [true];
 
 function generateECCKeys() {
 	var curve = 256;
@@ -13,48 +13,67 @@ $("#addKeyError, #pubKeyError").hide();
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
 	$("#addKeyError, #pubKeyError").stop(true).hide();
+	var keyVal = $.trim($("#key").val());
 	try{
-		var key = $("#ecc").is(":checked")? JSON.parse($("#key").val()) : $.trim($("#key").val());
+		var key = $("#ecc").is(":checked")? JSON.parse(keyVal) : keyVal;
 	}
 	catch(e){
-		$("#pubKeyError").fadeIn();
-		return;
+		if(keyVal[0] != '"' && keyVal[0] != "'"){
+			try{
+				var key = JSON.parse('"'+keyVal+'"');
+			}
+			catch(e){
+				$("#pubKeyError").fadeIn();
+				return;
+			}
+		}
+		else{
+			$("#pubKeyError").fadeIn();
+			return;
+		}
 	}
 	var description = $.trim($("#description").val());
 	if(!key || !description){
+		$("#description").focus();
 		$("#addKeyError").fadeIn();
 		return;
 	}
-	var hexRegex = /[^A-F0-9]/gi;
-	if(typeof key === "object" && key.priv){
-		/* Check that it's a valid public/private key */
+	if($("#ecc").is(":checked")){
+		if(typeof key !== "object"){
+			key = {pub: key};
+		}
+		var hexRegex = /[^A-F0-9]/gi;
 		var plaintext = "Hello World";
-		try{
-			var pub = key.pub.replace(hexRegex, "");
-			var priv = key.priv.replace(hexRegex, "");
-			var ciphertext = ecc.encrypt(pub, plaintext);
-			if(plaintext != ecc.decrypt(priv, ciphertext)){
-				throw true;
+		if(key.priv){
+			/* Check that it's a valid public/private key */
+			try{
+				var pub = key.pub.replace(hexRegex, "");
+				var priv = key.priv.replace(hexRegex, "");
+				var ciphertext = ecc.encrypt(pub, plaintext);
+				if(plaintext != ecc.decrypt(priv, ciphertext)){
+					throw true;
+				}
 			}
-		}
-		catch(e){
-			$("#pubKeyError").fadeIn();
-			return;
-		}
-		key = {pub: pub, priv: priv}
-	}
-	else if(typeof key === "object"){
-		try{
-			key.pub = key.pub.replace(hexRegex, "");
-			if(!key.pub){
-				throw true;
+			catch(e){
+				$("#pubKeyError").fadeIn();
+				return;
 			}
+			key = {pub: pub, priv: priv}
 		}
-		catch(e){
-			$("#pubKeyError").fadeIn();
-			return;
+		else{
+			try{
+				key.pub = key.pub.replace(hexRegex, "");
+				if(!key.pub){
+					throw true;
+				}
+				ecc.encrypt(key.pub, plaintext);
+			}
+			catch(e){
+				$("#pubKeyError").fadeIn();
+				return;
+			}
+			key = {pub: key.pub};
 		}
-		key = {pub: key.pub};
 	}
 	$("#key").val("").focus();
 	$("#description").val("");
@@ -102,11 +121,26 @@ $("#keyList").on("click", ".delete", function(e){
 	self.port.emit("deleteKey", $(this).parent().attr("index"));
 });
 
-$("#keyList").on("click", "li", function(){
-	if(!$(this).hasClass("active")){
+$("#keyList").on("click", "li", function(e){
+	if(e.shiftKey){
+		window.getSelection().removeAllRanges();
+	}
+	if($(this).hasClass("active") && $("#keyList").find(".active").length === 1){
+		return;
+	}
+	if(e.shiftKey){
+		$(this).toggleClass("active");
+		var indices = [];
+		var keyList = $("#keyList").find(".active");
+		for(var i=0; i<keyList.length; i++){
+			indices.push($(keyList.get(i)).attr("index"));
+		}
+		self.port.emit("setActiveKeys", indices);
+	}
+	else{
 		$("#keyList").find(".active").removeClass("active");
 		$(this).addClass("active");
-		self.port.emit("setActiveKey", $(this).attr("index"));
+		self.port.emit("setActiveKeys", [$(this).attr("index")]);
 	}
 });
 
@@ -114,7 +148,7 @@ self.port.on("displayKeys", function(keys){
 	var keyList = $("#keyList");
 	var newKeyList = $("<ul></ul>");
 	for(var i=0; i<keys.length; i++){
-		newKeyList.append("<li index='"+i+"' "+(i===activeIndex? "class='active'" : "")+">"+
+		newKeyList.append("<li index='"+i+"' "+(activeIndex[i]? "class='active'" : "")+">"+
 							"<div class='key'>Key: <span>"+
 							(typeof keys[i].key === "object"? "<br><b>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
 							"</span></div>"+
@@ -127,6 +161,6 @@ self.port.on("displayKeys", function(keys){
 });
 
 self.port.on("activeKeyIndex", function(index){
-	activeIndex = index;
+	activeIndex[index] = true;
 	$("#keyList [index='"+index+"']").addClass("active");
 });

@@ -1,12 +1,13 @@
 /** This file handles the page encryption and decryption */
 
-var startTag = '~~crypt~~';
-var endTag = '~~/crypt~~';
-var secret, keyList = [];
-var panelMode = false;
+var startTag = '~~crypt~~',
+endTag = '~~/crypt~~',
+secrets = [],
+keyList = [],
+panelMode = false;
 
 self.port.on("secret", function(secret_obj){
-	secret = secret_obj.active;
+	secrets = secret_obj.active;
 	keyList = secret_obj.keys;
 });
 
@@ -68,7 +69,12 @@ function encrypt(){
 		}
 		plaintext = $("<div></div>").text(plaintext.replace(/<br\s*[\/]?>/gi, "\n")).html();
 	}
-	var ciphertext = startTag+(typeof secret === "object" ? ecc.encrypt(secret.pub, plaintext) : CryptoJS.AES.encrypt(plaintext, secret)) + endTag;
+	var ciphertext = startTag;
+	for(var i=0; i<secrets.length; i++){
+		ciphertext += (typeof secrets[i] === "object" ? ecc.encrypt(secrets[i].pub, plaintext) : CryptoJS.AES.encrypt(plaintext, secrets[i])) + "|";
+	}
+	ciphertext = ciphertext.slice(0, - 1); 
+	ciphertext += endTag;
 	if(panelMode){
 		self.port.emit("copy_ciphertext", ciphertext);
 		$("#clipboard").stop(true, true).fadeIn().delay(1000).fadeOut();
@@ -144,25 +150,30 @@ function decrypt(elem){
 		index2 = val.toLowerCase().indexOf(endTag);
 	}
 	var ciphertext = index2>0 ? val.substring(index1+startTag.length, index2) : val.substring(index1+startTag.length);
-	
-	var plaintext;
-	for(var i=0; i<keyList.length; i++){
-		var validDecryption = true;
-		try{
-			if(typeof keyList[i].key === "object" && keyList[i].key.priv){
-				plaintext = ecc.decrypt(keyList[i].key.priv, ciphertext);
+	ciphertext = ciphertext.split("|");
+	for(var i=0; i<ciphertext.length; i++){
+		var plaintext;
+		for(var j=0; j<keyList.length; j++){
+			var validDecryption = true;
+			try{
+				if(typeof keyList[j].key === "object" && keyList[j].key.priv){
+					plaintext = ecc.decrypt(keyList[j].key.priv, ciphertext[i]);
+				}
+				else{
+					plaintext = CryptoJS.AES.decrypt(ciphertext[i], keyList[j].key);
+					plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+				}
+				if(!$.trim(plaintext)){
+					throw true;
+				}
+				break;
 			}
-			else{
-				plaintext = CryptoJS.AES.decrypt(ciphertext, keyList[i].key);
-				plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+			catch(e){
+				validDecryption = false;
 			}
-			if(!$.trim(plaintext)){
-				throw true;
-			}
-			break;
 		}
-		catch(e){
-			validDecryption = false;
+		if(validDecryption){
+			break;
 		}
 	}
 	
@@ -176,7 +187,7 @@ function decrypt(elem){
 		index2 = 1;
 		elem.html(val.substring(0, index1) + "[Unable to decrypt message] "+val.replace(startTag, "[start tag]").replace(endTag, "[end tag]"));
 	}
-	return {endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext};
+	return {endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext.join("|")};
 }
 
 //Scan for any crypto on the page and decypt if possible

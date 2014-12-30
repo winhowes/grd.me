@@ -90,11 +90,22 @@ input[type="checkbox"] {
     border: 0;
 }
 
+.header {
+	margin: 7px 0px 5px;
+	font-size: 15px;
+	padding: 5px 5px 1px;
+	border-bottom: 1px solid #ddd;
+}
+
+.header span {
+	font-size: 12px;
+}
+
 #keyList {
 	display: block;
-	margin: 5px 0px 0px;
 	list-style: none;
 	padding: 0px;
+	margin: 0px;
 }
 
 #keyList li {
