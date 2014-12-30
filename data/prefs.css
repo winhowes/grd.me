@@ -2,6 +2,19 @@
 	font-family: Arial;
 }
 
+#onlyPubWarning {
+	position: fixed;
+	background: #FFF9D7;
+	border: 1px solid #E2C822;
+	padding: 5px;
+	top: -60px;
+	left: 0px;
+	right: 0px;
+	font-size: 13px;
+	height: 45px;
+	cursor: pointer;
+}
+
 #addKey {
 	font-size: 15px;
 }

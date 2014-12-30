@@ -125,11 +125,12 @@ $("#keyList").on("click", "li", function(e){
 	if(e.shiftKey){
 		window.getSelection().removeAllRanges();
 	}
-	if($(this).hasClass("active") && $("#keyList").find(".active").length === 1){
+	var elem = $(this);
+	if(elem.hasClass("active") && $("#keyList").find(".active").length === 1){
 		return;
 	}
 	if(e.shiftKey){
-		$(this).toggleClass("active");
+		elem.toggleClass("active");
 		var indices = [];
 		var keyList = $("#keyList").find(".active");
 		for(var i=0; i<keyList.length; i++){
@@ -139,9 +140,20 @@ $("#keyList").on("click", "li", function(e){
 	}
 	else{
 		$("#keyList").find(".active").removeClass("active");
-		$(this).addClass("active");
-		self.port.emit("setActiveKeys", [$(this).attr("index")]);
+		elem.addClass("active");
+		self.port.emit("setActiveKeys", [elem.attr("index")]);
+		if(elem.find(".pub").length && !elem.find(".priv").length){
+			$("#onlyPubWarning").stop(true).css("top", "-60px").animate({
+				top: 0
+			}).delay(6000).animate({
+				top : "-60px"
+			});
+		}
 	}
+});
+
+$("#onlyPubWarning").on("click", function(){
+	$(this).stop(true).animate({top : "-60px"});
 });
 
 self.port.on("displayKeys", function(keys){
@@ -150,7 +162,7 @@ self.port.on("displayKeys", function(keys){
 	for(var i=0; i<keys.length; i++){
 		newKeyList.append("<li index='"+i+"' "+(activeIndex[i]? "class='active'" : "")+">"+
 							"<div class='key'>Key: <span>"+
-							(typeof keys[i].key === "object"? "<br><b>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
+							(typeof keys[i].key === "object"? "<br><b class='pub'>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b class='priv'>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
 							"</span></div>"+
 							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+"</div>"+
 							(i? "<div class='delete'>x</div>" : "")+
