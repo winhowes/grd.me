@@ -145,7 +145,7 @@ $("#keyList").on("click", "li", function(e){
 		if(elem.find(".pub").length && !elem.find(".priv").length){
 			$("#onlyPubWarning").stop(true).css("top", "-60px").animate({
 				top: 0
-			}).delay(6000).animate({
+			}).delay(7000).animate({
 				top : "-60px"
 			});
 		}

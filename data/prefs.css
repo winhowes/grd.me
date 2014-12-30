@@ -5,7 +5,7 @@
 #onlyPubWarning {
 	position: fixed;
 	background: #FFF9D7;
-	border: 1px solid #E2C822;
+	border-bottom: 1px solid #E2C822;
 	padding: 5px;
 	top: -60px;
 	left: 0px;
@@ -13,6 +13,7 @@
 	font-size: 13px;
 	height: 45px;
 	cursor: pointer;
+	z-index: 10;
 }
 
 #addKey {
