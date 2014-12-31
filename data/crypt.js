@@ -70,7 +70,6 @@ function encrypt(){
 		plaintext = $("<div></div>").text(plaintext.replace(/<br\s*[\/]?>/gi, "\n")).html();
 	}
 	var ciphertext = startTag;
-	console.log(secrets);
 	for(var i=0; i<secrets.length; i++){
 		ciphertext += (typeof secrets[i] === "object" ? ecc.encrypt(secrets[i].pub, plaintext) : CryptoJS.AES.encrypt(plaintext, secrets[i])) + "|";
 	}
