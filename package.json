@@ -8,6 +8,6 @@
   "license": "MIT",
   "version": "1.0",
   "permissions": {"private-browsing": true},
-  "icon": "icons/icon48.png",
-  "icon64": "icons/icon64.png"
+  "icon": "data/icons/icon48.png",
+  "icon64": "data/icons/icon64.png"
 }
