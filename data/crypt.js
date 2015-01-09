@@ -150,6 +150,24 @@ function decrypt(elem){
 		index2 = val.toLowerCase().indexOf(endTag);
 	}
 	var ciphertext = index2>0 ? val.substring(index1+startTag.length, index2) : val.substring(index1+startTag.length);
+	var plaintext = decryptText(ciphertext);
+	if(plaintext){
+		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
+		var start = html.substring(0, html.indexOf(startTag));
+		val = start + plaintext + end;
+		elem.html(val);
+	}
+	else{
+		index2 = 1;
+		elem.html(val.substring(0, index1) + "[Unable to decrypt message] "+val.replace(startTag, "[start tag]").replace(endTag, "[end tag]"));
+	}
+	return {endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext};
+}
+
+/** Decrypt ciphertext with all available keys. Returns false if no decryption possible
+ * ciphertext: the text excluding the crypto tags to decrypt
+*/
+function decryptText(ciphertext){
 	ciphertext = ciphertext.split("|");
 	for(var i=0; i<ciphertext.length; i++){
 		var plaintext;
@@ -176,18 +194,7 @@ function decrypt(elem){
 			break;
 		}
 	}
-	
-	if(validDecryption){
-		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
-		var start = html.substring(0, html.indexOf(startTag));
-		val = start + linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>")) + end;
-		elem.html(val);
-	}
-	else{
-		index2 = 1;
-		elem.html(val.substring(0, index1) + "[Unable to decrypt message] "+val.replace(startTag, "[start tag]").replace(endTag, "[end tag]"));
-	}
-	return {endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext.join("|")};
+	return validDecryption? linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>")) : false;
 }
 
 //Scan for any crypto on the page and decypt if possible
@@ -204,13 +211,21 @@ var decryptInterval = window.setInterval(function(){
 		elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 		if(!returnObj.endTagFound){
 			var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
+			var clickHandled = false;
 			parent.on("click", function(){
-				var clickHandled = false;
+				elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 				setTimeout(function(){
 					if(clickHandled){return;}
 					clickHandled = true;
 					if(parent.text().indexOf(endTag)>0){
 						var text = parent.text();
+						/* Handle the case of ciphertext in plaintext */
+						while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
+							var pre = returnObj.plaintext.substring(0, returnObj.plaintext.indexOf(startTag)),
+							ciphertext = returnObj.plaintext.substring(returnObj.plaintext.indexOf(startTag) + startTag.length, returnObj.plaintext.indexOf(endTag)),
+							post = returnObj.plaintext.substring(returnObj.plaintext.indexOf(endTag) + endTag.length);
+							returnObj.plaintext = pre+decryptText(ciphertext)+post;
+						}
 						parent.text(text.substring(0, text.indexOf(returnObj.plaintext+""))+
 								  startTag+
 								  returnObj.ciphertext+
