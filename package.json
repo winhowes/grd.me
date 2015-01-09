@@ -4,7 +4,10 @@
   "id": "jid1-62H0BrI5G2PAoQ",
   "description": "A browser plugin that provides encrypted communication across any web platform.",
   "author": "Winston Howes",
+  "homepage": "htps://grd.me",
   "license": "MIT",
   "version": "1.0",
-  "permissions": {"private-browsing": true}
+  "permissions": {"private-browsing": true},
+  "icon": "icons/icon48.png",
+  "icon64": "icons/icon64.png"
 }
