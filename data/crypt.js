@@ -62,8 +62,8 @@ function simulateKeyPress(character, target) {
 /** Encrypt the active element's text/value */
 function encrypt(){
 	var active = document.activeElement;
-	var plaintext = active.value || active.innerHTML;
-	if(!active.value && active.innerHTML){
+	var plaintext = active.value || active.textContent;
+	if(!active.value && active.textContent){
 		if(!$(active).attr("contenteditable")){
 			return;
 		}
