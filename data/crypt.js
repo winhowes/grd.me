@@ -62,12 +62,12 @@ function simulateKeyPress(character, target) {
 /** Encrypt the active element's text/value */
 function encrypt(){
 	var active = document.activeElement;
-	var plaintext = active.value || active.textContent;
-	if(!active.value && active.textContent){
+	var plaintext = active.value || active.innerHTML;
+	if(!active.value && active.innerHTML){
 		if(!$(active).attr("contenteditable")){
 			return;
 		}
-		plaintext = $("<div></div>").text(plaintext.replace(/<br\s*[\/]?>/gi, "\n")).html();
+		plaintext = strip(plaintext.replace(/<br\s*[\/]?>/gi, "\n"));
 	}
 	var ciphertext = startTag;
 	for(var i=0; i<secrets.length; i++){
