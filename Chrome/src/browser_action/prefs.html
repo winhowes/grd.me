@@ -1,0 +1,24 @@
+<!Doctype html>
+<html>
+	<head>
+		<title>Grd Me Key Management</title>
+		<link href="prefs.css" media="screen" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="onlyPubWarning">We recommend shift-selecting another key which contains a private key so that you will be able to read messages that you encrypt.</div>
+		<form id="addKey">
+			<input placeholder="Key" id="key" maxlength="32">
+			<input placeholder="Description" id="description" maxlength="50">
+			<button class="blue_btn" id="addKeyBtn">Add Key</button>
+			<button id="keyGen" class="blue_btn" type="button">Generate Key</button>
+			<input type="checkbox" id="ecc"><label for="ecc" id="eccLabel">Pub/Priv Key Pair</label>
+			<div id="addKeyError">Please enter both a key and a description</div>
+			<div id="pubKeyError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, {"pub": "x"}, or x with valid hex keys x and y</div>
+		</form>
+		<div class="header">Your Keys <span>(shift-select for multiple active keys)</span>:</div>
+		<ul id="keyList"></ul>
+		<script src="/src/inject/lib/jquery-2.1.3.min.js"></script>
+		<script src="/src/inject/lib/ecc.min.js"></script>
+		<script src="prefs.js"></script>
+	</body>
+</html>

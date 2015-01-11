@@ -11,6 +11,6 @@ How to Use
 3. To add a new key press the lock icon in the browser toolbar and enter/generate your new key and description. To toggle which key is active simply click on the key (shift-click for multiple keys) (note that you may have to refresh the page to see some decryption using that key).
 4. Encrypt stuff!
 
-Compatibility/Limitations
+Compatibility
 ==============
-Right now this browser plugin is only supported in Firefox. We hope to add Chrome soon!
+Right now this browser plugin is only supported in Firefox and Chrome.
