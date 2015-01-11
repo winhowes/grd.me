@@ -67,7 +67,8 @@ function encrypt(){
 		if(!$(active).attr("contenteditable")){
 			return;
 		}
-		plaintext = strip(plaintext.replace(/<br\s*[\/]?>/gi, "\n"));
+		/* This regex technically breaks if there's a ">" character in an attribute of a br tag*/
+		plaintext = strip(plaintext.replace(/<br\s*[^>]*>/gi, "\n"));
 	}
 	var ciphertext = startTag;
 	for(var i=0; i<secrets.length; i++){
@@ -90,6 +91,8 @@ function encrypt(){
 		}, 200);
 	}
 	else {
+		document.execCommand("selectAll");
+		
 		for(var i=0; i<plaintext.length; i++){
 			setTimeout(function(){
 				simulateKeyPress("\b");
