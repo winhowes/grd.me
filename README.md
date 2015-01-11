@@ -1,4 +1,4 @@
-grd.me
+Grd Me
 ======
 
 A browser plugin that provides encrypted communication across any web platform.  We support aes and ecc.
