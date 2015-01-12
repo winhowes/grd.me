@@ -162,7 +162,7 @@ function decrypt(elem){
 	}
 	else{
 		index2 = 1;
-		elem.html(val.substring(0, index1) + "[Unable to decrypt message] "+val.replace(startTag, "[start tag]").replace(endTag, "[end tag]"));
+		elem.html(val.substring(0, index1) + $("<i></i>").text("[Unable to decrypt message] "+val.replace(startTag, "[start tag]").replace(endTag, "[end tag]")).html());
 	}
 	return {endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext};
 }
