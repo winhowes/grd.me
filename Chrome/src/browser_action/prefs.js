@@ -1,8 +1,8 @@
 /** This file handles the preferences panel */
 
 function generateECCKeys() {
-	var curve = 256;
-	var keys = ecc.generate(ecc.ENC_DEC, 256);
+	var curve = 384;
+	var keys = ecc.generate(ecc.ENC_DEC, curve);
 	return {pub: keys.enc, priv: keys.dec};
 }
 
