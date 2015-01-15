@@ -96,7 +96,7 @@ function main(keys, activeKeys){
 		});
 	});
 	
-	chrome.runtime.onDisconnect.addListener(function(port){
+	chrome.runtime.Port.onDisconnect.addListener(function(port){
 		detachWorker(port, workers);
 	});
 }
