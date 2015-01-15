@@ -4,7 +4,8 @@ var startTag = '~~crypt~~',
 endTag = '~~/crypt~~',
 secrets = [],
 keyList = [],
-panelMode = false;
+panelMode = false,
+decryptTimeout = false;
 
 self.port.on("secret", function(secret_obj){
 	secrets = secret_obj.active;
@@ -21,8 +22,12 @@ self.port.on("panelMode", function(){
 	});
 });
 
-String.prototype.endsWith = function(suffix) {
-    return this.indexOf(suffix, this.length - suffix.length) !== -1;
+/** Check that a string ends with another substring
+ * subject: the string to search through
+ * suffix: the proposed suffix of the subject
+*/
+ function endsWith(subject, suffix) {
+    return subject.indexOf(suffix, subject.length - suffix.length) !== -1;
 };
 
 /** Strip html tags from string
@@ -113,7 +118,7 @@ function encrypt(){
 */
 function decrypt(elem){
 	var val = elem.text();
-	if(val.toLowerCase().indexOf(endTag)>0 && window.location.hostname.endsWith("facebook.com")){
+	if(val.toLowerCase().indexOf(endTag)>0 && endsWith(window.location.hostname, "facebook.com")){
 		elem.parent().find('.text_exposed_hide').remove();
 		val = elem.text();
 	}
@@ -200,10 +205,10 @@ function decryptText(ciphertext){
 	return validDecryption? linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>")) : false;
 }
 
-//Scan for any crypto on the page and decypt if possible
-//(possibly with a settimeout to lower overhead) instead of an interval
-var decryptInterval = window.setInterval(function(){
-	$('*:contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"])').each(function(i, e){
+/** Scan for any crypto on the page and decypt if possible */
+function decryptInterval(){
+	var elements = $('*:contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"])');
+	elements.each(function(i, e){
 		var elem = $(e);
 		if(elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
 			//ASSUMPTION: an element not containing a crypto message itself will never contain a crypto message
@@ -239,7 +244,19 @@ var decryptInterval = window.setInterval(function(){
 			});
 		}
 	});
-}, 50);
+	decryptTimeout = setTimeout(decryptInterval, 50);
+};
+
+self.port.on("activeTab", function(){
+	if(!decryptTimeout){
+		decryptTimeout = setTimeout(decryptInterval, 50);
+	}
+});
+
+self.port.on("unactiveTab", function(){
+	clearTimeout(decryptTimeout);
+	decryptTimeout = false;
+});
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
     encrypt();
