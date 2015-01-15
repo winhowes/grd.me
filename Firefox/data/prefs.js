@@ -1,6 +1,6 @@
 /** This file handles the preferences panel */
 
-var activeIndex = [true];
+var activeIndex = [];
 
 function generateECCKeys() {
 	var curve = 384;

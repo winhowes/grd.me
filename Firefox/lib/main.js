@@ -15,7 +15,9 @@ ss.storage.keys = ss.storage.keys || [{
 
 if(!ss.storage.activeKeys){
 	ss.storage.activeKeys = [ss.storage.keys[0].key];
-	ss.storage.activeKeys[JSON.stringify(ss.storage.keys[0].key)] = true;
+}
+for(var i=0; i<ss.storage.activeKeys.length; i++){
+	ss.storage.activeKeys[JSON.stringify(ss.storage.activeKeys[i])] = true;
 }
 
 function handleChange(state) {
@@ -47,13 +49,13 @@ var prefPanel = Panel({
 	height: 400
 });
 
-prefPanel.port.emit("displayKeys", ss.storage.keys);
-
 for(var i=0; i<ss.storage.keys.length; i++){
 	if(ss.storage.activeKeys[JSON.stringify(ss.storage.keys[i].key)]){
 		prefPanel.port.emit("activeKeyIndex", i);
 	}
 }
+
+prefPanel.port.emit("displayKeys", ss.storage.keys);
 
 prefPanel.port.on("setActiveKeys", function(indices){
 	ss.storage.activeKeys = [];
