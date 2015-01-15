@@ -42,30 +42,7 @@ function detachWorker(worker, workerArray) {
 function main(keys, activeKeys){
 	keyObj.keys = keys.slice(0);
 	keyObj.activeKeys = activeKeys.slice(0);
-	/*var secureTextPanel = Panel({
-		contentURL: data.url("secureText.html"),
-		contentStyleFile: data.url("secureText.css"),
-		contentScriptFile: [data.url("lib/aes.js"),
-							data.url('lib/ecc.min.js'),
-							data.url("lib/jquery-2.1.3.min.js"),
-							data.url("lib/mousetrap.min.js"),
-							data.url("lib/linkify.min.js"),
-							data.url("crypt.js")],
-		width: 300,
-		height: 235
-	});
 	
-	secureTextPanel.port.on("copy_ciphertext", function(text){
-		clipboard.set(text, "text");
-	});
-	
-	secureTextPanel.port.emit("secret", {active: activeKeys, keys: keys});
-	
-	secureTextPanel.port.emit("panelMode");
-	
-	secureTextPanel.on("show", function(){
-		secureTextPanel.port.emit("show");
-	});*/
 	var securePopup = false;
 	chrome.runtime.onConnect.addListener(function(port){
 		workers.push(port);
@@ -90,7 +67,6 @@ function main(keys, activeKeys){
 				input.select();
 				document.execCommand('Copy');
 				input.remove();
-				//clipboard.set(msg.text, "text");
 			}
 			else if (msg.id == "secureText"){
 				securePopup = true;
@@ -107,6 +83,15 @@ function main(keys, activeKeys){
 					top: top,
 					left: left
 				});
+			}
+		});
+		
+		chrome.tabs.query({active: true}, function(tabs) {
+			chrome.tabs.sendMessage(tabs[0].id, {id: "activeTab"});
+		});
+		chrome.tabs.query({active: false}, function(tabs) {
+			for(var i=0; i<tabs.length; i++){
+				chrome.tabs.sendMessage(tabs[i].id, {id: "unactiveTab"});
 			}
 		});
 	});
@@ -134,4 +119,13 @@ chrome.storage.sync.get("keys", function(keys){
 			main(keys, activeKeys);
 		});
 	}
+});
+
+chrome.tabs.onActivated.addListener(function(activeInfo){
+	chrome.tabs.sendMessage(activeInfo.tabId, {id: "activeTab"});
+	chrome.tabs.query({active: false}, function(tabs) {
+		for(var i=0; i<tabs.length; i++){
+			chrome.tabs.sendMessage(tabs[i].id, {id: "unactiveTab"});
+		}
+	});
 });

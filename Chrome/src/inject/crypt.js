@@ -4,7 +4,8 @@ var startTag = '~~crypt~~',
 endTag = '~~/crypt~~',
 secrets = [],
 keyList = [],
-panelMode = false;
+panelMode = false,
+decryptTimeout = false;
 
 var port = chrome.runtime.connect();
 port.onMessage.addListener(function(msg) {
@@ -168,9 +169,8 @@ function decryptText(ciphertext){
 	return validDecryption? linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>")) : false;
 }
 
-//Scan for any crypto on the page and decypt if possible
-//(possibly with a settimeout to lower overhead) instead of an interval
-var decryptInterval = window.setInterval(function(){
+/** Scan for any crypto on the page and decypt if possible */
+function decryptInterval(){
 	$('*:contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"])').each(function(i, e){
 		var elem = $(e);
 		if(elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
@@ -206,7 +206,22 @@ var decryptInterval = window.setInterval(function(){
 			});
 		}
 	});
-}, 50);
+	decryptTimeout = setTimeout(decryptInterval, 50);
+}
+
+decryptTimeout = setTimeout(decryptInterval, 50);
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    if(request.id == "activeTab") {
+		if(!decryptTimeout){
+			decryptTimeout = setTimeout(decryptInterval, 50);
+		}
+    }
+	else if(request.id == "unactiveTab"){
+		clearTimeout(decryptTimeout);
+		decryptTimeout = false;
+	}
+  });
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
     encrypt();
