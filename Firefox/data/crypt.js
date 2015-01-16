@@ -4,8 +4,7 @@ var startTag = '~~crypt~~',
 endTag = '~~/crypt~~',
 secrets = [],
 keyList = [],
-panelMode = false,
-decryptTimeout = false;
+panelMode = false;
 
 self.port.on("secret", function(secret_obj){
 	secrets = secret_obj.active;
@@ -257,6 +256,8 @@ function decryptInterval(){
 	
 	observer.observe(document.body, config);
 }());
+
+setTimeout(decryptInterval, 50);
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
     encrypt();

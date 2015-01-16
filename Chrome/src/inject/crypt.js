@@ -4,8 +4,7 @@ var startTag = '~~crypt~~',
 endTag = '~~/crypt~~',
 secrets = [],
 keyList = [],
-panelMode = false,
-decryptTimeout = false;
+panelMode = false;
 
 var port = chrome.runtime.connect();
 port.onMessage.addListener(function(msg) {
@@ -220,7 +219,7 @@ function decryptInterval(){
 	observer.observe(document.body, config);
 }());
 
-decryptTimeout = setTimeout(decryptInterval, 50);
+setTimeout(decryptInterval, 50);
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
     encrypt();
