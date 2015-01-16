@@ -15,7 +15,6 @@ self.port.on("secret", function(secret_obj){
 self.port.on("panelMode", function(){
 	panelMode = true;
 	Mousetrap.unbind('mod+alt+e');
-	clearInterval(decryptInterval);
 	$("#clipboard").hide();
 	self.port.on("show", function onShow() {
 		$("textArea").focus().select();
@@ -258,17 +257,6 @@ function decryptInterval(){
 	
 	observer.observe(document.body, config);
 }());
-
-self.port.on("activeTab", function(){
-	if(!decryptTimeout){
-		decryptTimeout = setTimeout(decryptInterval, 50);
-	}
-});
-
-self.port.on("unactiveTab", function(){
-	clearTimeout(decryptTimeout);
-	decryptTimeout = false;
-});
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
     encrypt();

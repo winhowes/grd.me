@@ -130,33 +130,13 @@ exports.main = function(options){
 			worker.port.on("secureText", function(){
 				secureTextPanel.show();
 			});
-			
-			if(tabs.activeTab===worker.tab){
-				worker.port.emit("activeTab");
-			}
 		}
 	});
 }
 
-tabs.on("activate", function(tab){
-	for(var i=0; i<workers.length; i++){
-		if(workers[i].tab===tab){
-			workers[i].port.emit("activeTab");
-		}
-	}
-});
-
-tabs.on("deactivate", function(tab){
-	for(var i=0; i<workers.length; i++){
-		if(workers[i].tab===tab){
-			workers[i].port.emit("unactiveTab");
-		}
-	}
-});
-
 function detachWorker(worker, workerArray) {
-  var index = workerArray.indexOf(worker);
-  if(index != -1) {
-    workerArray.splice(index, 1);
-  }
+	var index = workerArray.indexOf(worker);
+	if(index != -1) {
+		workerArray.splice(index, 1);
+	}
 }

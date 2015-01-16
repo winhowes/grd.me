@@ -86,18 +86,9 @@ function main(keys, activeKeys){
 			}
 		});
 		
-		chrome.tabs.query({active: true}, function(tabs) {
-			chrome.tabs.sendMessage(tabs[0].id, {id: "activeTab"});
-		});
-		chrome.tabs.query({active: false}, function(tabs) {
-			for(var i=0; i<tabs.length; i++){
-				chrome.tabs.sendMessage(tabs[i].id, {id: "unactiveTab"});
-			}
-		});
-	});
-	
-	chrome.runtime.Port.onDisconnect.addListener(function(port){
-		detachWorker(port, workers);
+		port.onDisconnect.addListener(function(port){
+			detachWorker(port, workers);
+		});	
 	});
 }
 
@@ -119,13 +110,4 @@ chrome.storage.sync.get("keys", function(keys){
 			main(keys, activeKeys);
 		});
 	}
-});
-
-chrome.tabs.onActivated.addListener(function(activeInfo){
-	chrome.tabs.sendMessage(activeInfo.tabId, {id: "activeTab"});
-	chrome.tabs.query({active: false}, function(tabs) {
-		for(var i=0; i<tabs.length; i++){
-			chrome.tabs.sendMessage(tabs[i].id, {id: "unactiveTab"});
-		}
-	});
 });

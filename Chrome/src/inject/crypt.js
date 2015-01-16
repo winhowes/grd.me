@@ -16,7 +16,6 @@ port.onMessage.addListener(function(msg) {
 	else if(msg.id == "panelMode"){
 		panelMode = true;
 		Mousetrap.unbind('mod+alt+e');
-		clearInterval(decryptInterval);
 		$("#clipboard").css("display", "block").hide();
 		$("textArea").focus().select();
 		$(window).blur(function(){
@@ -206,22 +205,22 @@ function decryptInterval(){
 			});
 		}
 	});
-	decryptTimeout = setTimeout(decryptInterval, 50);
 }
 
-decryptTimeout = setTimeout(decryptInterval, 50);
+/** Check for changes to the dom before running decryptInterval */
+(function(){
+	var otherDecryptTimeout = false;
+	var observer = new MutationObserver(function(mutations) {
+		clearTimeout(otherDecryptTimeout);
+		otherDecryptTimeout = setTimeout(decryptInterval, 50);
+	});
+	
+	var config = { subtree: true, childList: true, characterData: true, attributes: true };
+	
+	observer.observe(document.body, config);
+}());
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if(request.id == "activeTab") {
-		if(!decryptTimeout){
-			decryptTimeout = setTimeout(decryptInterval, 50);
-		}
-    }
-	else if(request.id == "unactiveTab"){
-		clearTimeout(decryptTimeout);
-		decryptTimeout = false;
-	}
-  });
+decryptTimeout = setTimeout(decryptInterval, 50);
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
     encrypt();
