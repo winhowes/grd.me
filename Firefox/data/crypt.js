@@ -244,8 +244,20 @@ function decryptInterval(){
 			});
 		}
 	});
-	decryptTimeout = setTimeout(decryptInterval, 50);
 };
+
+/** Check for changes to the dom before running decryptInterval */
+(function(){
+	var otherDecryptTimeout = false;
+	var observer = new MutationObserver(function(mutations) {
+		clearTimeout(otherDecryptTimeout);
+		otherDecryptTimeout = setTimeout(decryptInterval, 50);
+	});
+	
+	var config = { subtree: true, childList: true, characterData: true, attributes: true };
+	
+	observer.observe(document.body, config);
+}());
 
 self.port.on("activeTab", function(){
 	if(!decryptTimeout){
