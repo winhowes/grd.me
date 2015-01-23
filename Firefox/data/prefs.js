@@ -224,8 +224,14 @@ $("#keyGen").on("click", function(){
 	$("#description").focus();
 });
 
+/** Handle clicking delete key */
+$("#keyList").on("click", ".delete", function(e){
+	e.stopImmediatePropagation();
+	$("#pubKeyIndex").val($(this).parent().attr("index"));
+	$("#deleteForm, #overlay").stop(true).fadeIn();
+})
 /** Handle selecting different keys to be active */
-$("#keyList").on("click", "li", function(e){
+.on("click", "li", function(e){
 	if(e.shiftKey){
 		window.getSelection().removeAllRanges();
 	}
@@ -258,19 +264,6 @@ $("#keyList").on("click", "li", function(e){
 			}, 7000));
 		}
 	}
-});
-
-/** Click on the only pub warning hides the warning */
-$("#onlyPubWarning").on("click", function(){
-	clearTimeout($(this).data("timeout"));
-	$(this).stop(true).animate({top : "-60px"});
-});
-
-/** Handle clicking delete key */
-$("#keyList").on("click", ".delete", function(e){
-	e.stopImmediatePropagation();
-	$("#pubKeyIndex").val($(this).parent().attr("index"));
-	$("#deleteForm, #overlay").stop(true).fadeIn();
 })
 /** Show/hide the key in the key list */
 .on("click", ".showHideKey", function(e){
@@ -297,6 +290,12 @@ $("#keyList").on("click", ".delete", function(e){
 	$("#pubKeyIndex").val($(this).parent().attr("index"));
 });
 
+/** Click on the only pub warning hides the warning */
+$("#onlyPubWarning").on("click", function(){
+	clearTimeout($(this).data("timeout"));
+	$(this).stop(true).animate({top : "-60px"});
+});
+
 /** Delete the key */
 $("#deleteForm").on("submit", function(e){
 	e.preventDefault();
@@ -312,7 +311,7 @@ $("#revokeForm").on("submit", function(e){
 		index: $("#pubKeyIndex").val(),
 		sig: JSON.stringify(ecc.sign($("#privKey").val(), "REVOKED"))
 	}
-	$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".revoke").addClass("disabled");
+	$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".revoke").addClass("disabled").prop("disabled", true);
 	self.port.emit("revokeKey", key);
 	$("#overlay").trigger("click");
 });
@@ -337,6 +336,7 @@ $("#publishForm").on("submit", function(e){
 		uid: uid,
 		sig: JSON.stringify(ecc.sign($("#privKey").val(), uid.toLowerCase()))
 	}
+	$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".publish").addClass("disabled").prop("disabled", true);
 	self.port.emit("publishKey", key);
 	$("#overlay").trigger("click");
 });
@@ -396,9 +396,15 @@ self.port.on("activeKeyIndex", function(index){
 	$("#keyList [index='"+index+"']").addClass("active");
 });
 
-/** Indicate whether a key was published or failed to publish */
-self.port.on("publishResult", function(success){
-	var id = success? "publishSuccess" : "publishFail";
+/** Indicate whether a key was published or failed to publish
+ * obj: an object containing a success boolean property and an index property when success is
+ * false of the index of the revoked key
+*/
+self.port.on("publishResult", function(obj){
+	var id = obj.success? "publishSuccess" : "publishFail";
+	if(!obj.success){
+		$("#keyList").find("li[index='"+obj.index+"']").find(".publish").removeClass("disabled").prop("disabled", false);
+	}
 	$("#"+id).stop(true).css("top", "-20px").animate({
 		top: 0
 	}).delay(2500).animate({
@@ -413,7 +419,7 @@ self.port.on("publishResult", function(success){
 self.port.on("revokeResult", function(obj){
 	var id = obj.success? "revokeSuccess" : "revokeFail";
 	if(!obj.success){
-		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled_btn");
+		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled").prop("disabled", false);
 	}
 	$("#"+id).stop(true).css("top", "-20px").animate({
 		top: 0

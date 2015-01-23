@@ -95,25 +95,22 @@ prefPanel.port.on("publishKey", function(key){
 		onComplete: function (data) {
 			data = data.json;
 			if(!data || !data.status || !data.status[0] || data.status[0].code){
-				prefPanel.port.emit("publishResult", false);
-				ss.storage.keys[key.index].key.published = false;
-				prefPanel.port.emit("displayKeys", ss.storage.keys);
+				prefPanel.port.emit("publishResult", {success: false, index: key.index});				
 			}
 			else {
 				ss.storage.uids.push(key.uid);
 				ss.storage.uids = uniq(ss.storage.uids);
-				prefPanel.port.emit("publishResult", true);
+				ss.storage.keys[key.index].key.published = true;
+				prefPanel.port.emit("publishResult", {success: true, index: key.index});
 				prefPanel.port.emit("uids", ss.storage.uids);
+				prefPanel.port.emit("displayKeys", ss.storage.keys);
 			}
 		}
 	}).post();
-	
-	ss.storage.keys[key.index].key.published = true;
-	prefPanel.port.emit("displayKeys", ss.storage.keys);
 });
 
 prefPanel.port.on("revokeKey", function(key){
-	var addKeyRequest = Request({
+	var revokeKeyRequest = Request({
 		url: "https://grd.me/key/revoke",
 		content: {
 			pub: key.pub,
@@ -130,7 +127,7 @@ prefPanel.port.on("revokeKey", function(key){
 				prefPanel.port.emit("displayKeys", ss.storage.keys);
 			}
 		}
-	}).post();	
+	}).post();
 });
 
 exports.main = function(options){
