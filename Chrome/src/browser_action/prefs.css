@@ -441,7 +441,9 @@ button{
 	opacity: 0.4;
 }
 
-#searchResults li .revoked_msg, .not_secure{
+#searchResults li .revoked_msg,
+.not_secure,
+.already_exists{
 	letter-spacing: 1px;
 	color: #d61f1f;
 	margin-left: 10px;
@@ -450,6 +452,11 @@ button{
 
 .not_secure {
 	margin: 0px;
+}
+
+.already_exists {
+	color: #888;
+	margin: 3px 0;
 }
 
 #searchResults li .timestamp{

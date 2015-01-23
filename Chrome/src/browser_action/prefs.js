@@ -1,6 +1,6 @@
 /** This file handles the preferences panel */
 
-var uids = [], latestRequest = 0;
+var uids = [], latestRequest = 0, pubKeyMap = {};
 
 function generateECCKeys() {
 	var curve = 384;
@@ -56,9 +56,11 @@ $("#searchUIDForm").on("submit", function(e){
 					try{
 						if(ecc.verify(data.keys[i].pub, JSON.parse(data.keys[i].sig), data.uid.toLowerCase())){
 							var revoked = data.keys[i].revoke_sig && ecc.verify(data.keys[i].pub, JSON.parse(data.keys[i].revoke_sig), "REVOKED");
+							var already_exists = !revoked && pubKeyMap[data.keys[i].pub];
 							count++;
 							$("#searchResults").append("<li>"+
 														  (revoked? "<div class='revoked'>" : "")+
+														    (already_exists? "<div class='already_exists'>[Already in Keychain]</div>" : "")+
 															"<a class='showHideKey'>Show Key</a>"+
 															(revoked? "<span class='revoked_msg'>[Revoked]</span>" : "")+
 															"<div>"+
@@ -501,11 +503,15 @@ $("#keyList").on("click", ".showHideKey", function(e){
 
 /** Layout the keys and highlight the active keys */
 function displayKeys(){
+	pubKeyMap = {};
 	chrome.storage.local.get("keys", function(keys){
 		keys = keys.keys;
 		var keyList = $("#keyList");
 		var newKeyList = $("<ul></ul>");
 		for(var i=0; i<keys.length; i++){
+			if(keys[i].key.pub){
+				pubKeyMap[keys[i].key.pub] = true;
+			}
 			newKeyList.append("<li index='"+i+"'>"+
 								"<a class='showHideKey'>Show key</a>"+
 								"<div class='key'>Key: <span>"+

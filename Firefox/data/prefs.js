@@ -1,6 +1,6 @@
 /** This file handles the preferences panel */
 
-var activeIndex = [], uids = [], latestRequest = 0;
+var activeIndex = [], uids = [], latestRequest = 0, pubKeyMap = {};
 
 /** Generate an ECC pub/priv keypair */
 function generateECCKeys() {
@@ -57,9 +57,11 @@ $("#searchUIDForm").on("submit", function(e){
 					try{
 						if(ecc.verify(data.keys[i].pub, JSON.parse(data.keys[i].sig), data.uid.toLowerCase())){
 							var revoked = data.keys[i].revoke_sig && ecc.verify(data.keys[i].pub, JSON.parse(data.keys[i].revoke_sig), "REVOKED");
+							var already_exists = !revoked && pubKeyMap[data.keys[i].pub];
 							count++;
 							$("#searchResults").append("<li>"+
 														  (revoked? "<div class='revoked'>" : "")+
+														    (already_exists? "<div class='already_exists'>[Already in Keychain]</div>" : "")+
 															"<a class='showHideKey'>Show Key</a>"+
 															(revoked? "<span class='revoked_msg'>[Revoked]</span>" : "")+
 															"<div>"+
@@ -377,9 +379,13 @@ var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
 
 /** Show the key list */
 self.port.on("displayKeys", function(keys){
+	pubKeyMap = {};
 	var keyList = $("#keyList");
 	var newKeyList = $("<ul></ul>");
 	for(var i=0; i<keys.length; i++){
+		if(keys[i].key.pub){
+			pubKeyMap[keys[i].key.pub] = true;
+		}
 		newKeyList.append("<li index='"+i+"' "+(activeIndex[i]? "class='active'" : "")+">"+
 						    "<a class='showHideKey'>Show key</a>"+
 							"<div class='key'>Key: <span>"+
