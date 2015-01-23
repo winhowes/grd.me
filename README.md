@@ -13,7 +13,7 @@ How to Use
 
 Compatibility
 ==============
-Right now this browser plugin is supported in Firefox and Chrome.
+Right now this browser plugin is supported in Firefox (≥21) and Chrome (≥11).
 
 Cryptography Notice
 ======================
