@@ -6,11 +6,11 @@ function generateECCKeys() {
 	return {pub: keys.enc, priv: keys.dec};
 }
 
-$("#addKeyError, #pubKeyError").hide();
+$(".inputError").hide();
 
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
-	$("#addKeyError, #pubKeyError").stop(true).hide();
+	$(".inputError").stop(true).hide();
 	var keyVal = $.trim($("#key").val());
 	try{
 		var key = $("#ecc").is(":checked")? JSON.parse(keyVal) : keyVal;
@@ -72,6 +72,11 @@ $("#addKey").on("submit", function(e){
 			}
 			key = {pub: key.pub};
 		}
+	}
+	else if(key.length<6){
+		$("#key").focus();
+		$("#keyLengthError").fadeIn();
+		return;
 	}
 	$("#key").val("").focus();
 	$("#description").val("");
@@ -151,13 +156,13 @@ $("#keyList").on("click", "li", function(e){
 });
 
 function setActiveKeys(indices){
-	chrome.storage.sync.get("keys", function(keys){
+	chrome.storage.local.get("keys", function(keys){
 		keys = keys.keys;
 		var activeKeys = [];
 		for(var i=0; i<indices.length; i++){
 			activeKeys.push(keys[indices[i]].key);
 		}
-		chrome.storage.sync.set({'activeKeys': activeKeys});
+		chrome.storage.local.set({'activeKeys': activeKeys});
 		var workers = chrome.extension.getBackgroundPage().workers.slice(0);
 		chrome.extension.getBackgroundPage().keyObj.activeKeys = activeKeys.slice(0);
 		for(i=0; i<workers.length; i++){
@@ -171,21 +176,21 @@ function setActiveKeys(indices){
 }
 
 function addKey(keyObj){
-	chrome.storage.sync.get("keys", function(keys){
+	chrome.storage.local.get("keys", function(keys){
 		keys = keys.keys;
 		keys.push(keyObj);
 		chrome.extension.getBackgroundPage().keyObj.keys.push(keyObj);
-		chrome.storage.sync.set({'keys': keys});
+		chrome.storage.local.set({'keys': keys});
 		displayKeys();
 	});
 }
 
 function deleteKey(index){
-	chrome.storage.sync.get("keys", function(keys){
+	chrome.storage.local.get("keys", function(keys){
 		keys = keys.keys;
 		keys.splice(index, 1);
 		chrome.extension.getBackgroundPage().keyObj.keys.splice(index, 1);
-		chrome.storage.sync.set({'keys': keys});
+		chrome.storage.local.set({'keys': keys});
 		displayKeys();
 	});
 }
@@ -193,14 +198,21 @@ function deleteKey(index){
 $("#onlyPubWarning").on("click", function(){
 	$(this).stop(true).animate({top : "-60px"});
 });
+
+$("#keyList").on("click", ".showHideKey", function(e){
+	e.stopImmediatePropagation();
+	$(this).next().toggle();
+	$(this).text($(this).next().is(":visible")? "Hide key": "Show key");
+});
+
 function displayKeys(){
-	//alert("here");
-	chrome.storage.sync.get("keys", function(keys){
+	chrome.storage.local.get("keys", function(keys){
 		keys = keys.keys;
 		var keyList = $("#keyList");
 		var newKeyList = $("<ul></ul>");
 		for(var i=0; i<keys.length; i++){
 			newKeyList.append("<li index='"+i+"'>"+
+								"<a class='showHideKey'>Show key</a>"+
 								"<div class='key'>Key: <span>"+
 								(typeof keys[i].key === "object"? "<br><b class='pub'>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b class='priv'>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
 								"</span></div>"+
@@ -210,7 +222,7 @@ function displayKeys(){
 							   "</li>");
 		}
 		keyList.html(newKeyList.html());
-		chrome.storage.sync.get("activeKeys", function(activeKeys){
+		chrome.storage.local.get("activeKeys", function(activeKeys){
 			activeKeys = activeKeys.activeKeys;
 			for(var i=0; i<activeKeys.length; i++){
 				for(var j=0; j<keys.length; j++){

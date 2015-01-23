@@ -4,17 +4,56 @@
 		<title>Grd Me Key Management</title>
 	</head>
 	<body>
+		<div id="publishFail" class="indicator">Failed to Publish Key</div>
+		<div id="publishSuccess" class="indicator">Key Published</div>
+		<div id="revokeFail" class="indicator">Failed to Revoke Key</div>
+		<div id="revokeSuccess" class="indicator">Key Revoked</div>
 		<div id="onlyPubWarning">We recommend shift-selecting another key which contains a private key so that you will be able to read messages that you encrypt.</div>
+		<form id="searchUIDForm">
+			<input placeholder="Identifier (e.g. Email, Name)" id="searchUID" maxlength="70">
+			<ul id="searchSuggestions"></ul>
+			<button class="blue btn">Search</button>
+		</form>
 		<form id="addKey">
 			<input placeholder="Key" id="key" maxlength="32">
 			<input placeholder="Description" id="description" maxlength="50">
-			<button class="blue_btn" id="addKeyBtn">Add Key</button>
-			<button id="keyGen" class="blue_btn" type="button">Generate Key</button>
+			<button class="blue btn" id="addKeyBtn">Add Key</button>
+			<button id="keyGen" class="blue btn" type="button">Generate Key</button>
 			<input type="checkbox" id="ecc"><label for="ecc" id="eccLabel">Pub/Priv Key Pair</label>
-			<div id="addKeyError">Please enter both a key and a description</div>
-			<div id="pubKeyError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, {"pub": "x"}, or x with valid hex keys x and y</div>
+			<div id="addKeyError" class="inputError">Please enter both a key and a description</div>
+			<div id="keyLengthError" class="inputError">Key must be at least 6 characters long</div>
+			<div id="pubKeyError" class="inputError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, {"pub": "x"}, or x with valid hex keys x and y</div>
 		</form>
 		<div class="header">Your Keys <span>(shift-select for multiple active keys)</span>:</div>
 		<ul id="keyList"></ul>
+		<div id="overlay"></div>
+		<div id="searchResultsContainer" class="popup">
+			<div class="header">
+				<span class="title"></span>
+				<button type="button" class="cancel btn white">Close</button>
+			</div>
+			<div id="searchLoading" class="loading_icon"></div>
+			<ul id="searchResults"></ul>
+		</div>
+		<form id="deleteForm" class="popup">
+			<div class="description">Are you sure you want to delete this key? This action cannot be undone.</div>
+			<button type="button" class="cancel btn white">Cancel</button>
+			<button type="submit" class="publish btn red">Delete</button>
+		</form>
+		<form id="revokeForm" class="popup">
+			<div class="description">Are you sure you want to revoke this key? This action will delete this key and cannot be undone.</div>
+			<button type="button" class="cancel btn white">Cancel</button>
+			<button type="submit" class="publish btn red">Revoke</button>
+		</form>
+		<form id="publishForm" class="popup">
+			<input placeholder="Identifier (e.g. Email, Name, etc.)" id="uid" maxlength="70">
+			<ul id="uidSuggestions"></ul>
+			<button type="button" class="cancel btn white">Cancel</button>
+			<button type="submit" class="publish btn blue">Publish</button>
+			<div id="uidError" class="inputError">Must be at least 3 characters long</div>
+		</form>
+		<input type="hidden" id="pubKey">
+		<input type="hidden" id="privKey">
+		<input type="hidden" id="pubKeyIndex">
 	</body>
 </html>

@@ -8,11 +8,11 @@ var keyObj = {keys: [], activeKeys: []};
  * callback: a function which takes the active keys as it's first parameter
 */
 function getActiveKeys(keys, callback){
-	chrome.storage.sync.get("activeKeys", function(activeKeys){
+	chrome.storage.local.get("activeKeys", function(activeKeys){
 		activeKeys = activeKeys&&activeKeys.activeKeys;
 		if(!activeKeys||!activeKeys.length){
 			activeKeys = [keys[0].key];
-			chrome.storage.sync.set({'activeKeys': activeKeys}, function(){
+			chrome.storage.local.set({'activeKeys': activeKeys}, function(){
 				if(callback){
 				  callback(activeKeys);
 				}
@@ -92,14 +92,14 @@ function main(keys, activeKeys){
 	});
 }
 
-chrome.storage.sync.get("keys", function(keys){
+chrome.storage.local.get("keys", function(keys){
 	keys = keys&&keys.keys;
 	if(!keys||!keys.length){
 		keys = [{
 			key: ":N5gaDV7)\P3.r5",
 			description: "This is Grd Me's default shared key"
 		}];
-		chrome.storage.sync.set({'keys': keys}, function(){
+		chrome.storage.local.set({'keys': keys}, function(){
 			getActiveKeys(keys, function(activeKeys){
 				main(keys, activeKeys);
 			});

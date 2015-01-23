@@ -40,6 +40,15 @@ body {
 	font-weight: bold;
 }
 
+a {
+	color: #1f8dd6;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
 input:focus, input:hover, textarea:focus, textarea:hover {
     box-shadow: 0px 5px 4px -2px rgba(0, 0, 0, 0.05) inset;
     -webkit-box-shadow: 0px 5px 4px -2px rgba(0, 0, 0, 0.05) inset;
@@ -62,51 +71,90 @@ input[type="checkbox"] {
 	vertical-align: middle;
 }
 
-#addKeyError, #pubKeyError {
+.inputError {
 	margin: 5px 0px;
 	color: #d61f1f;
 }
 
-.blue_btn {
-	cursor: pointer;
+button{
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+button.disabled_btn{
+    border: 1px solid #000;
+    cursor: auto;
+}
+.btn{
     font-family: inherit;
     font-size: 100%;
     padding: 0.5em 1em;
-    color: #fff;
-    border: 0;
-    background-color: #e6e6e6;
+    color: #FFF;
+    border: none rgba(0, 0, 0, 0);
+    background-color: #E6E6E6;
     text-decoration: none;
     border-radius: 2px;
-    background: none repeat scroll 0% 0% #1f8dd6;
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, .1);
 }
-
-.blue_btn:hover, .blue_btn:focus, .text_to_btn:hover, .text_to_btn:focus {
+.btn:hover, .btn:focus, .text_to_btn:hover, .text_to_btn:focus{
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, .4);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#1a000000',GradientType=0);
     background-image: -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(40%, rgba(0,0,0, 0.05)), to(rgba(0,0,0, 0.10)));
     background-image: -webkit-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
     background-image: -moz-linear-gradient(top, rgba(0,0,0, 0.05) 0%, rgba(0,0,0, 0.10));
     background-image: -o-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
     background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
 }
-
-.blue_btn:focus {
+.btn:focus{
     outline: 0;
 }
-
-.blue_btn:active, .text_to_btn:active {
+.btn:active, .text_to_btn:active{
     box-shadow: 0 0 0 1px rgba(0,0,0, 0.20) inset, 0 0 6px rgba(0,0,0, 0.25) inset;
 }
-
-.blue_btn.disabled, .blue_btn.disabled:hover, .blue_btn.disabled:focus, .blue_btn.disabled:active {
-    border: 0;
+.btn.disabled, .btn.disabled:hover, .btn.disabled:focus, .btn.disabled:active{
+    border: none;
     background-image: none;
+    filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+    filter: alpha(opacity=40);
+    -khtml-opacity: 0.40;
+    -moz-opacity: 0.40;
     opacity: 0.40;
     cursor: not-allowed;
     box-shadow: none;
 }
-
-.blue_btn::-moz-focus-inner {
+.btn::-moz-focus-inner{
     padding: 0;
     border: 0;
+}
+.blue.btn {
+    background-color: #1f8dd6;
+}
+.lightBlue.btn{
+    background-color: #34a7ff;
+}
+.orange.btn {
+    background-color: #FF9500;
+}
+.silver.btn {
+    background-color: #EAEFF2;
+    color: #777;
+}
+.white.btn {
+    background-color: #fff;
+    color: #777;
+}
+.text_to_btn{
+    cursor: pointer;
+    display: inline-block;
+    border-radius: 2px;
+    border: 1px solid rgba(0, 0, 0, 0);
+    padding: 2px;
+}
+.text_to_btn:hover, .text_to_btn:focus, .text_to_btn:active{
+    border: 1px solid #999;
+}
+.text_to_btn.blue:hover, .text_to_btn.blue:focus, .text_to_btn.blue:active{
+    color: #FFF;
+    background: none repeat scroll 0% 0% #1a75bb;
 }
 
 .header {
@@ -144,6 +192,10 @@ input[type="checkbox"] {
 .description, .key {
 	width: 250px;
 	word-break: break-all;
+}
+
+.key {
+	display: none;
 }
 
 .key b{

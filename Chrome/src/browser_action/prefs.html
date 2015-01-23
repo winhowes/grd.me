@@ -9,11 +9,12 @@
 		<form id="addKey">
 			<input placeholder="Key" id="key" maxlength="32">
 			<input placeholder="Description" id="description" maxlength="50">
-			<button class="blue_btn" id="addKeyBtn">Add Key</button>
-			<button id="keyGen" class="blue_btn" type="button">Generate Key</button>
+			<button class="blue btn" id="addKeyBtn">Add Key</button>
+			<button id="keyGen" class="blue btn" type="button">Generate Key</button>
 			<input type="checkbox" id="ecc"><label for="ecc" id="eccLabel">Pub/Priv Key Pair</label>
-			<div id="addKeyError">Please enter both a key and a description</div>
-			<div id="pubKeyError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, {"pub": "x"}, or x with valid hex keys x and y</div>
+			<div id="addKeyError" class="inputError">Please enter both a key and a description</div>
+			<div id="keyLengthError" class="inputError">Key must be at least 6 characters long</div>
+			<div id="pubKeyError" class="inputError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, {"pub": "x"}, or x with valid hex keys x and y</div>
 		</form>
 		<div class="header">Your Keys <span>(shift-select for multiple active keys)</span>:</div>
 		<ul id="keyList"></ul>
