@@ -24,6 +24,9 @@ var searchDropdown = new dropdowns($("#searchUID"), $("#searchSuggestions"), fun
 			if(data && data.returnVal == latestRequest && data.status && data.status[0] && !data.status[0].code){
 				callback(data.uids);
 			}
+			else{
+				callback([]);
+			}
 		}
 	});
 	return false;
