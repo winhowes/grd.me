@@ -1,0 +1,14 @@
+Discussion/Documentation of Hybrid Axolotl-style Crypto Protocol
+================================================================
+
+Encrypt Then Authenticate : The sender encrypts the plaintext, then appends a MAC of the ciphertext. Ek1(P) || MACk2(Ek1(P))
+
+TextSecure Axolotl
+https://whispersystems.org/blog/advanced-ratcheting/
+https://github.com/WhisperSystems/TextSecure/wiki/ProtocolV2
+
+Pure Axolotl
+https://github.com/trevp/axolotl/wiki
+
+TextSecure Group Messaging
+https://whispersystems.org/blog/private-groups/
