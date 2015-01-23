@@ -436,11 +436,15 @@ button{
 	opacity: 0.4;
 }
 
-#searchResults li .revoked_msg{
+#searchResults li .revoked_msg, .not_secure{
 	letter-spacing: 1px;
 	color: #d61f1f;
 	margin-left: 10px;
 	font-size: 12px;
+}
+
+.not_secure {
+	margin: 0px;
 }
 
 #searchResults li .timestamp{
