@@ -139,7 +139,11 @@ $("#addKey").on("submit", function(e){
 	}
 	if($("#ecc").is(":checked")){
 		if(typeof key !== "object"){
-			key = {pub: key};
+			key = key.split(",");
+			key = {
+				pub: $.trim(key[0]),
+				priv: key[1]? $.trim(key[1]) : undefined
+			};
 		}
 		var hexRegex = /[^A-F0-9]/gi;
 		var plaintext = "Hello World";
