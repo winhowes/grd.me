@@ -293,7 +293,7 @@ button{
 	border-radius: 2px;
 }
 
-#uidError {
+.publishError {
 	width: 85px;
 	display: inline-block;
 	font-size: 11px;

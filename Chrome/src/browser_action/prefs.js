@@ -327,7 +327,7 @@ $("#revokeForm").on("submit", function(e){
 /** Publish the key */
 $("#publishForm").on("submit", function(e){
 	e.preventDefault();
-	$("#uidError").stop(true).hide();
+	$(".publishError").stop(true).hide();
 	var uid = $.trim($("#uid").val());
 	if(!uid){
 		$("#uid").focus();
@@ -338,15 +338,47 @@ $("#publishForm").on("submit", function(e){
 		$("#uidError").stop(true).fadeIn();
 		return;
 	}
-	var key = {
-		pub: $("#pubKey").val(),
-		index: $("#pubKeyIndex").val(),
-		uid: uid,
-		sig: JSON.stringify(ecc.sign($("#privKey").val(), uid.toLowerCase()))
-	}
-	$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".publish").addClass("disabled").prop("disabled", true);
-	publishKey(key);
-	$("#overlay").trigger("click");
+	var pub = $("#pubKey").val();
+	$.ajax({
+		url: "https://grd.me/key/get",
+		type: "GET",
+		data: {
+			uid: uid,
+			pub: pub
+		},
+		success: function(data){
+			if(data && data.status && data.status[0] && !data.status[0].code){
+				var notFound = true;
+				for(var i=0; i<data.keys.length; i++){
+					try{
+						if(uid.toLowerCase() == data.uid.toLowerCase() &&
+						   pub == data.keys[i].pub &&
+						   ecc.verify(data.keys[i].pub, JSON.parse(data.keys[i].sig), data.uid.toLowerCase())){
+							notFound = false;
+						}
+					}
+					catch(e){}
+				}
+				if(notFound){
+					var key = {
+						pub: pub,
+						index: $("#pubKeyIndex").val(),
+						uid: uid,
+						sig: JSON.stringify(ecc.sign($("#privKey").val(), uid.toLowerCase()))
+					}
+					$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".publish").addClass("disabled").prop("disabled", true);
+					publishKey(key);
+					$("#overlay").trigger("click");
+				}
+				else {
+					$("#existsError").stop(true).fadeIn();
+				}
+			}
+		},
+		error: function(){
+			$("#publishingError").stop(true).fadeIn();
+		}
+	});
 });
 
 /** Clicking the overlay closes the overlay and appropriate popups */

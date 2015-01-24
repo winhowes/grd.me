@@ -55,6 +55,8 @@ var dropdowns = (function(){
 			container.find(".active").removeClass("active");
 			newActive.addClass("active");
 			input.val(newActive.text());
+		}).parents("form").on("submit", function(){
+			container.html("").css("border", 0);
 		});
 		
 		container.on("click", "li", function(){

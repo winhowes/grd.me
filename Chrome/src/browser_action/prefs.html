@@ -51,7 +51,9 @@
 			<ul id="uidSuggestions"></ul>
 			<button type="button" class="cancel btn white">Cancel</button>
 			<button type="submit" class="publish btn blue">Publish</button>
-			<div id="uidError" class="inputError">Must be at least 3 characters long</div>
+			<div id="uidError" class="inputError publishError">Must be at least 3 characters long</div>
+			<div id="existsError" class="inputError publishError">This key and id are already published</div>
+			<div id="publishingError" class="inputError publishError">Error publishing</div>
 		</form>
 		<input type="hidden" id="pubKey">
 		<input type="hidden" id="privKey">
