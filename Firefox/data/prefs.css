@@ -190,6 +190,18 @@ button{
 	margin-top: 5px;
 }
 
+#keyList li .publish,
+#keyList li .revoke,
+#keyList li .delete {
+	display: none;
+}
+
+#keyList li:hover .publish,
+#keyList li:hover .revoke,
+#keyList li:hover .delete {
+	display: inline-block;
+}
+
 .description, .key {
 	width: 250px;
 	word-break: break-all;
