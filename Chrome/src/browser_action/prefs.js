@@ -524,7 +524,8 @@ function displayKeys(){
 								(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
 									"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Publish Public Key</button>" :
 									typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
-									"<button class='revoke red btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Revoke</button>" : "")+
+									"<button class='revoke red btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Revoke</button> "+
+									"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Republish Public Key</button>": "")+
 							   "</li>");
 		}
 		keyList.html(newKeyList.html());
