@@ -187,15 +187,15 @@ prefPanel.port.on("notifySharedKeys", function(keys){
 	ss.storage.acceptableSharedKeys = keys;
 	var length = keys.length;
 	notifications.notify({
-					title: "New Shared Key"+(length>1? "s" : ""),
-					text: "You have "+length+" new shared key"+(length>1? "s" : "")+"!",
-					iconURL: data.url("icons/icon64.png"),
-					onClick: function(){
-						timers.setTimeout(function(){
-							button.state('window', {checked: true});
-							prefPanel.show();
-						}, 0);
-					}
+		title: "New Shared Key"+(length>1? "s" : ""),
+		text: "You have "+length+" new shared key"+(length>1? "s" : "")+"!",
+		iconURL: data.url("icons/icon64.png"),
+		onClick: function(){
+			timers.setTimeout(function(){
+				button.state('window', {checked: true});
+				prefPanel.show();
+			}, 0);
+		}
 	});
 });
 
@@ -308,5 +308,5 @@ timers.setInterval(function(){
 				prefPanel.port.emit("checkSharedKey", data);
 			}
 		}
-	}).get();
+	}).post();
 }, 60000);

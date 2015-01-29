@@ -118,7 +118,7 @@ $("#searchUIDForm").on("submit", function(e){
 	});
 });
 
-/** Toggle the key's visibility in the search result popup */
+/** Toggle the key's visibility in various popups */
 $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey", function(e){
 	e.stopImmediatePropagation();
 	var key = $(this).parent().find(".key");
@@ -422,11 +422,6 @@ $("#revokeForm").on("submit", function(e){
 	$("#overlay").trigger("click");
 });
 
-/** Share the key */
-$("#shareForm").on("submit", function(e){
-	e.preventDefault();
-});
-
 /** Publish the key */
 $("#publishForm").on("submit", function(e){
 	e.preventDefault();
@@ -539,7 +534,7 @@ self.port.on("displayKeys", function(keys){
 								"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Publish Public Key</button>" :
 								typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
 									"<button class='revoke red btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Revoke</button> "+
-									"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Republish Public Key</button>":
+									"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Republish Public Key</button>" :
 									typeof keys[i].key !== "object" && i? "<button class='share blue btn' key='"+$("<i></i>").text(keys[i].key).html()+"'>Share Key</button>" : "")+
 						   "</li>");
 	}
@@ -557,11 +552,11 @@ self.port.on("activeKeyIndex", function(index){
  * false of the index of the revoked key
 */
 self.port.on("publishResult", function(obj){
-	var id = obj.success? "publishSuccess" : "publishFail";
+	var id = obj.success? "#publishSuccess" : "#publishFail";
 	if(!obj.success){
 		$("#keyList").find("li[index='"+obj.index+"']").find(".publish").removeClass("disabled").prop("disabled", false);
 	}
-	$("#"+id).stop(true).css("top", "-20px").animate({
+	$(id).stop(true).css("top", "-20px").animate({
 		top: 0
 	}).delay(2500).animate({
 		top : "-20px"
@@ -573,21 +568,23 @@ self.port.on("publishResult", function(obj){
  * false of the index of the revoked key
 */
 self.port.on("revokeResult", function(obj){
-	var id = obj.success? "revokeSuccess" : "revokeFail";
+	var id = obj.success? "#revokeSuccess" : "#revokeFail";
 	if(!obj.success){
 		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled").prop("disabled", false);
 	}
-	$("#"+id).stop(true).css("top", "-20px").animate({
+	$(id).stop(true).css("top", "-20px").animate({
 		top: 0
 	}).delay(2500).animate({
 		top : "-20px"
 	});
 });
 
-/** Indicate whether a key was shared or failed to be shared */
+/** Indicate whether a key was shared or failed to be shared
+ * success: a boolean indicating whether or not the share was successful
+*/
 self.port.on("shareKeyResult", function(success){
-	var id = success? "shareKeySuccess" : "shareKeyFail";
-	$("#"+id).stop(true).css("top", "-20px").animate({
+	var id = success? "#shareKeySuccess" : "#shareKeyFail";
+	$(id).stop(true).css("top", "-20px").animate({
 		top: 0
 	}).delay(2500).animate({
 		top : "-20px"
@@ -602,7 +599,7 @@ self.port.on("uids", function(uidsArr){
 /** Acknowledge receiving a shared key
  * keyObj: an object of key data to send
 */
-function acknowldegeKey(keyObj, index){
+function acknowledgeKey(keyObj, index){
 	$.ajax({
 		url: "https://grd.me/key/acceptSharedKey",
 		type: "POST",
@@ -645,7 +642,7 @@ self.port.on("checkSharedKey", function(data){
 										break;
 									}
 								}
-								acknowldegeKey({
+								acknowledgeKey({
 									fromKey: data.received[i].fromKey,
 									toKey: data.received[i].toKey,
 									sharedKey: data.received[i].sharedKey,
@@ -664,7 +661,7 @@ self.port.on("checkSharedKey", function(data){
 	data.acceptableSharedKeys = uniq(data.acceptableSharedKeys);
 	if(data.acceptableSharedKeys.length != original_length){
 		self.port.emit("notifySharedKeys", data.acceptableSharedKeys);
-		acceptableSharedKeysPopup(data.acceptableSharedKeys)
+		acceptableSharedKeysPopup(data.acceptableSharedKeys);
 	}
 	
 	/* Handle receiving acknowledgements of shared keys */

@@ -25,6 +25,7 @@ body {
 	font-size: 15px;
 }
 
+#acceptableSharedKeys input:not([type='checkbox']),
 #searchUIDForm input:not([type='checkbox']),
 #publishForm input:not([type='checkbox']),
 #addKey input:not([type='checkbox']) {
@@ -170,10 +171,13 @@ button{
 	font-size: 12px;
 }
 
-#keyList {
-	display: block;
+ul {
 	list-style: none;
 	padding: 0px;
+}
+
+#keyList {
+	display: block;
 	margin: 0px;
 }
 
@@ -299,12 +303,13 @@ button{
 .popup {
 	position: fixed;
 	top: 50%;
+	transform: translateY(-50%);
 	left: 15px;
 	right: 15px;
 	z-index: 10;
 	width: 250px;
 	height: auto;
-	margin-top: -35px;
+	max-height: 300px;
 	border: 1px solid #aaa;
 	background: #f5f5f5;
 	font-size: 15px;
@@ -479,7 +484,7 @@ button{
 	color: #888;
 }
 
-#searchResults .key {
+.key.partialKey {
 	display: inline-block;
 	white-space: nowrap;
 	overflow: hidden;
@@ -487,7 +492,7 @@ button{
 	width: 160px;
 }
 
-#searchResults .key.keyShown {
+.key.keyShown.partialKey {
 	word-break: break-all;
 	height: auto;
 	white-space: normal;
@@ -513,4 +518,51 @@ button{
 	top: 50%;
 	left: 50%;
 	margin: -6px -22px; 
+}
+
+.shareFormMessage {
+	margin-bottom: 5px;
+}
+
+.shareFormMessage .btn {
+	margin-top: 5px;
+}
+
+#shareForm li {
+	position: relative;
+	cursor: pointer;
+}
+
+#acceptableSharedKeys .title {
+	font-size: 17px;
+}
+
+#shareForm ul,
+#acceptableSharedKeys ul {
+	word-break: break-all;
+	max-height: 250px;
+	overflow: auto;
+	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .2) inset;
+	padding: 5px;
+	border-radius: 2px;
+}
+
+#shareForm ul {
+	max-height: 200px;
+}
+
+#shareForm li:not(:last-child),
+#acceptableSharedKeys li:not(:last-child) {
+	border-bottom: 1px solid #eee;
+	margin-bottom: 10px;
+	padding-bottom: 10px;
+}
+
+#acceptableSharedKeys .remove {
+	margin-top: 5px;
+	margin-left: 10px;
+}
+
+#acceptableSharedKeys input {
+	margin-top: 5px;
 }

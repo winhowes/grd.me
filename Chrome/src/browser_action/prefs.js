@@ -1,11 +1,32 @@
 /** This file handles the preferences panel */
 
-var uids = [], latestRequest = 0, pubKeyMap = {};
+var uids = [],
+latestRequest = 0,
+pubKeyMap = {},
+hasPrivateKey = false,
+hasOthersPubKey = false,
+keyChain = [];
 
+/** Generate an ECC pub/priv keypair */
 function generateECCKeys() {
 	var curve = 384;
 	var keys = ecc.generate(ecc.ENC_DEC, curve);
 	return {pub: keys.enc, priv: keys.dec};
+}
+
+/** Generate a random string
+ * length: the length of the random string
+*/
+function getRandomString(length) {
+	var randArray = new Uint32Array(length);
+	var rand = "";
+	window.crypto.getRandomValues(randArray);
+	for (var i = 0; i < randArray.length; i++) {
+		var character = String.fromCharCode((randArray[i] % 42) + 48);
+		character = (randArray[i] % 2) ? character : character.toLowerCase();
+		rand += character;
+	}
+	return rand;
 }
 
 $(".inputError, #overlay, .popup").hide();
@@ -64,7 +85,7 @@ $("#searchUIDForm").on("submit", function(e){
 															"<a class='showHideKey'>Show Key</a>"+
 															(revoked? "<span class='revoked_msg'>[Revoked]</span>" : "")+
 															"<div>"+
-															  "<span class='key'>Key: "+data.keys[i].pub+"</span>"+
+															  "<span class='key partialKey'>Key: "+data.keys[i].pub+"</span>"+
 															  (revoked? "" : "<button class='btn blue addKey' uid='"+data.uid+"' pub='"+data.keys[i].pub+"'>Add</button>")+
 															"</div>"+
 															(revoked? "<div class='timestamp'>"+
@@ -96,15 +117,15 @@ $("#searchUIDForm").on("submit", function(e){
 	});
 });
 
-/** Toggle the key's visibility in the search result popup */
-$("#searchResults").on("click", ".showHideKey", function(){
+/** Toggle the key's visibility in various popups */
+$("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey", function(){
 	var key = $(this).parent().find(".key");
 	key.toggleClass("keyShown");
 	$(this).text(key.hasClass("keyShown")? "Hide Key" : "Show Key");
 })
 /** Insert the pub key data and description into the appropriate fields and close the popup/overlay */
 .on("click", ".addKey", function(){
-	$("#key").val($(this).attr("pub"));
+	$("#key").val($(this).attr("pub")).removeAttr("maxlength");
 	$("#description").focus().val($(this).attr("uid"));
 	$("#ecc").prop('checked', true);
 	$("#overlay").trigger("click");
@@ -201,7 +222,7 @@ $("#addKey").on("submit", function(e){
 $("#ecc").on("click", function(){
 	if($(this).is(":checked")){
 		var keyPair = generateECCKeys();
-		$("#key").val(JSON.stringify(keyPair)).removeAttr("maxlength", "").data("key", keyPair);
+		$("#key").val(JSON.stringify(keyPair)).removeAttr("maxlength");
 		$("#description").focus();
 	}
 	else {
@@ -214,19 +235,11 @@ $("#keyGen").on("click", function(){
 	if($("#ecc").is(":checked")){
 		var keypair = generateECCKeys();
 		var rand = JSON.stringify(keypair);
-		$("#ecc").data("key", keypair);
 	}
 	else{
 		/* BROWSER COMPATIBILITY IS IFFY */
 		var length = Math.floor(Math.random()*24+8);
-		var randArray = new Uint32Array(length);
-		var rand = "";
-		window.crypto.getRandomValues(randArray);
-		for (var i = 0; i < randArray.length; i++) {
-			var character = String.fromCharCode((randArray[i] % 42) + 48);
-			character = (randArray[i] % 2) ? character : character.toLowerCase();
-			rand += character;
-		}
+		var rand = getRandomString(length);
 	}
 	$("#key").val(rand);
 	$("#description").focus();
@@ -475,6 +488,36 @@ function revokeKey(key){
 	});
 }
 
+/** Share a shared key with another user
+ * keyObj: a key object containing the sender and receiver's public key, a signature,
+ * a random string, and the encrypted shared key
+*/
+function shareKey(keyObj){
+	function error(){
+		shareKeyResult(false);
+	}
+	
+	$.ajax({
+		url: "https://grd.me/key/shareKey",
+		type: "POST",
+		data: keyObj,
+		success: function (data) {
+			if(!data || !data.status || !data.status[0] || data.status[0].code){
+				error();
+			}
+			else {
+				shareKeyResult(true);
+				chrome.storage.local.get("randomMap", function(items){
+					randomMap = items.randomMap;
+					randomMap[keyObj.sharedKey] = keyObj.rand;
+					chrome.storage.local.set({'randomMap': randomMap});
+				});
+			}
+		},
+		error: error
+	});
+}
+
 /** Set various active keys
  * indices: the indices of the keys to be made active in the array of keys
 */
@@ -531,6 +574,90 @@ $("#keyList").on("click", ".showHideKey", function(e){
 	e.stopImmediatePropagation();
 	$(this).next().toggle();
 	$(this).text($(this).next().is(":visible")? "Hide key": "Show key");
+})
+/** Handle clicking he share button in the key list */
+.on("click", ".share", function(e){
+	e.stopImmediatePropagation();
+	$("#shareForm, #overlay").stop(true).fadeIn();
+	$(".shareFormMessage").hide();
+	if(!hasPrivateKey){
+		$("#noPrivateKey").show();
+	}
+	else if(!hasOthersPubKey){
+		$("#noOtherPubKey").show();
+	}
+	else {
+		$("#pubKey").val($(this).attr("key"));
+		$("#shareFormMain1").show();
+		var count = 0;
+		var keyList = $("<ul></ul>");
+		for(var i=0; i<keyChain.length; i++){
+			if(keyChain[i].key.pub && keyChain[i].key.priv){
+				keyList.append("<li index='"+i+(count? "" : "' class='active")+"'>"+
+									"<a class='showHideKey'>Show key</a>"+
+									"<div><div class='key partialKey'>Key: <span>"+
+									"<br><b class='pub'>pub</b>: "+keyChain[i].key.pub+
+									"<br><b class='priv'>priv</b>: "+keyChain[i].key.priv+
+									"</span></div></div>"+
+									"<div class='description'>"+$("<i></i>").text(keyChain[i].description).html()+"</div>"+
+									"<div class='activeIndicator'></div>"+
+								"</li>");
+				count++;
+			}
+		}
+		$("#shareFormMain1 ul").html(keyList.html());
+		if(count===1){
+			sharedKeyPage2();
+		}
+	}
+});
+
+/** Hide the first page and show second page of sharing shared key */
+function sharedKeyPage2(){
+	$("#shareFormMain1").hide();
+	$("#shareFormMain2").show();
+	keyList = $("<ul></ul>");
+	var count = 0;
+	for(var i=0; i<keyChain.length; i++){
+		if(keyChain[i].key.pub && !keyChain[i].key.priv){
+			keyList.append("<li index='"+i+(count? "" : "' class='active")+"'>"+
+							"<a class='showHideKey'>Show key</a>"+
+							"<div><div class='key partialKey'>Key: <span>"+
+							"<br><b class='pub'>pub</b>: "+keyChain[i].key.pub+
+							"</span></div></div>"+
+							"<div class='description'>"+$("<i></i>").text(keyChain[i].description).html()+"</div>"+
+							"<div class='activeIndicator'></div>"+
+						"</li>");
+			count++;
+		}
+	}
+	$("#shareFormMain2 ul").html(keyList.html());
+}
+
+/** Press continue to move to page 2 of sharing a shared key */
+$("#shareFormMain1").on("click", ".continue", function(e){
+	sharedKeyPage2();
+});
+
+/** Share key */
+$("#shareFormMain2").on("click", ".continue", function(e){
+	var fromKey = keyChain[$("#shareFormMain1 .active").attr("index")].key;
+	var toKey = keyChain[$("#shareFormMain2 .active").attr("index")].key;
+	var sharedKey = ecc.encrypt(toKey.pub, $("#pubKey").val());
+	shareKey({
+			fromKey: fromKey.pub,
+			toKey: toKey.pub,
+			sharedKey: sharedKey,
+			sendSig: JSON.stringify(ecc.sign(fromKey.priv, sharedKey)),
+			rand: getRandomString(64)
+	});
+	$("#overlay").trigger("click");
+});
+
+/** Select which key to encrypt shared key with */
+$("#shareFormMain1, #shareFormMain2").on("click", "li", function(){
+	$(this).parent().find(".active").removeClass("active");
+	$(this).addClass("active");
 });
 
 /** Layout the keys and highlight the active keys */
@@ -538,10 +665,13 @@ function displayKeys(){
 	pubKeyMap = {};
 	chrome.storage.local.get("keys", function(keys){
 		keys = keys.keys;
+		keyChain = keys;
 		var keyList = $("#keyList");
 		var newKeyList = $("<ul></ul>");
 		for(var i=0; i<keys.length; i++){
 			if(keys[i].key.pub){
+				hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
+				hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv
 				pubKeyMap[keys[i].key.pub] = true;
 			}
 			newKeyList.append("<li index='"+i+"'>"+
@@ -553,12 +683,14 @@ function displayKeys(){
 								(i? "" : "<span class='not_secure'>[Not Secure]</span>")+
 								(i && !keys[i].key.published? "<div class='delete'>x</div>" : "")+
 								"<div class='activeIndicator'></div>"+
+								/* Add the appropriate buttons (revoke, publish, share) */
 								(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
 									"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Publish Public Key</button>" :
 									typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
-									"<button class='revoke red btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Revoke</button> "+
-									"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Republish Public Key</button>": "")+
-							   "</li>");
+										"<button class='revoke red btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Revoke</button> "+
+										"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Republish Public Key</button>" :
+										typeof keys[i].key !== "object" && i? "<button class='share blue btn' key='"+$("<i></i>").text(keys[i].key).html()+"'>Share Key</button>" : "")+
+							   "</li>");			
 		}
 		keyList.html(newKeyList.html());
 		chrome.storage.local.get("activeKeys", function(activeKeys){
@@ -581,11 +713,11 @@ displayKeys();
  * false of the index of the published key
 */
 function publishResult(obj){
-	var id = obj.success? "publishSuccess" : "publishFail";
+	var id = obj.success? "#publishSuccess" : "#publishFail";
 	if(!obj.success){
 		$("#keyList").find("li[index='"+obj.index+"']").find(".publish").removeClass("disabled").prop("disabled", false);
 	}
-	$("#"+id).stop(true).css("top", "-20px").animate({
+	$(id).stop(true).css("top", "-20px").animate({
 		top: 0
 	}).delay(2500).animate({
 		top : "-20px"
@@ -597,11 +729,23 @@ function publishResult(obj){
  * false of the index of the revoked key
 */
 function revokeResult(obj){
-	var id = obj.success? "revokeSuccess" : "revokeFail";
+	var id = obj.success? "#revokeSuccess" : "#revokeFail";
 	if(!obj.success){
 		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled").prop("disabled", false);
 	}
-	$("#"+id).stop(true).css("top", "-20px").animate({
+	$(id).stop(true).css("top", "-20px").animate({
+		top: 0
+	}).delay(2500).animate({
+		top : "-20px"
+	});
+}
+
+/** Indicate whether a key was shared or failed to be shared
+ * success: a boolean indicating whether or not the share was successful
+*/
+function shareKeyResult(success){
+	var id = success? "#shareKeySuccess" : "#shareKeyFail";
+	$(id).stop(true).css("top", "-20px").animate({
 		top: 0
 	}).delay(2500).animate({
 		top : "-20px"
@@ -615,6 +759,69 @@ function getUIDS(){
 	});
 }
 getUIDS();
+
+/** Panel shown. Call function to open acceptable shared keys popup */
+$(function(){
+	chrome.storage.local.get("acceptableSharedKeys", function(keys){
+		keys = keys.acceptableSharedKeys;
+		acceptableSharedKeysPopup(keys);
+	});
+});
+
+/** Panel shown. Display any acceptable shared keys
+ * keys: an array of acceptable shared keys that need approval
+*/
+function acceptableSharedKeysPopup(keys){
+	if(keys.length){
+		var list = $("<ul></ul>");
+		for(var i=0; i<keys.length; i++){
+			var key = $.trim($("<i></i>").text(keys[i].key).html());
+			list.append("<li>"+
+							"<form key='"+key+"' index='"+i+"'>"+
+								"<div>Key: "+key+"</div>"+
+								"<input placeholder='Description' maxlength='50' value='"+$("<i></i>").text(keys[i].from).html()+"'>"+
+								"<button class='blue btn' type='submit'>Add</button>"+
+								"<button class='red btn remove' type='button'>Ignore</button>"+
+							"</form>"+
+						"</li>");
+		}
+		$("#acceptableSharedKeys ul").html(list.html());
+		$("#overlay, #acceptableSharedKeys").show();
+	}
+}
+
+/** Remove a key from the acceptableSharedKey array */
+$("#acceptableSharedKeys").on("click", ".remove", function(){
+	var index =  $(this).parent().attr("index");
+	chrome.storage.local.get("acceptableSharedKeys", function(keys){
+		keys = keys.acceptableSharedKeys;
+		if(keys[index].removable){
+			keys.splice(index, 1);
+			chrome.storage.local.set({'acceptableSharedKeys': keys});
+		}
+	});
+	$(this).parents("li").fadeOut("fast", function(){
+		$(this).remove();
+		if(!$("#acceptableSharedKeys").find("li").length){
+			$("#overlay").trigger("click");
+		}
+	});
+})
+/** Handle adding an acceptableSharedKey to the normal key array */
+.on("submit", "form", function(e){
+	e.preventDefault();
+	var description = $(this).find("input");
+	if(!$.trim(description.val())){
+		description.focus();
+	}
+	else {
+		addKey({
+			key: $(this).attr("key"),
+			description: $.trim(description.val())
+		});
+		$(this).find(".remove").trigger("click");
+	}
+});
 
 /** Get rid of duplicate elements in an array
  * arr: the array to do such to

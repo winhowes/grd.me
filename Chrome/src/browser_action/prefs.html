@@ -9,6 +9,8 @@
 		<div id="publishSuccess" class="indicator">Key Published</div>
 		<div id="revokeFail" class="indicator">Failed to Revoke Key</div>
 		<div id="revokeSuccess" class="indicator">Key Revoked</div>
+		<div id="shareKeyFail" class="indicator">Failed to Share Key</div>
+		<div id="shareKeySuccess" class="indicator">Key Shared</div>
 		<div id="onlyPubWarning">We recommend shift-selecting another key which contains a private key so that you will be able to read messages that you encrypt.</div>
 		<form id="searchUIDForm">
 			<input placeholder="Identifier (e.g. Email, Name)" id="searchUID" maxlength="70">
@@ -55,6 +57,36 @@
 			<div id="existsError" class="inputError publishError">This key and id are already published</div>
 			<div id="publishingError" class="inputError publishError">Error publishing</div>
 		</form>
+		<div id="shareForm" class="popup">
+			<div id="noPrivateKey" class="shareFormMessage">
+				<div>
+					You must have a public/private key pair in order to share a key.
+				</div>
+				<button type="button" class="cancel btn white">Cancel</button>
+			</div>
+			<div id="noOtherPubKey" class="shareFormMessage">
+				<div>
+					You must have added someone else's public key in order to share a key.
+				</div>
+				<button type="button" class="cancel btn white">Cancel</button>
+			</div>
+			<div id="shareFormMain1" class="shareFormMessage">
+				Select a key to encrypt with:
+				<ul></ul>
+				<button type="button" class="cancel btn white">Cancel</button>
+				<button type="button" class="continue btn blue">Continue</button>
+			</div>
+			<div id="shareFormMain2" class="shareFormMessage">
+				Select a key to share with:
+				<ul></ul>
+				<button type="button" class="cancel btn white">Cancel</button>
+				<button type="button" class="continue btn blue">Share Key</button>
+			</div>
+		</div>
+		<div id="acceptableSharedKeys" class="popup">
+			<div class="title">Keys shared with you:</div>
+			<ul></ul>
+		</div>
 		<input type="hidden" id="pubKey">
 		<input type="hidden" id="privKey">
 		<input type="hidden" id="pubKeyIndex">
