@@ -189,7 +189,7 @@ prefPanel.port.on("notifySharedKeys", function(keys){
 	notifications.notify({
 					title: "New Shared Key"+(length>1? "s" : ""),
 					text: "You have "+length+" new shared key"+(length>1? "s" : "")+"!",
-					iconUrl: data.url("icons/icon64.png"),
+					iconURL: data.url("icons/icon64.png"),
 					onClick: function(){
 						timers.setTimeout(function(){
 							button.state('window', {checked: true});
