@@ -197,13 +197,15 @@ button{
 
 #keyList li .publish,
 #keyList li .revoke,
-#keyList li .delete {
+#keyList li .delete,
+#keyList li .share {
 	display: none;
 }
 
 #keyList li:hover .publish,
 #keyList li:hover .revoke,
-#keyList li:hover .delete {
+#keyList li:hover .delete,
+#keyList li:hover .share {
 	display: inline-block;
 }
 

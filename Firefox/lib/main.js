@@ -7,6 +7,8 @@ var Panel = require("sdk/panel").Panel;
 var clipboard = require("sdk/clipboard");
 var ss = require("sdk/simple-storage");
 var Request = require("sdk/request").Request;
+var notifications = require("sdk/notifications");
+var timers = require("sdk/timers");
 var workers = [];
 
 ss.storage.keys = ss.storage.keys || [{
@@ -15,6 +17,10 @@ ss.storage.keys = ss.storage.keys || [{
 }];
 
 ss.storage.uids = ss.storage.uids || [];
+
+ss.storage.randomMap = ss.storage.randomMap || {};
+
+ss.storage.acceptableSharedKeys = ss.storage.acceptableSharedKeys || [];
 
 if(!ss.storage.activeKeys){
 	ss.storage.activeKeys = [ss.storage.keys[0].key];
@@ -84,6 +90,16 @@ prefPanel.port.on("deleteKey", function(index){
 	prefPanel.port.emit("displayKeys", ss.storage.keys);
 });
 
+prefPanel.port.on("partiallyRemoveAcceptableSharedKey", function(index){
+	ss.storage.acceptableSharedKeys[index].removable = true;
+});
+
+prefPanel.port.on("removeAcceptableSharedKey", function(index){
+	if(ss.storage.acceptableSharedKeys[index].removable){
+		ss.storage.acceptableSharedKeys.splice(index, 1);
+	}
+});
+
 prefPanel.port.on("publishKey", function(key){
 	var addKeyRequest = Request({
 		url: "https://grd.me/key/add",
@@ -109,6 +125,7 @@ prefPanel.port.on("publishKey", function(key){
 	}).post();
 });
 
+/** Make a request to revoke a public key */
 prefPanel.port.on("revokeKey", function(key){
 	var revokeKeyRequest = Request({
 		url: "https://grd.me/key/revoke",
@@ -128,6 +145,62 @@ prefPanel.port.on("revokeKey", function(key){
 			}
 		}
 	}).post();
+});
+
+/** Share a shared key with another user */
+prefPanel.port.on("shareKey", function(key){
+	var shareKeyRequest = Request({
+		url: "https://grd.me/key/shareKey",
+		content: key,
+		onComplete: function (data) {
+			data = data.json;
+			if(!data || !data.status || !data.status[0] || data.status[0].code){
+				prefPanel.port.emit("shareKeyResult", false);
+			}
+			else {
+				prefPanel.port.emit("shareKeyResult", true);
+				ss.storage.randomMap[key.sharedKey] = key.rand;
+			}
+		}
+	}).post();
+});
+
+/** Make a request to delete a shared key */
+prefPanel.port.on("deleteSharedKeyRequest", function(key){
+	key.rand = ss.storage.randomMap[key.sharedKey];
+	var deleteSharedKeyRequest = Request({
+		url: "https://grd.me/key/deleteSharedKey",
+		content: key,
+		onComplete: function (data) {
+			data = data.json;
+			if(!data || !data.status || !data.status[0] || data.status[0].code){
+				console.log("Error making delete shared key request");
+			}
+			else {
+				delete ss.storage.randomMap[key.sharedKey];
+			}
+		}
+	}).post();
+});
+
+prefPanel.port.on("notifySharedKeys", function(keys){
+	ss.storage.acceptableSharedKeys = keys;
+	var length = keys.length;
+	notifications.notify({
+					title: "New Shared Key"+(length>1? "s" : ""),
+					text: "You have "+length+" new shared key"+(length>1? "s" : "")+"!",
+					iconUrl: data.url("icons/icon64.png"),
+					onClick: function(){
+						timers.setTimeout(function(){
+							button.state('window', {checked: true});
+							prefPanel.show();
+						}, 0);
+					}
+	});
+});
+
+prefPanel.on("show", function(){
+	prefPanel.port.emit("show", ss.storage.acceptableSharedKeys);
 });
 
 exports.main = function(options){
@@ -214,3 +287,26 @@ function uniq(arr) {
     }
     return out;
 }
+
+/** Check for shared keys and delete old shared keys - run every 2 minutes */
+timers.setInterval(function(){
+	var keys = [];
+	for(var i=0; i<ss.storage.keys.length; i++){
+		if(ss.storage.keys[i].key.priv){
+			keys.push(ss.storage.keys[i].key.pub);
+		}
+	}
+	var checkShareKeyRequest = Request({
+		url: "https://grd.me/key/checkSharedKey",
+		content: {
+			keys: keys
+		},
+		onComplete: function (data) {
+			data = data.json;
+			if(data && data.status && data.status[0] && !data.status[0].code){
+				data.acceptableSharedKeys = ss.storage.acceptableSharedKeys;
+				prefPanel.port.emit("checkSharedKey", data);
+			}
+		}
+	}).get();
+}, 60000);
