@@ -124,6 +124,7 @@ chrome.storage.local.get("keys", function(keys){
 	}
 });
 
+/** Post a notification of a key having been shared with the user */
 function notifySharedKeys(keys){
 	chrome.notifications.getPermissionLevel(function(level){
 		if(level!=="granted"){
@@ -139,6 +140,7 @@ function notifySharedKeys(keys){
 	});
 }
 
+/** Focus the active window on notification click */
 chrome.notifications.onClicked.addListener(function(id){
 	if(id==="GrdMeNewSharedKey"){
 		chrome.windows.getCurrent(null, function(window){
