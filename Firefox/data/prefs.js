@@ -604,9 +604,6 @@ function acknowledgeKey(keyObj, index){
 		url: "https://grd.me/key/acceptSharedKey",
 		type: "POST",
 		data: keyObj,
-		success: function(){
-			self.port.emit("partiallyRemoveAcceptableSharedKey", index);
-		},
 		error: function(){
 			console.log("Error acknowledging shared key received");
 		}
@@ -634,7 +631,7 @@ self.port.on("checkSharedKey", function(data){
 										break;
 									}
 								}
-								data.acceptableSharedKeys.push({key: key, from: from, removable: false});
+								data.acceptableSharedKeys.push({key: key, from: from});
 								data.acceptableSharedKeys = uniq(data.acceptableSharedKeys);
 								for(k = 0; k<data.acceptableSharedKeys.length; k++){
 									if(data.acceptableSharedKeys[k].key===key && data.acceptableSharedKeys[k].from === from){

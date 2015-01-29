@@ -90,14 +90,8 @@ prefPanel.port.on("deleteKey", function(index){
 	prefPanel.port.emit("displayKeys", ss.storage.keys);
 });
 
-prefPanel.port.on("partiallyRemoveAcceptableSharedKey", function(index){
-	ss.storage.acceptableSharedKeys[index].removable = true;
-});
-
 prefPanel.port.on("removeAcceptableSharedKey", function(index){
-	if(ss.storage.acceptableSharedKeys[index].removable){
-		ss.storage.acceptableSharedKeys.splice(index, 1);
-	}
+	ss.storage.acceptableSharedKeys.splice(index, 1);
 });
 
 prefPanel.port.on("publishKey", function(key){

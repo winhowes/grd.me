@@ -173,7 +173,7 @@ function checkSharedKey(data){
 											break;
 										}
 									}
-									data.acceptableSharedKeys.push({key: key, from: from, removable: false});
+									data.acceptableSharedKeys.push({key: key, from: from});
 									data.acceptableSharedKeys = uniq(data.acceptableSharedKeys);
 									for(k = 0; k<data.acceptableSharedKeys.length; k++){
 										if(data.acceptableSharedKeys[k].key===key && data.acceptableSharedKeys[k].from === from){
@@ -252,13 +252,6 @@ function acknowledgeKey(keyObj, index){
 		url: "https://grd.me/key/acceptSharedKey",
 		type: "POST",
 		data: keyObj,
-		success: function(){
-			chrome.storage.local.get("acceptableSharedKeys", function(keys){
-				keys = keys.acceptableSharedKeys;
-				keys[index].removable = true;
-				chrome.storage.local.set({'acceptableSharedKeys': keys});
-			});
-		},
 		error: function(){
 			console.log("Error acknowledging shared key received");
 		}
