@@ -144,7 +144,7 @@ function notifySharedKeys(keys){
 chrome.notifications.onClicked.addListener(function(id){
 	if(id==="GrdMeNewSharedKey"){
 		chrome.windows.getCurrent(null, function(window){
-			chrome.windows.update(window.id, {focused: true}, function(){})
+			chrome.windows.update(window.id, {focused: true}, function(){});
 		});
 	}
 });
