@@ -130,6 +130,7 @@ $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey"
 	$("#key").val($(this).attr("pub")).removeAttr("maxlength");
 	$("#description").focus().val($(this).attr("uid"));
 	$("#ecc").prop('checked', true);
+	$("#addKey").trigger("submit");
 	$("#overlay").trigger("click");
 });
 
