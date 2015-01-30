@@ -397,12 +397,10 @@ ul {
 
 #searchResultsContainer {
 	background: #fff;
-	max-height: 300px;
-	min-height: 100px;
-	margin-top: -150px;
 	padding: 0px;
 	left: 25px;
 	right: 25px;
+	min-height: 100px;
 }
 
 .popup .description {

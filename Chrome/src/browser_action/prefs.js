@@ -795,10 +795,8 @@ $("#acceptableSharedKeys").on("click", ".remove", function(){
 	var index =  $(this).parent().attr("index");
 	chrome.storage.local.get("acceptableSharedKeys", function(keys){
 		keys = keys.acceptableSharedKeys;
-		if(keys[index].removable){
-			keys.splice(index, 1);
-			chrome.storage.local.set({'acceptableSharedKeys': keys});
-		}
+		keys.splice(index, 1);
+		chrome.storage.local.set({'acceptableSharedKeys': keys});
 	});
 	$(this).parents("li").fadeOut("fast", function(){
 		$(this).remove();

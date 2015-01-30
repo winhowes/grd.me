@@ -525,7 +525,7 @@ self.port.on("displayKeys", function(keys){
 							"<div class='key fullToggle'>Key: <span>"+
 							(typeof keys[i].key === "object"? "<br><b class='pub'>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b class='priv'>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
 							"</span></div>"+
-							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+"</div>"+
+							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+(i?"<i class='pencil'></i>" : "")+"</div>"+
 							(i? "" : "<span class='not_secure'>[Not Secure]</span>")+
 							(i && !keys[i].key.published? "<div class='delete'>x</div>" : "")+
 							"<div class='activeIndicator'></div>"+
