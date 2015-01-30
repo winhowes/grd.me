@@ -577,3 +577,7 @@ ul {
 .pencil:hover {
 	opacity: 1;
 }
+
+.descriptionForm {
+	display: none;
+}

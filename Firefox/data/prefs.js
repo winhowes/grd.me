@@ -311,6 +311,49 @@ $("#keyList").on("click", ".delete", function(e){
 	$("#privKey").val($(this).attr("priv"));
 	$("#pubKeyIndex").val($(this).parent().attr("index"));
 })
+/** Handle clicking the pencil icon to edit description */
+.on("click", ".pencil", function(e){
+	e.stopImmediatePropagation();
+	$(this).parent().hide();
+	$(this).parents("li").find(".descriptionForm").show()
+	.find("input").focus().val($(this).parent().text());
+})
+/** Change the description */
+.on("submit", ".descriptionForm", function(e){
+	e.preventDefault();
+	var description = $.trim($(this).find("input").val());
+	if(description){
+		$(this).hide()
+		.siblings(".description").html($("<i></i>").text(description).html()+"<i class='pencil'></i>").show();
+		self.port.emit("updateDescription", {
+			description: description,
+			index: $(this).parents("li").attr("index")
+		});
+	}
+	else {
+		$(this).find("input").focus();
+	}
+})
+/** Prevent clicking the description field setting the key to active */
+.on("click", ".descriptionForm input", function(e){
+	e.stopImmediatePropagation();
+})
+/** Handle blurring the editable description field */
+.on("focusout", ".descriptionForm input", function(){
+	var description = $.trim($(this).val());
+	if(description){
+		$(this).parent().hide()
+		.siblings(".description").html($("<i></i>").text(description).html()+"<i class='pencil'></i>").show();
+		self.port.emit("updateDescription", {
+			description: description,
+			index: $(this).parents("li").attr("index")
+		});
+	}
+	else {
+		$(this).parent().hide()
+		.siblings(".description").show();
+	}
+})
 /** Handle clicking he share button in the key list */
 .on("click", ".share", function(e){
 	e.stopImmediatePropagation();
@@ -526,7 +569,7 @@ self.port.on("displayKeys", function(keys){
 							(typeof keys[i].key === "object"? "<br><b class='pub'>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b class='priv'>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
 							"</span></div>"+
 							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+(i?"<i class='pencil'></i>" : "")+"</div>"+
-							(i? "" : "<span class='not_secure'>[Not Secure]</span>")+
+							(i? "<form class='descriptionForm'><input placeholder='Description' maxlength='50'></form>" : "<span class='not_secure'>[Not Secure]</span>")+
 							(i && !keys[i].key.published? "<div class='delete'>x</div>" : "")+
 							"<div class='activeIndicator'></div>"+
 							/* Add the appropriate buttons (revoke, publish, share) */

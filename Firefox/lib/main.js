@@ -90,6 +90,13 @@ prefPanel.port.on("deleteKey", function(index){
 	prefPanel.port.emit("displayKeys", ss.storage.keys);
 });
 
+/** Update a key's description
+ * obj: an object containing the index of the key to change and the updated description
+*/
+prefPanel.port.on("updateDescription", function(obj){
+	ss.storage.keys[obj.index].description = obj.description;
+});
+
 prefPanel.port.on("removeAcceptableSharedKey", function(index){
 	ss.storage.acceptableSharedKeys.splice(index, 1);
 });
