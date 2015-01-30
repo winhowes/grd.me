@@ -128,6 +128,7 @@ $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey"
 	$("#key").val($(this).attr("pub")).removeAttr("maxlength");
 	$("#description").focus().val($(this).attr("uid"));
 	$("#ecc").prop('checked', true);
+	$("#addKey").trigger("submit");
 	$("#overlay").trigger("click");
 });
 
@@ -569,11 +570,61 @@ function deleteKey(index){
 	});
 }
 
+/** Update a key's description
+ * index: the index of the key to have its description updated
+ * description: the updated description
+*/
+function updateDescription(index, description){
+	chrome.storage.local.get("keys", function(keys){
+		keys = keys.keys;
+		keys[index].description = description;
+		chrome.extension.getBackgroundPage().keyObj.keys[index].description = description;
+		chrome.storage.local.set({'keys': keys});
+	});
+}
+
 /** Show/hide a key in the key list */
 $("#keyList").on("click", ".showHideKey", function(e){
 	e.stopImmediatePropagation();
 	$(this).next().toggle();
 	$(this).text($(this).next().is(":visible")? "Hide key": "Show key");
+})
+/** Handle clicking the pencil icon to edit description */
+.on("click", ".pencil", function(e){
+	e.stopImmediatePropagation();
+	$(this).parent().hide();
+	$(this).parents("li").find(".descriptionForm").show()
+	.find("input").focus().val($(this).parent().text());
+})
+/** Change the description */
+.on("submit", ".descriptionForm", function(e){
+	e.preventDefault();
+	var description = $.trim($(this).find("input").val());
+	if(description){
+		$(this).hide()
+		.siblings(".description").html($("<i></i>").text(description).html()+"<i class='pencil'></i>").show();
+		updateDescription($(this).parents("li").attr("index"), description);
+	}
+	else {
+		$(this).find("input").focus();
+	}
+})
+/** Prevent clicking the description field setting the key to active */
+.on("click", ".descriptionForm input", function(e){
+	e.stopImmediatePropagation();
+})
+/** Handle blurring the editable description field */
+.on("focusout", ".descriptionForm input", function(){
+	var description = $.trim($(this).val());
+	if(description){
+		$(this).parent().hide()
+		.siblings(".description").html($("<i></i>").text(description).html()+"<i class='pencil'></i>").show();
+		updateDescription($(this).parents("li").attr("index"), description);
+	}
+	else {
+		$(this).parent().hide()
+		.siblings(".description").show();
+	}
 })
 /** Handle clicking he share button in the key list */
 .on("click", ".share", function(e){
@@ -679,8 +730,8 @@ function displayKeys(){
 								"<div class='key'>Key: <span>"+
 								(typeof keys[i].key === "object"? "<br><b class='pub'>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b class='priv'>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
 								"</span></div>"+
-								"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+"</div>"+
-								(i? "" : "<span class='not_secure'>[Not Secure]</span>")+
+								"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+(i?"<i class='pencil'></i>" : "")+"</div>"+
+								(i? "<form class='descriptionForm'><input placeholder='Description' maxlength='50'></form>" : "<span class='not_secure'>[Not Secure]</span>")+
 								(i && !keys[i].key.published? "<div class='delete'>x</div>" : "")+
 								"<div class='activeIndicator'></div>"+
 								/* Add the appropriate buttons (revoke, publish, share) */

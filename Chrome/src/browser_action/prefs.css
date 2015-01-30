@@ -202,14 +202,16 @@ ul {
 #keyList li .publish,
 #keyList li .revoke,
 #keyList li .delete,
-#keyList li .share {
+#keyList li .share,
+#keyList li .pencil {
 	display: none;
 }
 
 #keyList li:hover .publish,
 #keyList li:hover .revoke,
 #keyList li:hover .delete,
-#keyList li:hover .share {
+#keyList li:hover .share,
+#keyList li:hover .pencil {
 	display: inline-block;
 }
 
@@ -563,4 +565,23 @@ ul {
 
 #acceptableSharedKeys input {
 	margin-top: 5px;
+}
+
+.pencil {
+	background-image: url("images/pencil.png");
+	width: 12px;
+	height: 12px;
+	cursor: pointer;
+	display: inline-block;
+	margin-left: 10px;
+	vertical-align: middle;
+	opacity: .8;
+}
+
+.pencil:hover {
+	opacity: 1;
+}
+
+.descriptionForm {
+	display: none;
 }

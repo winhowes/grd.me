@@ -101,6 +101,7 @@ prefPanel.port.on("removeAcceptableSharedKey", function(index){
 	ss.storage.acceptableSharedKeys.splice(index, 1);
 });
 
+/** Make a request to publish a public key */
 prefPanel.port.on("publishKey", function(key){
 	var addKeyRequest = Request({
 		url: "https://grd.me/key/add",
@@ -184,6 +185,7 @@ prefPanel.port.on("deleteSharedKeyRequest", function(key){
 	}).post();
 });
 
+/** Notify user of any symmetric keys shared with them */
 prefPanel.port.on("notifySharedKeys", function(keys){
 	ss.storage.acceptableSharedKeys = keys;
 	var length = keys.length;
