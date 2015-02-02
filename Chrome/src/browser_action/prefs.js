@@ -227,7 +227,7 @@ $("#ecc").on("click", function(){
 		$("#description").focus();
 	}
 	else {
-		$("#key").val("").focus().attr("maxlength", 32);
+		$("#key").val("").focus().attr("maxlength", 64);
 	}
 });
 
@@ -239,8 +239,7 @@ $("#keyGen").on("click", function(){
 	}
 	else{
 		/* BROWSER COMPATIBILITY IS IFFY */
-		var length = Math.floor(Math.random()*24+8);
-		var rand = getRandomString(length);
+		var rand = getRandomString(64);
 	}
 	$("#key").val(rand);
 	$("#description").focus();

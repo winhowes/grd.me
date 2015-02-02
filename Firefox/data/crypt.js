@@ -2,6 +2,7 @@
 
 var startTag = '~~crypt~~',
 endTag = '~~/crypt~~',
+NONCE_CHAR = "!",
 secrets = [],
 keyList = [],
 panelMode = false;
@@ -19,6 +20,21 @@ self.port.on("panelMode", function(){
 		$("textArea").focus().select();
 	});
 });
+
+/** Generate a random string
+ * length: the length of the random string
+*/
+function getRandomString(length) {
+	var randArray = new Uint32Array(length);
+	var rand = "";
+	window.crypto.getRandomValues(randArray);
+	for (var i = 0; i < randArray.length; i++) {
+		var character = String.fromCharCode((randArray[i] % 42) + 48);
+		character = (randArray[i] % 2) ? character : character.toLowerCase();
+		rand += character;
+	}
+	return rand;
+}
 
 /** Check that a string ends with another substring
  * subject: the string to search through
@@ -62,8 +78,13 @@ function simulateKeyPress(character, target) {
 	target.dispatchEvent(evt);
 }
 
-/** Encrypt the active element's text/value */
-function encrypt(){
+/** Encrypt the active element's text/value
+ * shortEncrypt: a boolean indicating whether or not to do short encryption. Defaults to false.
+ * 
+ * Short encryption is where the ciphertext is uploaded to grd me servers and an id is
+ * inserted in it's place which is used to lookup the ciphertext.
+*/
+function encrypt(shortEncrypt){
 	var active = document.activeElement;
 	var plaintext = active.value || active.innerHTML;
 	if(!active.value && active.innerHTML){
@@ -79,6 +100,27 @@ function encrypt(){
 	}
 	ciphertext = ciphertext.slice(0, - 1); 
 	ciphertext += endTag;
+	if(shortEncrypt){
+		var actualCiphertext = ciphertext.replace(startTag, "").replace(endTag, "");
+		var rand = getRandomString(64);
+		var hash = CryptoJS.SHA256(actualCiphertext+rand).toString().slice(0, 60);
+		ciphertext = startTag+NONCE_CHAR+hash+endTag;
+		$.ajax({
+			url: "https://grd.me/message/add",
+			type: "POST",
+			data: {
+				hash: hash,
+				message: actualCiphertext,
+				rand: rand
+			},
+			error: function(){
+				self.port.emit("copy_ciphertext", startTag+actualCiphertext+endTag);
+				setTimeout(function(){
+					alert("Failed to make short message.\nCiphertext copied to clipboard.");
+				}, 200);
+			}
+		});
+	}
 	if(panelMode){
 		self.port.emit("copy_ciphertext", ciphertext);
 		$("#clipboard").stop(true, true).fadeIn().delay(1000).fadeOut();
@@ -113,8 +155,28 @@ function encrypt(){
 
 /** Decrypt an elem's text and return an object with the plaintext, ciphertext, and whether or not an end crypto tage was found.
  * elem: the jQuery element whose text should be decypted
+ * callback: a callback function that takes an object containing a decryption object
 */
-function decrypt(elem){
+function decrypt(elem, callback){
+	/** Report error decrypting message */
+	function error(){
+		index2 = 1;
+		elem.html(val.substring(0, index1) + $("<i></i>").text("[Unable to decrypt message] [start tag]"+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, "[end tag]")).html());
+		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
+	}
+	
+	/** Insert plaintext into page and call callback
+	 * plaintext: the decrypted text
+	 * ciphertext: the encrypted text/nonce text
+	*/
+	function finish(plaintext, ciphertext){
+		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
+		var start = html.substring(0, html.indexOf(startTag));
+		val = start + plaintext + end;
+		elem.html(val);
+		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
+	}
+	
 	var val = elem.text();
 	if(val.toLowerCase().indexOf(endTag)>0 && endsWith(window.location.hostname, "facebook.com")){
 		elem.parent().find('.text_exposed_hide').remove();
@@ -156,18 +218,47 @@ function decrypt(elem){
 		index2 = val.toLowerCase().indexOf(endTag);
 	}
 	var ciphertext = index2>0 ? val.substring(index1+startTag.length, index2) : val.substring(index1+startTag.length);
-	var plaintext = decryptText(ciphertext);
-	if(plaintext){
-		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
-		var start = html.substring(0, html.indexOf(startTag));
-		val = start + plaintext + end;
-		elem.html(val);
+	if(ciphertext.charAt(0)==NONCE_CHAR){
+		var hash = ciphertext.slice(1);
+		elem.attr("crypto_mark", true);
+		$.ajax({
+			url: "https://grd.me/message/get",
+			type: "GET",
+			data: {
+				hash: hash
+			},
+			success: function(data){
+				elem.removeAttr("crypto_mark");
+				if(data && data.status && data.status[0] && !data.status[0].code){
+					var plaintext = false;
+					for(var i=0; i<data.messages.length; i++){
+						if(CryptoJS.SHA256(data.messages[i].message+data.messages[i].rand).toString().slice(0, 60) == hash &&
+						   (plaintext = decryptText(data.messages[i].message))){
+							finish(plaintext, ciphertext);
+							return;
+						}
+					}
+					error();
+				}
+				else {
+					error();
+				}
+			},
+			error: function(){
+				elem.removeAttr("crypto_mark");
+				error();
+			}
+		});
 	}
-	else{
-		index2 = 1;
-		elem.html(val.substring(0, index1) + $("<i></i>").text("[Unable to decrypt message] [start tag]"+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, "[end tag]")).html());
+	else {
+		var plaintext = decryptText(ciphertext);
+		if(plaintext){
+			finish(plaintext, ciphertext);
+		}
+		else{
+			error();
+		}
 	}
-	return {endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext};
 }
 
 /** Decrypt ciphertext with all available keys. Returns false if no decryption possible
@@ -213,34 +304,35 @@ function decryptInterval(){
 			elem.attr('crypto_mark', true);
 			return;
 		}
-		var returnObj = decrypt(elem);
-		elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
-		if(!returnObj.endTagFound){
-			var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
-			var clickHandled = false;
-			parent.on("click", function(){
-				elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
-				setTimeout(function(){
-					if(clickHandled){return;}
-					clickHandled = true;
-					if(parent.text().indexOf(endTag)>0){
-						var text = parent.text();
-						/* Handle the case of ciphertext in plaintext */
-						while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
-							var pre = returnObj.plaintext.substring(0, returnObj.plaintext.indexOf(startTag)),
-							ciphertext = returnObj.plaintext.substring(returnObj.plaintext.indexOf(startTag) + startTag.length, returnObj.plaintext.indexOf(endTag)),
-							post = returnObj.plaintext.substring(returnObj.plaintext.indexOf(endTag) + endTag.length);
-							returnObj.plaintext = pre+decryptText(ciphertext)+post;
+		var returnObj = decrypt(elem, function(returnObj){
+			elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
+			if(!returnObj.endTagFound){
+				var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
+				var clickHandled = false;
+				parent.on("click", function(){
+					elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
+					setTimeout(function(){
+						if(clickHandled){return;}
+						clickHandled = true;
+						if(parent.text().indexOf(endTag)>0){
+							var text = parent.text();
+							/* Handle the case of ciphertext in plaintext */
+							while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
+								var pre = returnObj.plaintext.substring(0, returnObj.plaintext.indexOf(startTag)),
+								ciphertext = returnObj.plaintext.substring(returnObj.plaintext.indexOf(startTag) + startTag.length, returnObj.plaintext.indexOf(endTag)),
+								post = returnObj.plaintext.substring(returnObj.plaintext.indexOf(endTag) + endTag.length);
+								returnObj.plaintext = pre+decryptText(ciphertext)+post;
+							}
+							parent.text(text.substring(0, text.indexOf(returnObj.plaintext+""))+
+									  startTag+
+									  returnObj.ciphertext+
+									  text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length));
+							decrypt(parent);
 						}
-						parent.text(text.substring(0, text.indexOf(returnObj.plaintext+""))+
-								  startTag+
-								  returnObj.ciphertext+
-								  text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length));
-						decrypt(parent);
-					}
-				}, 0);
-			});
-		}
+					}, 0);
+				});
+			}
+		});
 	});
 };
 
@@ -266,4 +358,12 @@ Mousetrap.bindGlobal(['mod+e'], function(e) {
 Mousetrap.bindGlobal(['mod+alt+e'], function(e) {
 	e.preventDefault();
     self.port.emit("secureText");
+});
+
+Mousetrap.bindGlobal(['mod+shift+e'], function(e) {
+	var active = document.activeElement;
+	if(active.value || $(active).attr("contenteditable")){
+		e.preventDefault();
+	}
+    encrypt(true);
 });

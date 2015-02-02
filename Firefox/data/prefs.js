@@ -229,7 +229,7 @@ $("#ecc").on("click", function(){
 		$("#description").focus();
 	}
 	else {
-		$("#key").val("").focus().attr("maxlength", 32);
+		$("#key").val("").focus().attr("maxlength", 64);
 	}
 });
 
@@ -240,8 +240,7 @@ $("#keyGen").on("click", function(){
 		var rand = JSON.stringify(keypair);
 	}
 	else{
-		var length = Math.floor(Math.random()*24+8);
-		var rand = getRandomString(length);
+		var rand = getRandomString(64);
 	}
 	$("#key").val(rand);
 	$("#description").focus();
@@ -666,7 +665,7 @@ self.port.on("checkSharedKey", function(data){
 				for(var j=0; j<keyChain.length; j++){
 					if(keyChain[j].key.priv){
 						try{
-							var key = String(ecc.decrypt(keyChain[j].key.priv, data.received[i].sharedKey)).slice(0, 32);
+							var key = String(ecc.decrypt(keyChain[j].key.priv, data.received[i].sharedKey)).slice(0, 64);
 							if(key){
 								var from = "";
 								for(var k = 0; k<keyChain.length; k++){
