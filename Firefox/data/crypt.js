@@ -42,7 +42,7 @@ function getRandomString(length) {
 */
  function endsWith(subject, suffix) {
     return subject.indexOf(suffix, subject.length - suffix.length) !== -1;
-};
+}
 
 /** Strip html tags from string
  * html: the string to have it's html tags removed
@@ -304,7 +304,7 @@ function decryptInterval(){
 			elem.attr('crypto_mark', true);
 			return;
 		}
-		var returnObj = decrypt(elem, function(returnObj){
+		decrypt(elem, function(returnObj){
 			elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 			if(!returnObj.endTagFound){
 				var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();

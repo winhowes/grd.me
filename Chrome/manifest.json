@@ -38,6 +38,7 @@
       "run_at": "document_end",
       "js": [
         "src/inject/lib/aes.js",
+        "src/inject/lib/sha256.js",
         "src/inject/lib/ecc.min.js",
         "src/inject/lib/jquery-2.1.3.min.js",
         "src/inject/lib/mousetrap.min.js",
