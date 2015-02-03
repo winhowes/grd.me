@@ -100,9 +100,7 @@ function encrypt(shortEncrypt){
 		});
 		plaintext = $el.html();
 		plaintext = plaintext.replace(/<div\s*/gi, endTag+"<div ");
-		var re = new RegExp(endTag+endTag,"gi");
-		plaintext = plaintext.replace(re, endTag);
-		re = new RegExp(endTag, "gi");
+		var re = new RegExp(endTag, "gi");
 		plaintext = !plaintext.indexOf(endTag)? plaintext.slice(endTag.length) : plaintext;
 		plaintext = plaintext.replace(re, "<br>");
 		/* This regex technically breaks if there's a ">" character in an attribute of a br tag*/
