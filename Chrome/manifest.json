@@ -3,7 +3,7 @@
   "short_name": "Grd Me",
   "version": "1.8",
   "manifest_version": 2,
-  "description": "A browser plugin that provides encrypted communication across any web platform.",
+  "description": "An open source browser plugin that provides encrypted communication across any web platform.",
   "homepage_url": "https://grd.me",
   "author": "Winston Howes",
   "icons": {
