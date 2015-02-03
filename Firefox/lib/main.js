@@ -41,7 +41,7 @@ function handleHide() {
 
 var button = require("sdk/ui/button/toggle").ToggleButton({
 	id: "crypt_btn",
-	label: "Grd Me Key Management",
+	label: "Grd Me Key Manager",
 	icon: data.url("icons/icon64.png"),
 	onChange: handleChange
 });
