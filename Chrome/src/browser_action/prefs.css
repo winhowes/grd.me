@@ -47,6 +47,7 @@ a {
 	cursor: pointer;
 	color: #1f8dd6;
 	text-decoration: none;
+	outline: none;
 }
 
 a:hover {
