@@ -167,6 +167,13 @@ function decrypt(elem, callback){
 	var index1 = val.toLowerCase().indexOf(startTag);
 	var index2 = val.toLowerCase().indexOf(endTag);
 	
+	if(index2<0 && callback && elem.siblings(':contains("'+endTag+'"):not(:contains("'+startTag+'")):not([contenteditable="true"])')){
+		decrypt(elem.parent().attr("crypto_mark", false));
+		return;
+	}
+	
+	callback = callback || function(){};
+	
 	/* This checks the case of the start tag being broken by html elements */
 	if(index1>0 && html.indexOf(startTag)<0 && strip(html).indexOf(startTag)>0){
 		var string, character = startTag.slice(-1), index = html.indexOf(character)+1;
@@ -278,7 +285,7 @@ function decryptText(ciphertext){
 
 /** Scan for any crypto on the page and decypt if possible */
 function decryptInterval(){
-	$('*:contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"])').each(function(i, e){
+	$(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"])').each(function(i, e){
 		var elem = $(e);
 		if(elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
 			//ASSUMPTION: an element not containing a crypto message itself will never contain a crypto message
