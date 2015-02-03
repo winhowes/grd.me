@@ -201,8 +201,7 @@ function decrypt(elem, callback){
 	var index1 = val.toLowerCase().indexOf(startTag);
 	var index2 = val.toLowerCase().indexOf(endTag);
 	
-	if(index2<0 && callback && (elem.siblings(':contains("'+endTag+'"):not(:contains("'+startTag+'")):not([contenteditable="true"])').length ||
-	   elem.parent(':contains("'+endTag+'"):not([contenteditable="true"])').length)){
+	if(index2<0 && callback && elem.parent(':contains("'+endTag+'"):not([contenteditable="true"])').length){
 		decrypt(elem.parent().attr("crypto_mark", false));
 		return;
 	}
