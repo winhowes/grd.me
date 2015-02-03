@@ -91,6 +91,20 @@ function encrypt(shortEncrypt){
 		if(!$(active).attr("contenteditable")){
 			return;
 		}
+		/* Transfer div's into br's using endTag as intermediate as it's not in string */
+		var $el = $("<i></i>");
+		$el.html(plaintext).find("div").each(function(i,e){
+			if(!$.trim($(e).text()).length){
+				$(e).html("")
+			}
+		});
+		plaintext = $el.html();
+		plaintext = plaintext.replace(/<div\s*/gi, endTag+"<div ");
+		var re = new RegExp(endTag+endTag,"gi");
+		plaintext = plaintext.replace(re, endTag);
+		re = new RegExp(endTag, "gi");
+		plaintext = !plaintext.indexOf(endTag)? plaintext.slice(endTag.length) : plaintext;
+		plaintext = plaintext.replace(re, "<br>");
 		/* This regex technically breaks if there's a ">" character in an attribute of a br tag*/
 		plaintext = strip(plaintext.replace(/<br\s*[^>]*>/gi, "\n"));
 	}
