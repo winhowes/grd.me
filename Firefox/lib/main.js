@@ -202,6 +202,7 @@ prefPanel.port.on("notifySharedKeys", function(keys){
 	});
 });
 
+/** Prefpanel show event handler */
 prefPanel.on("show", function(){
 	prefPanel.port.emit("show", ss.storage.acceptableSharedKeys);
 });
@@ -255,6 +256,36 @@ exports.main = function(options){
 			
 			worker.port.on("copy_ciphertext", function(text){
 				clipboard.set(text, "text");
+			});
+			
+			worker.port.on("message_add", function(obj){
+				var addMessageRequest = Request({
+					url: "https://grd.me/message/add",
+					content: obj.data,
+					onComplete: function(data){
+						data = data.json;
+						if(!data || !data.status || !data.status[0] || data.status[0].code){
+							clipboard.set(obj.ciphertext, "text");
+							worker.port.emit("message_add_fail");
+						}
+					}
+				}).post();
+			});
+			
+			worker.port.on("message_get", function(obj){
+				var getMessageRequest = Request({
+					url: "https://grd.me/message/get",
+					content: {hash: obj.hash},
+					onComplete: function(data){
+						data = data.json;
+						if(!data || !data.status || !data.status[0] || data.status[0].code){
+							worker.port.emit("message_get_callback", {index: obj.error, data: data});
+						}
+						else {
+							worker.port.emit("message_get_callback", {index: obj.success, data: data});
+						}
+					}
+				}).get();
 			});
 			
 			worker.port.on("secureText", function(){

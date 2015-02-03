@@ -5,7 +5,8 @@ endTag = '~~!grdme~~',
 NONCE_CHAR = "!",
 secrets = [],
 keyList = [],
-panelMode = false;
+panelMode = false,
+calbackChain = [];
 
 self.port.on("secret", function(secret_obj){
 	secrets = secret_obj.active;
@@ -19,6 +20,14 @@ self.port.on("panelMode", function(){
 	self.port.on("show", function onShow() {
 		$("textArea").focus().select();
 	});
+});
+
+self.port.on("message_get_callback", function(obj){
+	typeof calbackChain[obj.index] == "function" && calbackChain[obj.index](obj.data);
+});
+
+self.port.on("message_add_fail", function(){
+	alert("Failed to make short message.\nCiphertext copied to clipboard.");
 });
 
 /** Generate a random string
@@ -117,22 +126,15 @@ function encrypt(shortEncrypt){
 		var actualCiphertext = ciphertext.replace(startTag, "").replace(endTag, "");
 		var rand = getRandomString(64);
 		var hash = CryptoJS.SHA256(actualCiphertext+rand).toString().slice(0, 60);
-		ciphertext = startTag+NONCE_CHAR+hash+endTag;
-		$.ajax({
-			url: "https://grd.me/message/add",
-			type: "POST",
+		self.port.emit("message_add", {
 			data: {
 				hash: hash,
 				message: actualCiphertext,
 				rand: rand
 			},
-			error: function(){
-				self.port.emit("copy_ciphertext", startTag+actualCiphertext+endTag);
-				setTimeout(function(){
-					alert("Failed to make short message.\nCiphertext copied to clipboard.");
-				}, 200);
-			}
+			ciphertext: ciphertext
 		});
+		ciphertext = startTag+NONCE_CHAR+hash+endTag;
 	}
 	if(panelMode){
 		self.port.emit("copy_ciphertext", ciphertext);
@@ -234,13 +236,10 @@ function decrypt(elem, callback){
 	if(ciphertext.charAt(0)==NONCE_CHAR){
 		var hash = ciphertext.slice(1);
 		elem.attr("crypto_mark", true);
-		$.ajax({
-			url: "https://grd.me/message/get",
-			type: "GET",
-			data: {
-				hash: hash
-			},
-			success: function(data){
+		
+		self.port.emit("message_get", {
+			hash: hash,
+			success: calbackChain.push(function(data){
 				elem.removeAttr("crypto_mark");
 				if(data && data.status && data.status[0] && !data.status[0].code){
 					var plaintext = false;
@@ -256,11 +255,11 @@ function decrypt(elem, callback){
 				else {
 					error();
 				}
-			},
-			error: function(){
+			}) - 1,
+			error: calbackChain.push(function(){
 				elem.removeAttr("crypto_mark");
 				error();
-			}
+			}) - 1
 		});
 	}
 	else {
