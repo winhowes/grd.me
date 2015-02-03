@@ -1,7 +1,7 @@
 /** This file handles the page encryption and decryption */
 
-var startTag = '~~crypt~~',
-endTag = '~~/crypt~~',
+var startTag = '~~grdme~~',
+endTag = '~~!grdme~~',
 NONCE_CHAR = "!",
 secrets = [],
 keyList = [],
@@ -82,6 +82,7 @@ function encrypt(shortEncrypt){
 	}
 	ciphertext = ciphertext.slice(0, - 1); 
 	ciphertext += endTag;
+	ciphertext.replace(/\+/g, ")").replace(/\//g, ":");
 	if(shortEncrypt){
 		var actualCiphertext = ciphertext.replace(startTag, "").replace(endTag, "");
 		var rand = getRandomString(64);
@@ -233,6 +234,7 @@ function decrypt(elem, callback){
  * ciphertext: the text excluding the crypto tags to decrypt
 */
 function decryptText(ciphertext){
+	ciphertext.replace(/\)/g, "+").replace(/\:/g, "/");
 	ciphertext = ciphertext.split("|");
 	for(var i=0; i<ciphertext.length; i++){
 		var plaintext;
