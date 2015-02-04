@@ -22,13 +22,21 @@ self.port.on("panelMode", function(){
 	});
 });
 
-self.port.on("message_get_callback", function(obj){
+self.port.on("callback", function(obj){
+	console.log("callback", obj);
 	typeof calbackChain[obj.index] == "function" && calbackChain[obj.index](obj.data);
 });
 
 self.port.on("message_add_fail", function(){
 	alert("Failed to make short message.\nCiphertext copied to clipboard.");
 });
+
+/** linkify and fix line breaks in plaintext
+ * plaintext: the plaintext to modify
+*/
+function setupPlaintext(plaintext){
+	return linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>"));
+}
 
 /** Generate a random string
  * length: the length of the random string
@@ -185,6 +193,7 @@ function decrypt(elem, callback){
 	 * ciphertext: the encrypted text/nonce text
 	*/
 	function finish(plaintext, ciphertext){
+		plaintext = setupPlaintext(plaintext);
 		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
 		var start = html.substring(0, html.indexOf(startTag));
 		val = start + plaintext + end;
@@ -246,37 +255,30 @@ function decrypt(elem, callback){
 		
 		self.port.emit("message_get", {
 			hash: hash,
-			success: calbackChain.push(function(data){
+			callback: calbackChain.push(function(plaintext){
 				elem.removeAttr("crypto_mark");
-				if(data && data.status && data.status[0] && !data.status[0].code){
-					var plaintext = false;
-					for(var i=0; i<data.messages.length; i++){
-						if(CryptoJS.SHA256(data.messages[i].message+data.messages[i].rand).toString().slice(0, 60) == hash &&
-						   (plaintext = decryptText(data.messages[i].message))){
-							finish(plaintext, ciphertext);
-							return;
-						}
-					}
-					error();
+				if(plaintext){
+					finish(plaintext, ciphertext);
 				}
-				else {
+				else{
 					error();
 				}
 			}) - 1,
-			error: calbackChain.push(function(){
-				elem.removeAttr("crypto_mark");
-				error();
-			}) - 1
 		});
 	}
 	else {
-		var plaintext = decryptText(ciphertext);
-		if(plaintext){
-			finish(plaintext, ciphertext);
-		}
-		else{
-			error();
-		}
+		self.port.emit("decrypt", {
+			ciphertext: ciphertext,
+			keyList: keyList,
+			callback: calbackChain.push(function(plaintext){
+				if(plaintext){
+					finish(plaintext, ciphertext);
+				}
+				else{
+					error();
+				}
+			}) - 1
+		});		
 	}
 }
 
@@ -357,7 +359,7 @@ function decryptInterval(){
 };
 
 /** Check for changes to the dom before running decryptInterval */
-(function(){
+setTimeout(function(){
 	var otherDecryptTimeout = false;
 	var observer = new MutationObserver(function(mutations) {
 		clearTimeout(otherDecryptTimeout);
@@ -367,17 +369,16 @@ function decryptInterval(){
 	var config = { subtree: true, childList: true, characterData: true, attributes: true };
 	
 	observer.observe(document.body, config);
-}());
-
-setTimeout(decryptInterval, 50);
+	decryptInterval();
+}, 50);
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
-    encrypt();
+	encrypt();
 });
 
 Mousetrap.bindGlobal(['mod+alt+e'], function(e) {
 	e.preventDefault();
-    self.port.emit("secureText");
+	self.port.emit("secureText");
 });
 
 Mousetrap.bindGlobal(['mod+shift+e'], function(e) {
@@ -385,5 +386,5 @@ Mousetrap.bindGlobal(['mod+shift+e'], function(e) {
 	if(active.value || $(active).attr("contenteditable")){
 		e.preventDefault();
 	}
-    encrypt(true);
+	encrypt(true);
 });

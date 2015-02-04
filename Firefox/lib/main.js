@@ -254,6 +254,21 @@ exports.main = function(options){
 			
 			worker.port.emit("secret", {active: ss.storage.activeKeys, keys: ss.storage.keys});
 			
+			var {Cu} = require("chrome");
+			var {Worker} = Cu.import(data.url("dummy.jsm"));
+			Cu.unload(data.url("dummy.jsm"));
+			
+			var webWorker = new Worker(data.url("worker.js"));
+			
+			webWorker.onmessage = function(event){
+				//console.log("Worker result:", event.data);
+				worker.port.emit("callback", JSON.parse(event.data));
+			};
+			
+			worker.port.on("decrypt", function(decryptObj){
+				webWorker.postMessage(JSON.stringify({id: "decrypt", data: decryptObj}));
+			});
+			
 			worker.port.on("copy_ciphertext", function(text){
 				clipboard.set(text, "text");
 			});
@@ -278,11 +293,17 @@ exports.main = function(options){
 					content: {hash: obj.hash},
 					onComplete: function(data){
 						data = data.json;
-						if(!data || !data.status || !data.status[0] || data.status[0].code){
-							worker.port.emit("message_get_callback", {index: obj.error, data: data});
+						if(data && data.status && data.status[0] && !data.status[0].code) {
+							//Success
+							data.hash = obj.hash;
+							data.callback = obj.callback;
+							data.keyList = ss.storage.keys;
+							console.log("verifyShortMessage");
+							webWorker.postMessage(JSON.stringify({id: "verifyShortMessage", data: data}));
 						}
 						else {
-							worker.port.emit("message_get_callback", {index: obj.success, data: data});
+							//Error
+							worker.port.emit("callback", {index: obj.callback, data: false});
 						}
 					}
 				}).get();
