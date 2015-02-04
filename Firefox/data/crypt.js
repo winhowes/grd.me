@@ -284,7 +284,7 @@ function decrypt(elem, callback){
  * ciphertext: the text excluding the crypto tags to decrypt
 */
 function decryptText(ciphertext){
-	ciphertext = ciphertext.replace(/\)/g, "+").replace(/\:/g, "/");
+	ciphertext = ciphertext.replace(/\)/g, "+").replace(/\(/g, "/");
 	ciphertext = ciphertext.split("|");
 	for(var i=0; i<ciphertext.length; i++){
 		var plaintext;
