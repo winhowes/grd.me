@@ -1,3 +1,5 @@
+var window = {};
+
 importScripts("lib/sha256.js",
 			  "lib/ecc.min.js",
 			  "lib/aes.js");
@@ -25,11 +27,11 @@ function trim(str){
  * keyList: an array of all key objects
 */
 function decryptText(ciphertext, keyList){
-	ciphertext = ciphertext.replace(/\)/g, "+").replace(/\:/g, "/");
+	ciphertext = ciphertext.replace(/\)/g, "+").replace(/\(/g, "/");
 	ciphertext = ciphertext.split("|");
 	for(var i=0; i<ciphertext.length; i++){
-		var plaintext;
-		for(var j=0; j<keyList.length; j++){
+		var plaintext = "";
+		for(var j=1; j<keyList.length; j++){
 			try{
 				if(typeof keyList[j].key === "object" && keyList[j].key.priv){
 					plaintext = ecc.decrypt(keyList[j].key.priv, ciphertext[i]);
@@ -42,7 +44,9 @@ function decryptText(ciphertext, keyList){
 					return plaintext;
 				}
 			}
-			catch(e){}
+			catch(e){
+				return "CAUGHT: "+plaintext+"! "+JSON.stringify(e);
+			}
 		}
 	}
 	return false;

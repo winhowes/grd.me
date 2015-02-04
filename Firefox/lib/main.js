@@ -265,6 +265,7 @@ exports.main = function(options){
 			};
 			
 			worker.port.on("decrypt", function(decryptObj){
+				decryptObj.keyList = ss.storage.keys;
 				webWorker.postMessage(JSON.stringify({id: "decrypt", data: decryptObj}));
 			});
 			

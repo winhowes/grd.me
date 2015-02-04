@@ -128,7 +128,7 @@ function encrypt(shortEncrypt){
 	}
 	ciphertext = ciphertext.slice(0, - 1); 
 	ciphertext += endTag;
-	ciphertext = ciphertext.replace(/\+/g, ")").replace(/\//g, ":");
+	ciphertext = ciphertext.replace(/\+/g, ")").replace(/\//g, "(");
 	if(shortEncrypt){
 		var actualCiphertext = ciphertext.replace(startTag, "").replace(endTag, "");
 		var rand = getRandomString(64);
@@ -181,7 +181,7 @@ function encrypt(shortEncrypt){
 */
 function decrypt(elem, callback){
 	/** Report error decrypting message */
-	function error(){
+	function error(plaintext){
 		index2 = 1;
 		elem.html(val.substring(0, index1) + $("<i></i>").text("[Unable to decrypt message] [start tag]"+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, "[end tag]")).html());
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
@@ -260,7 +260,7 @@ function decrypt(elem, callback){
 					finish(plaintext, ciphertext);
 				}
 				else{
-					error();
+					error(plaintext);
 				}
 			}) - 1,
 		});
@@ -268,13 +268,12 @@ function decrypt(elem, callback){
 	else {
 		self.port.emit("decrypt", {
 			ciphertext: ciphertext,
-			keyList: keyList,
 			callback: calbackChain.push(function(plaintext){
 				if(plaintext){
 					finish(plaintext, ciphertext);
 				}
 				else{
-					error();
+					error(plaintext);
 				}
 			}) - 1
 		});		
