@@ -38,10 +38,9 @@ function decryptText(ciphertext, keyList){
 					plaintext = CryptoJS.AES.decrypt(ciphertext[i], keyList[j].key);
 					plaintext = plaintext.toString(CryptoJS.enc.Utf8);
 				}
-				if(!trim(plaintext).length){
-					break;
+				if(trim(plaintext).length){
+					return plaintext;
 				}
-				return plaintext;
 			}
 			catch(e){}
 		}
