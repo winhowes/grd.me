@@ -261,7 +261,6 @@ exports.main = function(options){
 			var webWorker = new Worker(data.url("worker.js"));
 			
 			webWorker.onmessage = function(event){
-				//console.log("Worker result:", event.data);
 				worker.port.emit("callback", JSON.parse(event.data));
 			};
 			
@@ -298,7 +297,6 @@ exports.main = function(options){
 							data.hash = obj.hash;
 							data.callback = obj.callback;
 							data.keyList = ss.storage.keys;
-							console.log("verifyShortMessage");
 							webWorker.postMessage(JSON.stringify({id: "verifyShortMessage", data: data}));
 						}
 						else {

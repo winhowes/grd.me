@@ -23,7 +23,6 @@ self.port.on("panelMode", function(){
 });
 
 self.port.on("callback", function(obj){
-	console.log("callback", obj);
 	typeof calbackChain[obj.index] == "function" && calbackChain[obj.index](obj.data);
 });
 
