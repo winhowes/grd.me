@@ -31,7 +31,7 @@ function decryptText(ciphertext, keyList){
 	ciphertext = ciphertext.split("|");
 	for(var i=0; i<ciphertext.length; i++){
 		var plaintext = "";
-		for(var j=1; j<keyList.length; j++){
+		for(var j=0; j<keyList.length; j++){
 			try{
 				if(typeof keyList[j].key === "object" && keyList[j].key.priv){
 					plaintext = ecc.decrypt(keyList[j].key.priv, ciphertext[i]);
@@ -44,9 +44,7 @@ function decryptText(ciphertext, keyList){
 					return plaintext;
 				}
 			}
-			catch(e){
-				return "CAUGHT: "+plaintext+"! "+JSON.stringify(e);
-			}
+			catch(e){}
 		}
 	}
 	return false;
