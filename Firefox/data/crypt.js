@@ -23,7 +23,7 @@ self.port.on("panelMode", function(){
 });
 
 self.port.on("callback", function(obj){
-	typeof calbackChain[obj.index] == "function" && calbackChain[obj.index](obj.data);
+	(typeof calbackChain[obj.index] == "function") && calbackChain[obj.index](obj.data);
 });
 
 self.port.on("message_add_fail", function(){
@@ -182,7 +182,7 @@ function encrypt(shortEncrypt){
 function decrypt(elem, callback){
 	/** Report error decrypting message */
 	function error(plaintext){
-		index2 = 1;
+		//index2 = 1;
 		elem.html(val.substring(0, index1) + $("<i></i>").text("[Unable to decrypt message] [start tag]"+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, "[end tag]")).html());
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
 	}
@@ -198,6 +198,10 @@ function decrypt(elem, callback){
 		val = start + plaintext + end;
 		elem.html(val);
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
+	}
+	
+	if(elem.attr("crypto_mark") == "inFlight"){
+		return;
 	}
 	
 	var val = elem.text();
@@ -248,20 +252,19 @@ function decrypt(elem, callback){
 		index2 = val.toLowerCase().indexOf(endTag);
 	}
 	var ciphertext = index2>0 ? val.substring(index1+startTag.length, index2) : val.substring(index1+startTag.length);
+	elem.attr("crypto_mark", "inFlight");
 	if(ciphertext.charAt(0)==NONCE_CHAR){
 		var hash = ciphertext.slice(1);
-		elem.attr("crypto_mark", true);
-		
 		self.port.emit("message_get", {
 			hash: hash,
 			callback: calbackChain.push(function(plaintext){
-				elem.removeAttr("crypto_mark");
 				if(plaintext){
 					finish(plaintext, ciphertext);
 				}
 				else{
 					error(plaintext);
 				}
+				elem.removeAttr("crypto_mark");
 			}) - 1,
 		});
 	}
@@ -275,6 +278,7 @@ function decrypt(elem, callback){
 				else{
 					error(plaintext);
 				}
+				elem.removeAttr("crypto_mark");
 			}) - 1
 		});		
 	}
@@ -311,7 +315,7 @@ function decryptText(ciphertext){
 			break;
 		}
 	}
-	return validDecryption? linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>")) : false;
+	return validDecryption? setupPlaintext(plaintext) : false;
 }
 
 /** Scan for any crypto on the page and decypt if possible */
