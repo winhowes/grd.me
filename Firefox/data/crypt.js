@@ -3,6 +3,9 @@
 var startTag = '~~grdme~~',
 endTag = '~~!grdme~~',
 NONCE_CHAR = "!",
+UNABLE_TO_DECRYPT = "[Unable to decrypt message]",
+UNABLE_startTag = "[start tag]",
+UNABLE_endTag = "[end tag]",
 secrets = [],
 keyList = [],
 panelMode = false,
@@ -183,7 +186,7 @@ function decrypt(elem, callback){
 	/** Report error decrypting message */
 	function error(plaintext){
 		//index2 = 1;
-		elem.html(val.substring(0, index1) + $("<i></i>").text("[Unable to decrypt message] [start tag]"+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, "[end tag]")).html());
+		elem.html(val.substring(0, index1) + $("<i></i>").text(UNABLE_TO_DECRYPT+" "+UNABLE_startTag+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, UNABLE_endTag)).html());
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
 	}
 	
@@ -332,13 +335,11 @@ function decryptInterval(){
 			elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 			if(!returnObj.endTagFound){
 				var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
-				var clickHandled = false;
 				parent.on("click", function(){
 					elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 					setTimeout(function(){
-						if(clickHandled){return;}
-						clickHandled = true;
 						if(parent.text().indexOf(endTag)>0){
+							returnObj.plaintext = returnObj.plaintext || "";
 							var text = parent.text();
 							/* Handle the case of ciphertext in plaintext */
 							while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
@@ -347,10 +348,15 @@ function decryptInterval(){
 								post = returnObj.plaintext.substring(returnObj.plaintext.indexOf(endTag) + endTag.length);
 								returnObj.plaintext = pre+decryptText(ciphertext)+post;
 							}
-							parent.text(text.substring(0, text.indexOf(returnObj.plaintext+""))+
-									  startTag+
-									  returnObj.ciphertext+
-									  text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length));
+							if(returnObj.plaintext.length){
+								parent.text(text.substring(0, text.indexOf(returnObj.plaintext+""))+
+											startTag+
+											returnObj.ciphertext+
+											text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length));
+							}
+							else {
+								parent.text(text.replace(UNABLE_TO_DECRYPT+" "+UNABLE_startTag, startTag));
+							}
 							decrypt(parent);
 						}
 					}, 0);
