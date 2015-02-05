@@ -211,7 +211,8 @@ exports.main = function(options){
 	var secureTextPanel = Panel({
 		contentURL: data.url("secureText.html"),
 		contentStyleFile: data.url("secureText.css"),
-		contentScriptFile: [data.url("lib/aes.js"),
+		contentScriptFile: [data.url("constants.js"),
+							data.url("lib/aes.js"),
 							data.url('lib/ecc.min.js'),
 							data.url('lib/sha256.js'),
 							data.url("lib/jquery-2.1.3.min.js"),
