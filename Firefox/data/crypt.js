@@ -356,6 +356,6 @@ Mousetrap.bindGlobal(['mod+shift+e'], function(e) {
 	var active = document.activeElement;
 	if(active.value || $(active).attr("contenteditable")){
 		e.preventDefault();
+		encrypt(true);
 	}
-	encrypt(true);
 });
