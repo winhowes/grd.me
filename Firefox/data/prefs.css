@@ -344,6 +344,9 @@ ul {
 	cursor: pointer;
 	list-style: none;
 	padding: 5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .dropdown-container li.active {
