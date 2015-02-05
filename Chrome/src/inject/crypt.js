@@ -144,7 +144,6 @@ function encrypt(shortEncrypt){
 function decrypt(elem, callback){
 	/** Report error decrypting message */
 	function error(){
-		index2 = 1;
 		elem.html(val.substring(0, index1) + $("<i></i>").text(UNABLE_TO_DECRYPT+" "+UNABLE_startTag+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, UNABLE_endTag)).html());
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
 	}
