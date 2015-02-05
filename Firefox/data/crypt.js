@@ -1,15 +1,8 @@
 /** This file handles the page encryption and decryption */
 
-var startTag = '~~grdme~~',
-endTag = '~~!grdme~~',
-NONCE_CHAR = "!",
-UNABLE_TO_DECRYPT = "[Unable to decrypt message]",
-UNABLE_startTag = "[start tag]",
-UNABLE_endTag = "[end tag]",
-secrets = [],
+var secrets = [],
 keyList = [],
-panelMode = false,
-calbackChain = [];
+panelMode = false;
 
 self.port.on("secret", function(secret_obj){
 	secrets = secret_obj.active;
@@ -25,13 +18,24 @@ self.port.on("panelMode", function(){
 	});
 });
 
-self.port.on("callback", function(obj){
-	(typeof calbackChain[obj.index] == "function") && calbackChain[obj.index](obj.data);
-});
-
 self.port.on("message_add_fail", function(){
 	alert("Failed to make short message.\nCiphertext copied to clipboard.");
 });
+
+var callbackWrap = (function(){
+	callbackChain = [];
+	
+	self.port.on("callback", function(obj){
+		(typeof callbackChain[obj.index] == "function") && callbackChain[obj.index](obj.data);
+	});
+	
+	/** Prepare a function to be called back and return its index
+	 * func: the callback function
+	*/
+	return function(func){
+		return callbackChain.push(func) - 1;
+	}
+}());
 
 /** linkify and fix line breaks in plaintext
  * plaintext: the plaintext to modify
@@ -260,7 +264,7 @@ function decrypt(elem, callback){
 		var hash = ciphertext.slice(1);
 		self.port.emit("message_get", {
 			hash: hash,
-			callback: calbackChain.push(function(plaintext){
+			callback: callbackWrap(function(plaintext){
 				if(plaintext){
 					finish(plaintext, ciphertext);
 				}
@@ -268,13 +272,13 @@ function decrypt(elem, callback){
 					error(plaintext);
 				}
 				elem.removeAttr("crypto_mark");
-			}) - 1,
+			}) ,
 		});
 	}
 	else {
 		self.port.emit("decrypt", {
 			ciphertext: ciphertext,
-			callback: calbackChain.push(function(plaintext){
+			callback: callbackWrap(function(plaintext){
 				if(plaintext){
 					finish(plaintext, ciphertext);
 				}
@@ -282,43 +286,9 @@ function decrypt(elem, callback){
 					error(plaintext);
 				}
 				elem.removeAttr("crypto_mark");
-			}) - 1
+			})
 		});		
 	}
-}
-
-/** Decrypt ciphertext with all available keys. Returns false if no decryption possible
- * ciphertext: the text excluding the crypto tags to decrypt
-*/
-function decryptText(ciphertext){
-	ciphertext = ciphertext.replace(/\)/g, "+").replace(/\(/g, "/");
-	ciphertext = ciphertext.split("|");
-	for(var i=0; i<ciphertext.length; i++){
-		var plaintext;
-		for(var j=0; j<keyList.length; j++){
-			var validDecryption = true;
-			try{
-				if(typeof keyList[j].key === "object" && keyList[j].key.priv){
-					plaintext = ecc.decrypt(keyList[j].key.priv, ciphertext[i]);
-				}
-				else{
-					plaintext = CryptoJS.AES.decrypt(ciphertext[i], keyList[j].key);
-					plaintext = plaintext.toString(CryptoJS.enc.Utf8);
-				}
-				if(!$.trim(plaintext)){
-					throw true;
-				}
-				break;
-			}
-			catch(e){
-				validDecryption = false;
-			}
-		}
-		if(validDecryption){
-			break;
-		}
-	}
-	return validDecryption? setupPlaintext(plaintext) : false;
 }
 
 /** Scan for any crypto on the page and decypt if possible */
@@ -334,30 +304,23 @@ function decryptInterval(){
 		decrypt(elem, function(returnObj){
 			elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 			if(!returnObj.endTagFound){
+				returnObj.plaintext = returnObj.plaintext || "";
 				var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
 				parent.on("click", function(){
 					elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
+					var inFlight = false;
 					setTimeout(function(){
-						if(parent.text().indexOf(endTag)>0){
-							returnObj.plaintext = returnObj.plaintext || "";
-							var text = parent.text();
-							/* Handle the case of ciphertext in plaintext */
-							while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
-								var pre = returnObj.plaintext.substring(0, returnObj.plaintext.indexOf(startTag)),
-								ciphertext = returnObj.plaintext.substring(returnObj.plaintext.indexOf(startTag) + startTag.length, returnObj.plaintext.indexOf(endTag)),
-								post = returnObj.plaintext.substring(returnObj.plaintext.indexOf(endTag) + endTag.length);
-								returnObj.plaintext = pre+decryptText(ciphertext)+post;
-							}
-							if(returnObj.plaintext.length){
-								parent.text(text.substring(0, text.indexOf(returnObj.plaintext+""))+
-											startTag+
-											returnObj.ciphertext+
-											text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length));
-							}
-							else {
-								parent.text(text.replace(UNABLE_TO_DECRYPT+" "+UNABLE_startTag, startTag));
-							}
-							decrypt(parent);
+						if(parent.text().indexOf(endTag)>0 && !inFlight){
+							inFlight = true;
+							self.port.emit("recheckDecryption",{
+								text: parent.text(),
+								returnObj: returnObj,
+								callback: callbackWrap(function(text){
+									inFlight = false;
+									parent.text(text);
+									decrypt(parent);
+								})
+							});
 						}
 					}, 0);
 				});

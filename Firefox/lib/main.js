@@ -236,7 +236,8 @@ exports.main = function(options){
 	
 	pageMod.PageMod({
 		include: ["*"],
-		contentScriptFile: [data.url("lib/aes.js"),
+		contentScriptFile: [data.url("constants.js"),
+							data.url("lib/aes.js"),
 							data.url('lib/ecc.min.js'),
 							data.url('lib/sha256.js'),
 							data.url("lib/jquery-2.1.3.min.js"),
@@ -264,9 +265,21 @@ exports.main = function(options){
 				worker.port.emit("callback", JSON.parse(event.data));
 			};
 			
-			worker.port.on("decrypt", function(decryptObj){
-				decryptObj.keyList = ss.storage.keys;
-				webWorker.postMessage(JSON.stringify({id: "decrypt", data: decryptObj}));
+			/** Send a message to the webworker
+			 * id: the id of the messsage
+			 * data: any data to send to the worker
+			*/
+			function sendWebWorkerMessage(id, data){
+				data.keyList = ss.storage.keys;
+				webWorker.postMessage(JSON.stringify({id: id, data: data}));
+			}
+			
+			worker.port.on("decrypt", function(data){
+				sendWebWorkerMessage("decrypt", data);
+			});
+			
+			worker.port.on("recheckDecryption", function(data){
+				sendWebWorkerMessage("recheckDecryption", data);
 			});
 			
 			worker.port.on("copy_ciphertext", function(text){
@@ -297,8 +310,7 @@ exports.main = function(options){
 							//Success
 							data.hash = obj.hash;
 							data.callback = obj.callback;
-							data.keyList = ss.storage.keys;
-							webWorker.postMessage(JSON.stringify({id: "verifyShortMessage", data: data}));
+							sendWebWorkerMessage("verifyShortMessage", data);
 						}
 						else {
 							//Error

@@ -298,11 +298,11 @@ function decryptInterval(){
 		decrypt(elem, function(returnObj){
 			elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 			if(!returnObj.endTagFound){
+				returnObj.plaintext = returnObj.plaintext || "";
 				var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
 				parent.on("click", function(){
 					setTimeout(function(){
 						if(parent.text().indexOf(endTag)>0){
-							returnObj.plaintext = returnObj.plaintext || "";
 							var text = parent.text();
 							/* Handle the case of ciphertext in plaintext */
 							while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
