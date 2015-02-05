@@ -161,6 +161,10 @@ function decrypt(elem, callback){
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
 	}
 	
+	if(elem.attr("crypto_mark") == "inFlight"){
+		return;
+	}
+	
 	var val = elem.text();
 	if(val.toLowerCase().indexOf(endTag)>0 && endsWith(window.location.hostname, "facebook.com")){
 		elem.parent().find('.text_exposed_hide').remove();
@@ -211,7 +215,7 @@ function decrypt(elem, callback){
 	var ciphertext = index2>0 ? val.substring(index1+startTag.length, index2) : val.substring(index1+startTag.length);
 	if(ciphertext.charAt(0)==NONCE_CHAR){
 		var hash = ciphertext.slice(1);
-		elem.attr("crypto_mark", true);
+		elem.attr("crypto_mark", "inFlight");
 		$.ajax({
 			url: "https://grd.me/message/get",
 			type: "GET",
