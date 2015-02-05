@@ -31,7 +31,7 @@ var dropdowns = (function(){
 			});
 			if(results){
 				for(var i=0; i<results.length; i++){
-					newSuggestions.append("<li>"+results[i].toLowerCase()+"</li>");
+					newSuggestions.append("<li>"+$("<i></i>").text(results[i].toLowerCase()).html()+"</li>");
 				}
 				container.html(newSuggestions.html());
 				container.css("border", container.children().length>1? "" : 0);
