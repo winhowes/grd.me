@@ -29,8 +29,8 @@ function trim(str){
 function decryptText(ciphertext, keyList){
 	ciphertext = ciphertext.replace(/\)/g, "+").replace(/\(/g, "/");
 	ciphertext = ciphertext.split("|");
+	var plaintext = "";
 	for(var i=0; i<ciphertext.length; i++){
-		var plaintext = "";
 		for(var j=0; j<keyList.length; j++){
 			try{
 				if(typeof keyList[j].key === "object" && keyList[j].key.priv){
