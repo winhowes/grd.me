@@ -320,6 +320,7 @@ function decryptInterval(){
 							else {
 								parent.text(text.replace(UNABLE_TO_DECRYPT+" "+UNABLE_startTag, startTag));
 							}
+							decrypt(parent);
 						}
 					}, 0);
 				});
