@@ -488,7 +488,8 @@ $("#publishForm").on("submit", function(e){
 			pub: pub
 		},
 		success: function(data){
-			if(data && data.status && data.status[0] && !data.status[0].code){
+			if(data && data.status){
+				data.keys = data.keys || [];
 				var notFound = true;
 				for(var i=0; i<data.keys.length; i++){
 					try{
