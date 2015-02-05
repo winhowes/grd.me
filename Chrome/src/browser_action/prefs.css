@@ -348,6 +348,10 @@ ul {
 	cursor: pointer;
 	list-style: none;
 	padding: 5px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: inline-block;
 }
 
 .dropdown-container li.active {
