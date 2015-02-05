@@ -516,6 +516,9 @@ $("#publishForm").on("submit", function(e){
 					$("#existsError").stop(true).fadeIn();
 				}
 			}
+			else {
+				$("#publishingError").stop(true).fadeIn();
+			}
 		},
 		error: function(){
 			$("#publishingError").stop(true).fadeIn();
