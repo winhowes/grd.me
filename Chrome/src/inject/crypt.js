@@ -71,6 +71,9 @@ function strip(html){
 */
 function encrypt(shortEncrypt){
 	var active = document.activeElement;
+	while(active.shadowRoot){
+		active = active.shadowRoot.activeElement;
+	}
 	var plaintext = active.value || active.innerHTML;
 	if(!plaintext.length){
 		return;
