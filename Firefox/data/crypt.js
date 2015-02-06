@@ -110,6 +110,9 @@ function simulateKeyPress(character, target) {
 function encrypt(shortEncrypt){
 	var active = document.activeElement;
 	var plaintext = active.value || active.innerHTML;
+	if(!plaintext.length){
+		return;
+	}
 	if(!active.value && active.innerHTML){
 		if(!$(active).attr("contenteditable")){
 			return;
