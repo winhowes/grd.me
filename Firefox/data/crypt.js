@@ -219,6 +219,8 @@ function decrypt(elem, callback){
 	var val = elem.text();
 	if(val.toLowerCase().indexOf(endTag)>0 && endsWith(window.location.hostname, "facebook.com")){
 		elem.parent().find('.text_exposed_hide').remove();
+		elem.parent().find('.text_exposed_show').show();
+		elem.parents(".text_exposed_root").addClass("text_exposed");
 		val = elem.text();
 	}
 	var html = elem.html();
