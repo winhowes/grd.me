@@ -1,7 +1,7 @@
 Grd Me
 ======
 
-A browser plugin that provides encrypted communication across any web platform.  We support aes and ecc. Available at https://grd.me.
+Grd Me (/ɡärd mē/) is an open source browser plugin that provides encrypted communication across any web platform.  We support aes and ecc. Available at https://grd.me.
 
 How to Use
 ==========
