@@ -37,11 +37,18 @@ var callbackWrap = (function(){
 	}
 }());
 
+/** Sanitize a string
+ * str: the string to sanitize
+*/
+function sanitize(str){
+	return $("<i>", {text: str}).html();
+}
+
 /** linkify and fix line breaks in plaintext
  * plaintext: the plaintext to modify
 */
 function setupPlaintext(plaintext){
-	return linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>"));
+	return linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
 }
 
 /** Generate a random string
@@ -195,7 +202,7 @@ function encrypt(shortEncrypt){
 function decrypt(elem, callback){
 	/** Report error decrypting message */
 	function error(plaintext){
-		elem.html(val.substring(0, index1) + $("<i></i>").text(UNABLE_TO_DECRYPT+" "+UNABLE_startTag+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, UNABLE_endTag)).html());
+		elem.html(val.substring(0, index1) + sanitize(UNABLE_TO_DECRYPT+" "+UNABLE_startTag+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, UNABLE_endTag)));
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
 	}
 	

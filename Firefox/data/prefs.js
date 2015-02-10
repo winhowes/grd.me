@@ -30,6 +30,13 @@ function getRandomString(length) {
 	return rand;
 }
 
+/** Sanitize a string
+ * str: the string to sanitize
+*/
+function sanitize(str){
+	return $("<i>", {text: str}).html();
+}
+
 $(".inputError, #overlay, .popup").hide();
 
 /** Create a dropdown providing suggestions for others' uids */
@@ -80,23 +87,17 @@ $("#searchUIDForm").on("submit", function(e){
 							var revoked = data.keys[i].revoke_sig && ecc.verify(data.keys[i].pub, JSON.parse(data.keys[i].revoke_sig), "REVOKED");
 							var already_exists = !revoked && pubKeyMap[data.keys[i].pub];
 							count++;
-							$("#searchResults").append("<li>"+
-														  (revoked? "<div class='revoked'>" : "")+
-														    (already_exists? "<div class='already_exists'>[Already in Keychain]</div>" : "")+
-															"<a class='showHideKey'>Show Key</a>"+
-															(revoked? "<span class='revoked_msg'>[Revoked]</span>" : "")+
-															"<div>"+
-															  "<span class='key partialKey'>Key: "+data.keys[i].pub+"</span>"+
-															  (revoked? "" : "<button class='btn blue addKey' uid='"+data.uid+"' pub='"+data.keys[i].pub+"'>Add</button>")+
-															"</div>"+
-															(revoked? "<div class='timestamp'>"+
-															  "Revoked: "+$("<i></i>").text(data.keys[i].revoked_at).html()+
-															"</div>" : "")+
-															"<div class='timestamp'>"+
-															  "Created: "+$("<i></i>").text(data.keys[i].created_at).html()+
-															"</div>"+
-														  (revoked? "</div>" : "")+
-													   "</li>");
+							$("#searchResults")
+								.append($("<li>")
+									.append(revoked? $("<div>", {class: "revoked"}) : "")
+									.append(already_exists? $("<div>", {class: 'already_exists', text: '[Already in Keychain]'}) : "")
+									.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
+									.append(revoked? $("<span>", {class: 'revoked_msg', text: '[Revoked]'}) : "")
+									.append($("<div>")
+										.append($("<span>", {class: 'key partialKey', text: "Key: "+data.keys[i].pub}))
+										.append(!revoked? $("<button>", {class: 'btn blue addKey', uid: data.uid, pub: data.keys[i].pub, text: "Add"}) : ""))
+									.append(revoked? $("<div>", {class: 'timestamp', text: "Revoked: "+data.keys[i].revoked_at}): "")
+									.append($("<div>", {class: 'timestamp', text: "Created: "+data.keys[i].created_at})));
 						}
 					}
 					catch(e){
@@ -324,7 +325,9 @@ $("#keyList").on("click", ".delete", function(e){
 	var description = $.trim($(this).find("input").val());
 	if(description){
 		$(this).hide()
-		.siblings(".description").html($("<i></i>").text(description).html()+"<i class='pencil'></i>").show();
+		.siblings(".description").html(sanitize(description))
+		.append($("<i>", {class: 'pencil'}))
+		.show();
 		self.port.emit("updateDescription", {
 			description: description,
 			index: $(this).parents("li").attr("index")
@@ -343,7 +346,9 @@ $("#keyList").on("click", ".delete", function(e){
 	var description = $.trim($(this).val());
 	if(description){
 		$(this).parent().hide()
-		.siblings(".description").html($("<i></i>").text(description).html()+"<i class='pencil'></i>").show();
+		.siblings(".description").html(sanitize(description))
+		.append($("<i>", {class: 'pencil'}))
+		.show();
 		self.port.emit("updateDescription", {
 			description: description,
 			index: $(this).parents("li").attr("index")
@@ -372,15 +377,19 @@ $("#keyList").on("click", ".delete", function(e){
 		var keyList = $("<ul></ul>");
 		for(var i=0; i<keyChain.length; i++){
 			if(keyChain[i].key.pub && keyChain[i].key.priv){
-				keyList.append("<li index='"+i+(count? "" : "' class='active")+"'>"+
-									"<a class='showHideKey'>Show key</a>"+
-									"<div><div class='key partialKey'>Key: <span>"+
-									"<br><b class='pub'>pub</b>: "+keyChain[i].key.pub+
-									"<br><b class='priv'>priv</b>: "+keyChain[i].key.priv+
-									"</span></div></div>"+
-									"<div class='description'>"+$("<i></i>").text(keyChain[i].description).html()+"</div>"+
-									"<div class='activeIndicator'></div>"+
-								"</li>");
+				keyList.append($("<li>").attr({index: i, class: (count? "" : "active")})
+					.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
+					.append($("<div>")
+						.append($("<div>", {class: 'key partialKey', text: "Key: "})
+							.append($("<span>")
+								.append($("<br>"))
+								.append($("<b>", {class: "pub", text: "pub"}))
+								.append(": "+sanitize(keyChain[i].key.pub))
+								.append($("<br>"))
+								.append($("<b>", {class: "priv", text: "priv"}))
+								.append(": "+sanitize(keyChain[i].key.priv)))))
+					.append($("<div>", {class: "description", text: keyChain[i].description}))
+					.append($("<div>", {class: "activeIndicator"})));
 				count++;
 			}
 		}
@@ -399,14 +408,16 @@ function sharedKeyPage2(){
 	var count = 0;
 	for(var i=0; i<keyChain.length; i++){
 		if(keyChain[i].key.pub && !keyChain[i].key.priv){
-			keyList.append("<li index='"+i+(count? "" : "' class='active")+"'>"+
-							"<a class='showHideKey'>Show key</a>"+
-							"<div><div class='key partialKey'>Key: <span>"+
-							"<br><b class='pub'>pub</b>: "+keyChain[i].key.pub+
-							"</span></div></div>"+
-							"<div class='description'>"+$("<i></i>").text(keyChain[i].description).html()+"</div>"+
-							"<div class='activeIndicator'></div>"+
-						"</li>");
+			keyList.append($("<li>").attr({index: i, class: (count? "" : "active")})
+				.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
+				.append($("<div>")
+					.append($("<div>", {class: 'key partialKey', text: "Key: "})
+						.append($("<span>")
+							.append($("<br>"))
+							.append($("<b>", {class: "pub", text: "pub"}))
+							.append(": "+sanitize(keyChain[i].key.pub)))))
+				.append($("<div>", {class: "description", text: keyChain[i].description}))
+				.append($("<div>", {class: "activeIndicator"})));
 			count++;
 		}
 	}
@@ -567,23 +578,42 @@ self.port.on("displayKeys", function(keys){
 			hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv;
 			pubKeyMap[keys[i].key.pub] = true;
 		}
-		newKeyList.append("<li index='"+i+"' "+(activeIndex[i]? "class='active'" : "")+">"+
-						    "<a class='showHideKey'>Show key</a>"+
-							"<div class='key fullToggle'>Key: <span>"+
-							(typeof keys[i].key === "object"? "<br><b class='pub'>pub</b>: "+keys[i].key.pub+(keys[i].key.priv? "<br><b class='priv'>priv</b>: "+keys[i].key.priv : "") : $("<i></i>").text(keys[i].key).html())+
-							"</span></div>"+
-							"<div class='description'>"+$("<i></i>").text(keys[i].description).html()+(i?"<i class='pencil'></i>" : "")+"</div>"+
-							(i? "<form class='descriptionForm'><input placeholder='Description' maxlength='50'></form>" : "<span class='not_secure'>[Not Secure]</span>")+
-							(i && !keys[i].key.published? "<div class='delete'>x</div>" : "")+
-							"<div class='activeIndicator'></div>"+
-							/* Add the appropriate buttons (revoke, publish, share) */
-							(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
-								"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Publish Public Key</button>" :
-								typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
-									"<button class='revoke red btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Revoke</button> "+
-									"<button class='publish blue btn' pub='"+keys[i].key.pub+"' priv='"+keys[i].key.priv+"'>Republish Public Key</button>" :
-									typeof keys[i].key !== "object" && i? "<button class='share blue btn' key='"+$("<i></i>").text(keys[i].key).html()+"'>Share Key</button>" : "")+
-						   "</li>");
+		newKeyList.append($("<li>").attr({
+				index: i,
+				class: activeIndex[i]? "active" : ""
+			})
+			.append($("<a>", {class: "showHideKey", text: "Show Key"}))
+			.append($("<div>", {class: "key fullToggle", text: "Key: "})
+				.append($("<span>")
+					.append(function(){
+						var $return = $("<span>");
+						typeof keys[i].key === "object"?
+							$return.append($("<br>"))
+							.append($("<b>", {class: "pub", text: "pub"}))
+							.append(": "+sanitize(keys[i].key.pub)) : sanitize(keys[i].key);
+						keys[i].key.priv?
+							$return.append($("<br>"))
+							.append($("<b>", {class: "priv", text: "priv"}))
+							.append(": "+sanitize(keys[i].key.priv)) : "";
+						return $return.html();
+					})
+				)
+			)
+			.append($("<div>", {class: "description", text: sanitize(keys[i].description)})
+				.append(i? $("<i>", {class: "pencil"}) : ""))
+			.append(i? $("<form>", {class: "descriptionForm"})
+				.append($("<input>", {placeholder: "Description", maxlength: 50})) :
+				$("<span>", {class: "not_secure", text: "[Not Secure]"}))
+			.append(i && !keys[i].key.published? $("<div>", {class: "delete", text: "x"}) : "")
+			.append($("<div>", {class: "activeIndicator"}))
+			/* Add the appropriate buttons (revoke, publish, share) */
+			.append(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
+				$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Publish Public Key"}) :
+				typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
+					[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
+					$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
+					typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
+		);
 	}
 	keyList.html(newKeyList.html());
 });
@@ -735,14 +765,12 @@ function acceptableSharedKeysPopup(keys){
 		var list = $("<ul></ul>");
 		for(var i=0; i<keys.length; i++){
 			var key = $.trim($("<i></i>").text(keys[i].key).html());
-			list.append("<li>"+
-							"<form key='"+key+"' index='"+i+"'>"+
-								"<div>Key: "+key+"</div>"+
-								"<input placeholder='Description' maxlength='50' value='"+$("<i></i>").text(keys[i].from).html()+"'>"+
-								"<button class='blue btn' type='submit'>Add</button>"+
-								"<button class='red btn remove' type='button'>Ignore</button>"+
-							"</form>"+
-						"</li>");
+			list.append($("<li>")
+				.append($("<form>").attr({key: key, index: i})
+					.append($("<div>", {text: "Key: "+key}))
+					.append($("<input>", {placeholder: "Description", maxlength: 50, value: sanitize(keys[i].from)}))
+					.append($("<button>", {class: "blue btn", type: "submit", text: "Add"}))
+					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
 		}
 		$("#acceptableSharedKeys ul").html(list.html());
 		$("#overlay, #acceptableSharedKeys").show();
