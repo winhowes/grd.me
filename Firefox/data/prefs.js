@@ -599,7 +599,7 @@ self.port.on("displayKeys", function(keys){
 					})
 				)
 			)
-			.append($("<div>", {class: "description", text: sanitize(keys[i].description)})
+			.append($("<div>", {class: "description", text: keys[i].description})
 				.append(i? $("<i>", {class: "pencil"}) : ""))
 			.append(i? $("<form>", {class: "descriptionForm"})
 				.append($("<input>", {placeholder: "Description", maxlength: 50})) :
