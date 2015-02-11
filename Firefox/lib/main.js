@@ -47,12 +47,6 @@ var button = require("sdk/ui/button/toggle").ToggleButton({
 	onChange: handleChange
 });
 
-preferences.on("decryptIndicator", function(){
-	for(var i=0; workers.length; i++){
-		workers[i].port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
-	}
-});
-
 var prefPanel = Panel({
 	contentURL: data.url("prefs.html"),
 	contentStyleFile: data.url("prefs.css"),
@@ -218,13 +212,13 @@ exports.main = function(options){
 	var secureTextPanel = Panel({
 		contentURL: data.url("secureText.html"),
 		contentStyleFile: data.url("secureText.css"),
-		contentScriptFile: [data.url("constants.js"),
-							data.url("lib/aes.js"),
+		contentScriptFile: [data.url("lib/aes.js"),
 							data.url('lib/ecc.min.js'),
 							data.url('lib/sha256.js'),
 							data.url("lib/jquery-2.1.3.min.js"),
 							data.url("lib/mousetrap.min.js"),
 							data.url("lib/linkify.min.js"),
+							data.url("constants.js"),
 							data.url("crypt.js")],
 		width: 300,
 		height: 235
@@ -244,13 +238,13 @@ exports.main = function(options){
 	
 	pageMod.PageMod({
 		include: ["*"],
-		contentScriptFile: [data.url("constants.js"),
-							data.url("lib/aes.js"),
+		contentScriptFile: [data.url("lib/aes.js"),
 							data.url('lib/ecc.min.js'),
 							data.url('lib/sha256.js'),
 							data.url("lib/jquery-2.1.3.min.js"),
 							data.url("lib/mousetrap.min.js"),
 							data.url("lib/linkify.min.js"),
+							data.url("constants.js"),
 							data.url("crypt.js")],
 		contentScriptWhen: "ready",
 		attachTo: ["existing", "top", "frame"],
