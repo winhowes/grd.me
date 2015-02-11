@@ -748,7 +748,7 @@ function displayKeys(){
 						typeof keys[i].key === "object"?
 							$return.append($("<br>"))
 							.append($("<b>", {class: "pub", text: "pub"}))
-							.append(": "+sanitize(keys[i].key.pub)) : sanitize(keys[i].key);
+							.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
 						keys[i].key.priv?
 							$return.append($("<br>"))
 							.append($("<b>", {class: "priv", text: "priv"}))
