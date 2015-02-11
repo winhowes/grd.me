@@ -9,6 +9,7 @@ var ss = require("sdk/simple-storage");
 var Request = require("sdk/request").Request;
 var notifications = require("sdk/notifications");
 var timers = require("sdk/timers");
+var preferences = require("sdk/simple-prefs");
 var workers = [];
 
 ss.storage.keys = ss.storage.keys || [{
@@ -44,6 +45,12 @@ var button = require("sdk/ui/button/toggle").ToggleButton({
 	label: "Grd Me Key Manager",
 	icon: data.url("icons/icon64.png"),
 	onChange: handleChange
+});
+
+preferences.on("decryptIndicator", function(){
+	for(var i=0; workers.length; i++){
+		workers[i].port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
+	}
 });
 
 var prefPanel = Panel({
@@ -255,6 +262,7 @@ exports.main = function(options){
 			});
 			
 			worker.port.emit("secret", {active: ss.storage.activeKeys, keys: ss.storage.keys});
+			worker.port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
 			
 			var {Cu} = require("chrome");
 			var {Worker} = Cu.import(data.url("dummy.jsm"));

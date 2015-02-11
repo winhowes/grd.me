@@ -2,12 +2,17 @@
 
 var secrets = [],
 keyList = [],
+decryptIndicator = false,
 panelMode = false;
 
 self.port.on("secret", function(secret_obj){
 	secrets = secret_obj.active;
 	keyList = secret_obj.keys;
 });
+
+self.port.on("decryptIndicator", function(indicate){
+	decryptIndicator = indicate;
+})
 
 self.port.on("panelMode", function(){
 	panelMode = true;
@@ -211,7 +216,7 @@ function decrypt(elem, callback){
 	 * ciphertext: the encrypted text/nonce text
 	*/
 	function finish(plaintext, ciphertext){
-		plaintext = setupPlaintext(plaintext);
+		plaintext = (decryptIndicator? DECRYPTED_MARK+" " : "") + setupPlaintext(plaintext);
 		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
 		var start = html.substring(0, html.indexOf(startTag));
 		val = start + plaintext + end;

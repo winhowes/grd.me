@@ -9,5 +9,12 @@
   "version": "2.0.2",
   "permissions": {"private-browsing": true},
   "icon": "data/icons/icon48.png",
-  "icon64": "data/icons/icon64.png"
+  "icon64": "data/icons/icon64.png",
+  "preferences": [{
+	"name": "decryptIndicator",
+	"title": "Decrypt Indicator",
+	"description": "Show \"[Decrypted Text]\" in front of any successfully decrypted text.",
+	"type": "bool",
+	"value": false
+  }]
 }
