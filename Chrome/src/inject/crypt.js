@@ -1,13 +1,8 @@
 /** This file handles the page encryption and decryption */
 
-var startTag = '~~grdme~~',
-endTag = '~~!grdme~~',
-NONCE_CHAR = "!",
-UNABLE_TO_DECRYPT = "[Unable to decrypt message]",
-UNABLE_startTag = "[start tag]",
-UNABLE_endTag = "[end tag]",
-secrets = [],
+var secrets = [],
 keyList = [],
+decryptIndicator = false,
 panelMode = false;
 
 var port = chrome.runtime.connect();
@@ -30,6 +25,13 @@ port.onMessage.addListener(function(msg) {
 		});
 	}
 });
+
+/** Get the decrypt Indicator */
+chrome.storage.sync.get({
+    decryptIndicator: false
+  }, function(items) {
+    decryptIndicator = items.decryptIndicator;
+  });
 
 /** Sanitize a string
  * str: the string to sanitize
@@ -166,6 +168,7 @@ function decrypt(elem, callback){
 	 * ciphertext: the encrypted text/nonce text
 	*/
 	function finish(plaintext, ciphertext){
+		plaintext = (decryptIndicator? DECRYPTED_MARK+" " : "") + plaintext;
 		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
 		var start = html.substring(0, html.indexOf(startTag));
 		val = start + plaintext + end;
