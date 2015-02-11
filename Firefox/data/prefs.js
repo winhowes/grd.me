@@ -105,16 +105,16 @@ $("#searchUIDForm").on("submit", function(e){
 					}
 				}
 				if(!count){
-					$("#searchResults").html("<li>No results found</li>");
+					$("#searchResults").html($("<li>", {text: "No results found"}));
 				}
 			}
 			else{
-				$("#searchResults").html("<li>No results found</li>");
+				$("#searchResults").html($("<li>", {text: "No results found"}));
 			}
 		},
 		error: function(){
 			$("#searchLoading").hide();
-			$("#searchResults").html("<li>Error fetching results</li>");
+			$("#searchResults").html($("<li>", {text: "Error fetching results"}));
 		}
 	});
 });

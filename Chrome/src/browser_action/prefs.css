@@ -221,7 +221,7 @@ ul {
 	word-break: break-all;
 }
 
-.key {
+.key.fullToggle {
 	display: none;
 }
 

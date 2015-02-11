@@ -31,6 +31,13 @@ port.onMessage.addListener(function(msg) {
 	}
 });
 
+/** Sanitize a string
+ * str: the string to sanitize
+*/
+function sanitize(str){
+	return $("<i>", {text: str}).html();
+}
+
 /** Check that a string ends with another substring
  * subject: the string to search through
  * suffix: the proposed suffix of the subject
@@ -150,7 +157,7 @@ function encrypt(shortEncrypt){
 function decrypt(elem, callback){
 	/** Report error decrypting message */
 	function error(){
-		elem.html(val.substring(0, index1) + $("<i></i>").text(UNABLE_TO_DECRYPT+" "+UNABLE_startTag+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, UNABLE_endTag)).html());
+		elem.html(val.substring(0, index1) + sanitize(UNABLE_TO_DECRYPT+" "+UNABLE_startTag+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, UNABLE_endTag)));
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
 	}
 	
@@ -294,7 +301,7 @@ function decryptText(ciphertext){
 			break;
 		}
 	}
-	return validDecryption? linkify($("<i></i>").text(plaintext).html().replace(/\n/g, "<br>")) : false;
+	return validDecryption? linkify(sanitize(plaintext).replace(/\n/g, "<br>")) : false;
 }
 
 /** Scan for any crypto on the page and decypt if possible */

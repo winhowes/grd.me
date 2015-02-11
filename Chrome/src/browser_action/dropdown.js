@@ -21,17 +21,17 @@ var dropdowns = (function(){
 				container.html("").css("border", 0);
 				return;
 			}
-			var newSuggestions = $("<ul><li class='active'>"+$("<i></i>").text(text).html()+"</li></ul>");
+			var newSuggestions = $("<ul>").append($("<li>", {class: "active", text: text}));
 			var results = inputFunction(text, function(results){
 				for(var i=0; i<results.length; i++){
-					newSuggestions.append("<li>"+$("<i></i>").text(results[i].toLowerCase()).html()+"</li>");
+					newSuggestions.append($("<li>", {text: results[i].toLowerCase()}));
 				}
 				container.html(newSuggestions.html());
 				container.css("border", container.children().length>1? "" : 0);
 			});
 			if(results){
 				for(var i=0; i<results.length; i++){
-					newSuggestions.append("<li>"+$("<i></i>").text(results[i].toLowerCase()).html()+"</li>");
+					newSuggestions.append($("<li>", {text: results[i].toLowerCase()}));
 				}
 				container.html(newSuggestions.html());
 				container.css("border", container.children().length>1? "" : 0);
