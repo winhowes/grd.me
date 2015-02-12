@@ -92,6 +92,15 @@ function main(keys, activeKeys){
 	});
 }
 
+/** Initialize preferences */	
+chrome.storage.sync.get("decryptIndicator", function(items) {
+	if(items.decryptIndicator!==false){
+		chrome.storage.sync.set({
+			decryptIndicator: true
+		});
+	}
+});
+
 /** Initialize Random Map */
 chrome.storage.local.get("randomMap", function(items){
 	var randomMap = (items&&items.randomMap) || {};
