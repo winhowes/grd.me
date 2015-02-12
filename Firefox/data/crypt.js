@@ -107,6 +107,9 @@ function strip(html){
    return tmp.textContent || tmp.innerText || "";
 }
 
+/** Mark a piece of text as decrypted - only works if the decryptIndicator is true
+ * plaintext: the text to be marked
+*/
 function decryptMark(plaintext){
 	if(decryptIndicator){
 		var wrapper = $("<i>").append($("<grdme_decrypt>").html(plaintext));
