@@ -215,6 +215,10 @@ prefPanel.on("show", function(){
 });
 
 exports.main = function(options){
+	var attachTo = ["top", "frame"];
+	if(options.loadReason === "install"){
+		attachTo.push("existing");
+	}
 	var secureTextPanel = Panel({
 		contentURL: data.url("secureText.html"),
 		contentStyleFile: data.url("secureText.css"),
@@ -253,7 +257,7 @@ exports.main = function(options){
 							data.url("constants.js"),
 							data.url("crypt.js")],
 		contentScriptWhen: "ready",
-		attachTo: ["existing", "top", "frame"],
+		attachTo: attachTo,
 		onAttach: function(worker){
 			workers.push(worker);
 			
