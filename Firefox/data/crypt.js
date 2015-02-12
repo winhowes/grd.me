@@ -88,6 +88,14 @@ function strip(html){
    return tmp.textContent || tmp.innerText || "";
 }
 
+function decryptMark(plaintext){
+	if(decryptIndicator){
+		var wrapper = $("<i>").append($("<grdme_decrypt>").html(plaintext));
+		plaintext = DECRYPTED_MARK+" "+wrapper.html();
+	}
+	return plaintext;
+}
+
 /** Simulte typing a key
  * character: a single character string to be pressed
  * [target]: an optional argument for where to dispatch the event. Defaults to the active element
@@ -216,7 +224,7 @@ function decrypt(elem, callback){
 	 * ciphertext: the encrypted text/nonce text
 	*/
 	function finish(plaintext, ciphertext){
-		plaintext = (decryptIndicator? DECRYPTED_MARK+" " : "") + setupPlaintext(plaintext);
+		plaintext = decryptMark(setupPlaintext(plaintext));
 		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
 		var start = html.substring(0, html.indexOf(startTag));
 		val = start + plaintext + end;
