@@ -16,7 +16,7 @@ setTimeout(function(){
 		.append($("<span>").html("&#x1f512;").css(css_obj))
 		.append($("<span>").html("&#xfffff;").css(css_obj)));
 	DECRYPTED_MARK = "<grdme style='font-weight:bold;'>" +
-		(charCheck.find("span").first().width() ===
-		charCheck.find("span").last().width()? "[Decrypted Text]" :
-		"&#x1f512;") + "</grdme>";
+		(Math.abs(charCheck.find("span").first().width()
+				  - charCheck.find("span").last().width()) < 2 ?
+		"[Decrypted Text]" : "&#x1f512;") + "</grdme>";
 }, 0);
