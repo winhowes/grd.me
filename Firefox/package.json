@@ -6,14 +6,14 @@
   "author": "Winston Howes",
   "homepage": "https://grd.me",
   "license": "MIT",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "permissions": {"private-browsing": true},
   "icon": "data/icons/icon48.png",
   "icon64": "data/icons/icon64.png",
   "preferences": [{
 	"name": "decryptIndicator",
 	"title": "Decrypt Indicator",
-	"description": "Show \"[Decrypted Text]\" in front of any successfully decrypted text.",
+	"description": "A lock icon or \"[Decrypted Text]\" (on some computers) will be displayed in front of any successfully decrypted text. You may need to refresh old pages to see this.",
 	"type": "bool",
 	"value": false
   }]

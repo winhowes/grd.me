@@ -47,6 +47,12 @@ var button = require("sdk/ui/button/toggle").ToggleButton({
 	onChange: handleChange
 });
 
+preferences.on("decryptIndicator", function(){
+	for(var i=0; workers.length; i++){
+		workers[i] && workers[i].port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
+	}
+});
+
 var prefPanel = Panel({
 	contentURL: data.url("prefs.html"),
 	contentStyleFile: data.url("prefs.css"),
