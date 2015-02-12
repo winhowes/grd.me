@@ -8,7 +8,7 @@ UNABLE_endTag = "[end tag]";
 
 setTimeout(function(){
 	container = $("<i>");
-	$("<grdme>").attr("title", "Decrypted by Grd Me").css({
+	$("<grdme>").attr("title", "Decrypted with Grd Me").css({
 		"width": "15px",
 		"height": "16px",
 		"display": "inline-block",
