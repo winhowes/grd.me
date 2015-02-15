@@ -12,6 +12,8 @@ How to Use
 3. To add a new key press the lock icon in the browser toolbar and enter/generate your new key and description. To toggle which key is active simply click on the key (shift+click for multiple keys). Note that you may have to refresh the page to see some decryptions when adding a new key.
 5. Encrypt stuff!
 
+For more details about Grd Me features and protocols, visit https://grd.me/docs.
+
 Compatibility
 ==============
 Right now this browser plugin is supported in Firefox (≥ 21) and Chrome (≥ 11).
