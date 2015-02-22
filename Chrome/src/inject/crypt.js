@@ -102,6 +102,13 @@ function strip(html){
    return tmp.textContent || tmp.innerText || "";
 }
 
+/** Remove the attributes from all elements in html string
+ * html: the html string to strip attributes from
+*/
+function clearAttributes(html) {
+	return html.replace(/<(\w+)(.|[\r\n])*?>/g, '<$1>');
+}
+
 /** linkify and fix line breaks in plaintext
  * plaintext: the plaintext to modify
 */
@@ -129,10 +136,10 @@ function encrypt(shortEncrypt){
 			return;
 		}
 		/* Transfer div's into br's using endTag as intermediate as it's not in string */
-		var $el = $("<i></i>");
-		$el.html(plaintext).find("div").each(function(i,e){
+		var $el = $("<i>");
+		$el.html(clearAttributes(plaintext)).find("div").each(function(i,e){
 			if(!$.trim($(e).text()).length){
-				$(e).html("")
+				$(e).html("");
 			}
 		});
 		plaintext = $el.html();

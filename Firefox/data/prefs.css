@@ -2,6 +2,11 @@
 	font-family: Arial;
 }
 
+.help_links {
+	margin-bottom: 5px;
+	color: #f5f5f5;
+}
+
 #onlyPubWarning {
 	position: fixed;
 	background: #FFF9D7;
