@@ -6,10 +6,10 @@ Grd Me (/ɡärd mē/) is an open source browser plugin that provides encrypted c
 How to Use
 ==========
 
-1. To encrypt text simply type in a text box and press ctrl/cmd+e to encrypt the text. In certain textboxes if your text is too long, the encrypted text (ciphertext) may be copied to your clipboard, in which case you must paste it in the textbox.
-4. If your post is space constrained use ctrl/cmd+shift+e to send the encrypted message to our server and post a shortened hash of that message instead. The message will be fetched and then decrypted just like any other encrypted message.
-2. To type in a JavaScript-protected textbox, press ctrl/cmd+alt+e to open a protected textbox and write your message there. To encrypt that text press ctrl/cmd+e and the ciphertex will be copied to your clipboard.
-3. To add a new key press the lock icon in the browser toolbar and enter/generate your new key and description. To toggle which key is active simply click on the key (shift+click for multiple keys). Note that you may have to refresh the page to see some decryptions when adding a new key.
+1. To encrypt text simply type in a text box and press `ctrl`/`cmd`+`e` to encrypt the text. In certain textboxes if your text is too long, the encrypted text (ciphertext) may be copied to your clipboard, in which case you must paste it in the textbox.
+2. If your post is space constrained use `ctrl`/`cmd`+`shift`+`e` to send the encrypted message to our server and post a shortened hash of that message instead. The message will be fetched and then decrypted just like any other encrypted message.
+3. To type in a JavaScript-protected textbox, press `ctrl`/`cmd`+`alt`+`e` to open a protected textbox and write your message there. To encrypt that text press ctrl/cmd+e and the ciphertex will be copied to your clipboard.
+4. To add a new key press the lock icon in the browser toolbar and enter/generate your new key and description. To toggle which key is active simply click on the key (`shift`+click for multiple keys). Note that you may have to refresh the page to see some decryptions when adding a new key.
 5. Encrypt stuff!
 
 For more details about Grd Me features and protocols, visit https://grd.me/docs.
