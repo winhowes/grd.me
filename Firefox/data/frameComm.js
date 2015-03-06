@@ -30,7 +30,7 @@ function receiveMessage(event){
 			msg(data.uid, {id: "decryptIndicator", decryptIndicator: decryptIndicator});
 		}
 		else if(data.id == "adjustHeight"){
-			$("iframe[grdMeFrameUID='"+data.uid+"']").height(data.height);
+			$("iframe[grdMeFrameUID='"+data.uid+"']").height(data.height).css("margin-bottom", "-5px");
 		}
 		else if(data.id == "click"){
 			if(data.target === "_blank"){
