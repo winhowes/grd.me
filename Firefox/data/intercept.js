@@ -295,8 +295,9 @@ $(function(){
 		margin: 0,
 		height: "auto"
 	});
+	
 	container.on("mouseover", "grdme", function(){
-		$(this).next("grdme_decrypt").css("font-weight", "bold");
+		$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
 	}).on("mouseleave", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "");
 	});
