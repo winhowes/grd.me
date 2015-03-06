@@ -46,7 +46,8 @@ self.port.on("preparedIframe", function(uid){
 	elem.append($("<iframe>", {src: 'https://decrypt.grd.me/'+uid, "grdMeFrameUID" : uid, seamless: "seamless"}).css({
 		border: 0,
 		width: elem.css("display") === "block"? elem.width() > 0 ? elem.outerWidth() : "auto" : "100%",
-		height: elem.outerHeight()
+		height: elem.outerHeight(),
+		"margin-bottom": "-5px"
 	}).hide());
 });
 
