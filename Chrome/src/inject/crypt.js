@@ -352,7 +352,7 @@ function decryptText(ciphertext){
 
 /** Scan for any crypto on the page and decypt if possible */
 function decryptInterval(){
-	$(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"])').each(function(i, e){
+	$(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"]):not(textarea):not(input):not(script)').each(function(i, e){
 		var elem = $(e);
 		if(elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
 			//ASSUMPTION: an element not containing a crypto message itself will never contain a crypto message

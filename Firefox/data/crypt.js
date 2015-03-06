@@ -1,19 +1,31 @@
 /** This file handles the page encryption and decryption */
 
-var secrets = [],
-keyList = [],
-decryptIndicator = false,
+var secrets = (self.options && self.options.active) || [],
+keyList = (self.options && self.options.keys) || [],
+decryptIndicator = (self.options && self.options.decryptIndicator) || false,
+sandboxDecrypt = (self.options && self.options.sandboxDecrypt) || false,
 panelMode = false;
 
+/** Called to update the keyring and the active keys */
 self.port.on("secret", function(secret_obj){
 	secrets = secret_obj.active;
 	keyList = secret_obj.keys;
 });
 
+/** Called to toggle displaying the decrypt indicator */
 self.port.on("decryptIndicator", function(indicate){
 	decryptIndicator = indicate;
-})
+	$("[grdMeFrameUID]").each(function(i, e){
+		msg($(e).attr("grdMeFrameUID"), {id: "decryptIndicator", decryptIndicator: indicate});
+	});
+});
 
+/** Called to toggle sandboxed decryption */
+self.port.on("sandboxDecrypt", function(indicate){
+	sandboxDecrypt = indicate;
+});
+
+/** Called if crypt is to run into panel mode */
 self.port.on("panelMode", function(){
 	panelMode = true;
 	Mousetrap.unbind('mod+alt+e');
@@ -23,10 +35,22 @@ self.port.on("panelMode", function(){
 	});
 });
 
+/** Notify user that their message was copied to clipboard */
 self.port.on("message_add_fail", function(){
 	alert("Failed to make short message.\nCiphertext copied to clipboard.");
 });
 
+/** Append iframe of decrypted message */
+self.port.on("preparedIframe", function(uid){
+	var elem = $("[grdMeUID='"+uid+"']");
+	elem.append($("<iframe>", {src: 'https://decrypt.grd.me/'+uid, "grdMeFrameUID" : uid, seamless: "seamless"}).css({
+		border: 0,
+		width: elem.css("display") === "block"? elem.width() > 0 ? elem.outerWidth() : "auto" : "100%",
+		height: elem.outerHeight()
+	}).hide());
+});
+
+/** Create the grdMe lock icon and establish the frame secret */
 setTimeout(function(){
 	container = $("<i>");
 	$("<grdme>").attr("title", "Decrypted with Grd Me").css({
@@ -39,6 +63,8 @@ setTimeout(function(){
 	}).appendTo(container);
 	DECRYPTED_MARK = container.html();
 	
+	FRAME_SECRET = getRandomString(64);
+	
 	$("body").on("mouseover", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "bold");
 	}).on("mouseleave", "grdme", function(){
@@ -46,6 +72,9 @@ setTimeout(function(){
 	});
 }, 0);
 
+/** Prepare a function to be called back and return its index
+ * func: the callback function
+*/
 var callbackWrap = (function(){
 	callbackChain = [];
 	
@@ -53,13 +82,79 @@ var callbackWrap = (function(){
 		(typeof callbackChain[obj.index] == "function") && callbackChain[obj.index](obj.data);
 	});
 	
-	/** Prepare a function to be called back and return its index
-	 * func: the callback function
-	*/
 	return function(func){
 		return callbackChain.push(func) - 1;
 	}
 }());
+
+/** Get the unique selector for qn element
+ * elem: the element for which to get the selector
+ * stop: the parent the selector should be relative to
+*/
+function getUniqueSelector(elem, stop){
+    var parent = elem.parentNode;
+    var selector = '>' + elem.nodeName + ':nth-child(' + ($(elem).index() + 1) + ')';
+    while (parent && parent !== stop) {
+        selector = '>' + parent.nodeName + ':nth-child(' + ($(parent).index() + 1) + ')' + selector;
+        parent = parent.parentNode;
+    }
+    return selector;
+}
+
+/** Return an array of selectors and css objects for children of an element
+ * parent: the parent element to search down from
+*/
+function setupChildren(parent){
+	var cssArr = [];
+	var elements = parent.querySelectorAll("*");
+	for(var i=0; i<elements.length; i++){
+		cssArr.push({
+			selector: getUniqueSelector(elements[i], parent),
+			css: getCSS(elements[i])
+		});
+	}
+	return cssArr;
+}
+
+/** Return an object of all CSS attributes for a given element
+ * element: the element whose CSS attributes are to be returned
+*/
+function getCSS(element) {
+    var dest = {},
+    style, prop;
+    if (window.getComputedStyle) {
+        if (style = window.getComputedStyle(element, null)) {
+            var val;
+            if (style.length) {
+                for (var i = 0, l = style.length; i < l; i++) {
+                    prop = style[i];
+                    val = style.getPropertyValue(prop);
+                    dest[prop] = val;
+                }
+            } else {
+                for (prop in style) {
+                    val = style.getPropertyValue(prop) || style[prop];
+                    dest[prop] = val;
+                }
+            }
+            return dest;
+        }
+    }
+    if (style = element.currentStyle) {
+        for (prop in style) {
+            dest[prop] = style[prop];
+        }
+        return dest;
+    }
+    if (style = element.style) {
+        for (prop in style) {
+            if (typeof style[prop] != 'function') {
+                dest[prop] = style[prop];
+            }
+        }
+    }
+    return dest;
+}
 
 /** Sanitize a string
  * str: the string to sanitize
@@ -131,23 +226,25 @@ function decryptMark(plaintext){
  * [target]: an optional argument for where to dispatch the event. Defaults to the active element
 */
 function simulateKeyPress(character, target) {
+	var charCode = character.charCodeAt(0);
 	target = target || unsafeWindow.document.activeElement;
+	
 	var evt = unsafeWindow.document.createEvent("KeyboardEvent");
 	evt.initKeyEvent("keydown", true, true, unsafeWindow,
                     0, 0, 0, 0,
-                    character.charCodeAt(0), character.charCodeAt(0));
+                    charCode, charCode);
 	target.dispatchEvent(evt);
 	
 	evt = unsafeWindow.document.createEvent("KeyboardEvent");
 	evt.initKeyEvent("keypress", true, true, unsafeWindow,
                     0, 0, 0, 0,
-                    character.charCodeAt(0), character.charCodeAt(0));
+                    charCode, charCode);
 	target.dispatchEvent(evt);
 	
 	evt = unsafeWindow.document.createEvent("KeyboardEvent");
 	evt.initKeyEvent("keyup", true, true, unsafeWindow,
                     0, 0, 0, 0,
-                    character.charCodeAt(0), character.charCodeAt(0));
+                    charCode, charCode);
 	target.dispatchEvent(evt);
 }
 
@@ -223,20 +320,94 @@ function encrypt(shortEncrypt){
 	else {
 		document.execCommand("selectAll");
 		
-		for(var i=0; i<plaintext.length; i++){
-			setTimeout(function(){
-				simulateKeyPress("\b");
-			}, i);
-		}
+		setTimeout(function(){
+			simulateKeyPress("\b");
+		}, 0);
 		
 		setTimeout(function(){
-			active.textContent = ciphertext;
-			for(i=0; i<ciphertext.length; i++){
+			//
+			for(var i=0; i<ciphertext.length; i++){
 				simulateKeyPress(ciphertext.charAt(i));
 			}
-		}, plaintext.length);
+			var target = active;
+			while(target.childNodes.length === 1 && target.childNodes[0].innerHTML){
+				target = target.childNodes[0];
+			}
+			target.textContent = ciphertext;
+			range = document.createRange();
+			range.selectNodeContents(target);
+			range.collapse(false);
+			selection = window.getSelection();
+			selection.removeAllRanges();
+			selection.addRange(range);
+			var evt = unsafeWindow.document.createEvent("KeyboardEvent");
+			evt.initKeyEvent("keydown", true, true, unsafeWindow,
+							0, 0, 0, 0,
+							39, 39);
+			target.dispatchEvent(evt);
+		}, Math.min(plaintext.length, 10));
 	}
 }
+
+//Namespace management idea from http://enterprisejquery.com/2010/10/how-good-c-habits-can-encourage-bad-javascript-habits-part-1/
+(function( cursorManager ) {
+
+    //From: http://www.w3.org/TR/html-markup/syntax.html#syntax-elements
+    var voidNodeTags = ['AREA', 'BASE', 'BR', 'COL', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR', 'BASEFONT', 'BGSOUND', 'FRAME', 'ISINDEX'];
+
+    //From: http://stackoverflow.com/questions/237104/array-containsobj-in-javascript
+    Array.prototype.contains = function(obj) {
+        var i = this.length;
+        while (i--) {
+            if (this[i] === obj) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //Basic idea from: http://stackoverflow.com/questions/19790442/test-if-an-element-can-contain-text
+    function canContainText(node) {
+        if(node.nodeType == 1) { //is an element node
+            return !voidNodeTags.contains(node.nodeName);
+        } else { //is not an element node
+            return false;
+        }
+    };
+
+    function getLastChildElement(el){
+        var lc = el.lastChild;
+        while(lc && lc.nodeType != 1) {
+            if(lc.previousSibling)
+                lc = lc.previousSibling;
+            else
+                break;
+        }
+        return lc;
+    }
+
+    //Based on Nico Burns's answer
+    cursorManager.setEndOfContenteditable = function(contentEditableElement)
+    {
+
+        while(getLastChildElement(contentEditableElement) &&
+              canContainText(getLastChildElement(contentEditableElement))) {
+            contentEditableElement = getLastChildElement(contentEditableElement);
+        }
+
+        var range,selection;
+        if(document.createRange)//Firefox, Chrome, Opera, Safari, IE 9+
+        {    
+            range = document.createRange();//Create a range (a range is a like the selection but invisible)
+            range.selectNodeContents(contentEditableElement);//Select the entire contents of the element with the range
+            range.collapse(false);//collapse the range to the end point. false means collapse to end rather than the start
+            selection = window.getSelection();//get the selection object (allows you to change selection)
+            selection.removeAllRanges();//remove any selections already made
+            selection.addRange(range);//make the range you have just created the visible selection
+        }
+    }
+
+}( window.cursorManager = window.cursorManager || {}));
 
 /** Decrypt an elem's text and return an object with the plaintext, ciphertext, and whether or not an end crypto tage was found.
  * elem: the jQuery element whose text should be decypted
@@ -256,8 +427,40 @@ function decrypt(elem, callback){
 	function finish(plaintext, ciphertext){
 		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
 		var start = html.substring(0, html.indexOf(startTag));
+		var uid = encodeURIComponent(getRandomString(64));
+		elem.attr("grdMeUID", uid);
 		val = start + decryptMark(setupPlaintext(plaintext)) + end;
-		elem.html(val);
+		if(sandboxDecrypt){
+			plaintext  = "[Decrypting Message...]";
+			elem.html(start + decryptMark(plaintext) + end);
+			elem.append($("<a>", {grdMeAnchor: ""}).hide());
+			elem.contents().filter(function() {
+				return this.nodeType===3;
+			}).remove();
+			self.port.emit("prepareIframe", {
+				location: {
+					full: window.location.href,
+					host: window.location.host,
+					origin: window.location.origin
+				},
+				message: {
+					childrenCSS: setupChildren(elem.get(0)),
+					css: getCSS(elem.get(0)),
+					text: val
+				},
+				secret: FRAME_SECRET,
+				uid: uid
+			});
+			if(elem.css("display") === "inline"){
+				elem.css("display", "inline-block");
+				if(elem.css("vertical-align") === "baseline"){
+					elem.css("vertical-align", "-moz-middle-with-baseline");
+				}
+			}
+		}
+		else {
+			elem.html(val);
+		}
 		callback({endTagFound: index2>0, plaintext: sanitize(plaintext), ciphertext: ciphertext});
 	}
 	
@@ -328,10 +531,10 @@ function decrypt(elem, callback){
 					error(plaintext);
 				}
 				elem.removeAttr("crypto_mark");
-			}) ,
+			})
 		});
 	}
-	else {
+	else{
 		self.port.emit("decrypt", {
 			ciphertext: ciphertext,
 			callback: callbackWrap(function(plaintext){
@@ -349,11 +552,10 @@ function decrypt(elem, callback){
 
 /** Scan for any crypto on the page and decypt if possible */
 function decryptInterval(){
-	var elements = $(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"])');
+	var elements = $(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"]):not(textarea):not(input):not(script)');
 	elements.each(function(i, e){
 		var elem = $(e);
 		if(elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
-			//ASSUMPTION: an element not containing a crypto message itself will never contain a crypto message
 			elem.attr('crypto_mark', true);
 			return;
 		}
@@ -361,14 +563,15 @@ function decryptInterval(){
 			elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 			if(!returnObj.endTagFound){
 				returnObj.plaintext = returnObj.plaintext || "";
-				var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
+				var parent = elem.parent().parent().parent();
+				parent = endsWith(window.location.hostname, "facebook.com") ? (elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : parent) : parent;
 				parent.on("click", function(){
 					elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 					var inFlight = false;
 					setTimeout(function(){
 						if(parent.text().indexOf(endTag)>0 && !inFlight){
 							inFlight = true;
-							self.port.emit("recheckDecryption",{
+							self.port.emit("recheckDecryption", {
 								text: parent.text(),
 								returnObj: returnObj,
 								callback: callbackWrap(function(text){
@@ -385,19 +588,10 @@ function decryptInterval(){
 	});
 };
 
-/** Check for changes to the dom before running decryptInterval */
-setTimeout(function(){
-	var otherDecryptTimeout = false;
-	var observer = new MutationObserver(function(mutations) {
-		clearTimeout(otherDecryptTimeout);
-		otherDecryptTimeout = setTimeout(decryptInterval, 50);
-	});
-	
-	var config = { subtree: true, childList: true, characterData: true, attributes: true };
-	
-	observer.observe(document.body, config);
-	decryptInterval();
-}, 50);
+/** Check for changes to the dom before running decryptInterval **/
+setTimeout(initObserver.bind(this, decryptInterval), 50);
+
+/** Bind the keyboard shortcuts **/
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
 	encrypt();

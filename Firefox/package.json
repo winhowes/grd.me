@@ -6,7 +6,7 @@
   "author": "Winston Howes",
   "homepage": "https://grd.me",
   "license": "MIT",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "permissions": {"private-browsing": true},
   "icon": "data/icons/icon48.png",
   "icon64": "data/icons/icon64.png",
@@ -16,5 +16,12 @@
 	"description": "The Grd Me lock icon will be displayed in front of any successfully decrypted text. You may need to refresh open pages to see this.",
 	"type": "bool",
 	"value": true
+  },
+  {
+	"name": "sandboxDecrypt",
+	"title": "Sandboxed Decryption",
+	"description": "By default, when Grd Me decrypts a message it inserts the decryption right back into the webpage. Turning this on prevents the webpage from reading your decrypted text.",
+	"type": "bool",
+	"value": false
   }]
 }

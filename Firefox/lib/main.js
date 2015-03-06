@@ -10,6 +10,7 @@ var Request = require("sdk/request").Request;
 var notifications = require("sdk/notifications");
 var timers = require("sdk/timers");
 var preferences = require("sdk/simple-prefs");
+var Intercept = require("intercept").Intercept;
 var workers = [];
 
 ss.storage.keys = ss.storage.keys || [{
@@ -48,8 +49,14 @@ var button = require("sdk/ui/button/toggle").ToggleButton({
 });
 
 preferences.on("decryptIndicator", function(){
-	for(var i=0; workers.length; i++){
+	for(var i=0; i<workers.length; i++){
 		workers[i] && workers[i].port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
+	}
+});
+
+preferences.on("sandboxDecrypt", function(){
+	for(var i=0; i<workers.length; i++){
+		workers[i] && workers[i].port.emit("sandboxDecrypt", preferences.prefs.sandboxDecrypt);
 	}
 });
 
@@ -229,6 +236,7 @@ exports.main = function(options){
 							data.url("lib/mousetrap.min.js"),
 							data.url("lib/linkify.min.js"),
 							data.url("constants.js"),
+							data.url("observer.js"),
 							data.url("crypt.js")],
 		width: 300,
 		height: 235
@@ -255,18 +263,28 @@ exports.main = function(options){
 							data.url("lib/mousetrap.min.js"),
 							data.url("lib/linkify.min.js"),
 							data.url("constants.js"),
+							data.url("frameComm.js"),
+							data.url("observer.js"),
 							data.url("crypt.js")],
 		contentScriptWhen: "ready",
+		contentScriptOptions: {
+			active: ss.storage.activeKeys,
+			keys: ss.storage.keys,
+			decryptIndicator: preferences.prefs.decryptIndicator,
+			sandboxDecrypt: preferences.prefs.sandboxDecrypt
+		},
 		attachTo: attachTo,
 		onAttach: function(worker){
 			workers.push(worker);
 			
-			worker.on('detach', function () {
+			worker.on('detach', function(){
 				detachWorker(this, workers);
 			});
 			
-			worker.port.emit("secret", {active: ss.storage.activeKeys, keys: ss.storage.keys});
+			/** Send worker the latest info */
 			worker.port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
+			worker.port.emit("sandboxDecrypt", preferences.prefs.sandboxDecrypt);
+			worker.port.emit("secret", {active: ss.storage.activeKeys, keys: ss.storage.keys});
 			
 			var {Cu} = require("chrome");
 			var {Worker} = Cu.import(data.url("dummy.jsm"));
@@ -277,7 +295,7 @@ exports.main = function(options){
 			webWorker.onmessage = function(event){
 				worker.port.emit("callback", JSON.parse(event.data));
 			};
-			
+				
 			/** Send a message to the webworker
 			 * id: the id of the messsage
 			 * data: any data to send to the worker
@@ -286,6 +304,15 @@ exports.main = function(options){
 				data.keyList = ss.storage.keys;
 				webWorker.postMessage(JSON.stringify({id: id, data: data}));
 			}
+			
+			worker.port.on("newTab", function(href){
+				tabs.open(href);
+			});
+			
+			worker.port.on("prepareIframe", function(data){
+				Intercept.add(data.uid, data.location, data.secret, data.message);
+				worker.port.emit("preparedIframe", data.uid);
+			});
 			
 			worker.port.on("decrypt", function(data){
 				sendWebWorkerMessage("decrypt", data);
@@ -369,7 +396,7 @@ function uniq(arr) {
     return out;
 }
 
-/** Check for shared keys and delete old shared keys - run every 2 minutes */
+/** Check for shared keys and delete old shared keys - run every minute */
 timers.setInterval(function(){
 	var keys = [];
 	for(var i=0; i<ss.storage.keys.length; i++){
