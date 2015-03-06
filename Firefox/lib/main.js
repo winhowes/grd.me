@@ -295,7 +295,7 @@ exports.main = function(options){
 			webWorker.onmessage = function(event){
 				worker.port.emit("callback", JSON.parse(event.data));
 			};
-				
+			
 			/** Send a message to the webworker
 			 * id: the id of the messsage
 			 * data: any data to send to the worker
