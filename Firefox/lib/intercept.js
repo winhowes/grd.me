@@ -45,23 +45,63 @@ function getUniqueSelector(elem, stop){
     return "body"+selector;
 }
 
+/** Get custom fonts for document
+ * doc: the document
+*/
+function getFonts(doc){
+	var fonts = [];
+	for(var i=0; i<doc.styleSheets.length; i++){
+		try{
+			for(var j=0; j<doc.styleSheets[i].cssRules.length; j++){
+				if(!doc.styleSheets[i].cssRules[j].cssText.toLowerCase().indexOf("@font-face")){
+					fonts.push(doc.styleSheets[i].cssRules[j].cssText.replace(/javascript:/i, ""));
+				}
+			}
+		}
+		catch(e){}
+	}
+	return fonts;
+}
+
+/** Determines whether or not a stylesheet is a page stylesheet (ie not of the browser)
+ * styleSheet: the styleSheet in question
+*/
+function isPageStyle(styleSheet){
+  if(styleSheet.ownerNode){
+    return true;
+  }
+
+  if(styleSheet.ownerRule instanceof Ci.nsIDOMCSSImportRule){
+    return isPageStyle(styleSheet.parentStyleSheet);
+  }
+
+  return false;
+}
+
 /** Return an array of selectors and css objects for children of an element
  * parent: the parent element to search down from
  * window: the element's window
 */
 function setupChildren(parent, window){
 	const states = [{
-		state: "active",
+		state: ":active",
 		prop: 0x01
 	},
 	{
-		state: "focus",
+		state: ":focus",
 		prop: 0x02
 	},
 	{
-		state: "hover",
+		state: ":hover",
 		prop: 0x04
+	},
+	{
+		state: ":before"
+	},
+	{
+		state: ":after"
 	}];
+	
 	var cssArr = [];
 	var elements = parent.querySelectorAll("*");
 	for(var i=0; i<elements.length; i++){
@@ -70,8 +110,24 @@ function setupChildren(parent, window){
 		};
 		if(elements[i].nodeName.toLowerCase() !== "grdme"){
 			for(var j=0; j<states.length; j++){
-				domUtil.setContentState(elements[i], states[j].prop);
+				if(states[j].prop){
+					domUtil.setContentState(elements[i], states[j].prop);
+				}
 				css[states[j].state] = getCSS(elements[i], window);
+				var rules = domUtil.getCSSStyleRules(elements[i]);
+				if(rules){
+					for(var k=0; k<rules.Count(); k++){
+						var rule = rules.GetElementAt(k);
+						if(isPageStyle(rule.parentStyleSheet)){
+							for(var m=0; m<rule.style.length; m++){
+								css[states[j].state][rule.style[m]] = rule.style[rule.style[m]];
+							}
+						}
+					}
+				}
+				if(states[j].prop){
+					domUtil.setContentState(elements[i], window);
+				}
 			}
 		}
 		cssArr.push({
@@ -134,12 +190,14 @@ function requestListener(event){
 	if(!url.indexOf(frameOrigin)) {
 		let uid = event.subject.URI.path;
 		uid  = uid && uid.slice(1);
-		var cssArr = [];
+		var cssArr = [],
+		fonts = [];
 		browserWindow = windowController.getMostRecentBrowserWindow();
 		if(browserWindow && "gBrowser" in browserWindow){
 			var doc = browserWindow.gBrowser.contentDocument;
 			var element = doc.querySelector("[grdMeUID='"+uid+"']");
 			cssArr = setupChildren(element, browserWindow);
+			fonts = getFonts(doc);
 		}
 		event.subject.redirectTo(Services.io.newURI("data:text/html," +
 			encodeURIComponent(
@@ -149,6 +207,7 @@ function requestListener(event){
 				  ";locationObj=" + JSON.stringify(uidMap[uid].location) +
 				  ";FRAME_SECRET=" + JSON.stringify(uidMap[uid].secret) +
 				  ";messageText=" + JSON.stringify(uidMap[uid].message.text) +
+				  ";fonts=" + JSON.stringify(fonts) +
 				  ";fullCSS=" + JSON.stringify(cssArr) +
 				  ";childrenCSS=" + JSON.stringify(uidMap[uid].message.childrenCSS) +
 				  ";messageCSS=" + JSON.stringify(uidMap[uid].message.css) + ";" +

@@ -237,11 +237,16 @@ $(function(){
 	$("html").css(messageCSS);
 	var container = $("body").append(clean(messageText)).css(messageCSS);
 	
+	var style = $("<style>", {type: "text/css"});
+	
+	for(var i=0; i<fonts.length; i++){
+		style.append(fonts[i]);
+	}
+	
 	if(fullCSS.length){
-		var style = $("<style>", {type: "text/css"});
 		for(i=0; i<fullCSS.length; i++){
 			for(var pseudo in fullCSS[i].css){
-				var pseudoClass = pseudo !== "normal"? ":"+pseudo : ""
+				var pseudoClass = pseudo !== "normal"? pseudo : ""
 				style.append(document.createTextNode(fullCSS[i].selector + pseudoClass + "{"));
 				for(key in fullCSS[i].css[pseudo]){
 					var value = $.trim(fullCSS[i].css[pseudo][key]);
@@ -255,13 +260,14 @@ $(function(){
 				style.append(document.createTextNode("}"));
 			}
 		}
-		$(document.head).append(style);
 	}
 	else {
-		for(var i=0; i<childrenCSS.length; i++){
+		for(i=0; i<childrenCSS.length; i++){
 			$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
 		}
 	}
+	
+	$(document.head).append(style);
 	
 	$("html").bind(getAllEvents($("html").get(0)), function(e){
 		msg({
