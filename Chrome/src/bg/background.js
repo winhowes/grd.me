@@ -285,7 +285,7 @@ function uniq(arr) {
     return out;
 }
 
-/** Check for shared keys and delete old shared keys - run every 2 minutes */
+/** Check for shared keys and delete old shared keys - run every minute */
 setInterval(function(){
 	chrome.storage.local.get("keys", function(items){
 		keyObj.keys = items.keys;
