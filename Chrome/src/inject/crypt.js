@@ -363,7 +363,8 @@ function decryptInterval(){
 			elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 			if(!returnObj.endTagFound){
 				returnObj.plaintext = returnObj.plaintext || "";
-				var parent = elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : elem.parent().parent().parent();
+				var parent = elem.parent().parent().parent();
+				parent = endsWith(window.location.hostname, "facebook.com") ? (elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : parent) : parent;
 				parent.on("click", function(){
 					setTimeout(function(){
 						if(parent.text().indexOf(endTag)>0){
