@@ -54,7 +54,7 @@ function getFonts(doc){
 		try{
 			for(var j=0; j<doc.styleSheets[i].cssRules.length; j++){
 				if(!doc.styleSheets[i].cssRules[j].cssText.toLowerCase().indexOf("@font-face")){
-					fonts.push(doc.styleSheets[i].cssRules[j].cssText.replace(/javascript:/i, ""));
+					fonts.push(doc.styleSheets[i].cssRules[j].cssText.replace(/javascript:/gi, ""));
 				}
 			}
 		}
