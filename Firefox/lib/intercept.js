@@ -145,11 +145,11 @@ function setupChildren(parent, window){
 function getCSS(element, window){
     var dest = {},
     style, prop;
-    if (window.getComputedStyle) {
-        if (style = window.getComputedStyle(element, null)) {
+    if(window.getComputedStyle){
+        if((style = window.getComputedStyle(element, null))){
             var val;
-            if (style.length) {
-                for (var i = 0, l = style.length; i < l; i++) {
+            if(style.length){
+                for(var i = 0, l = style.length; i < l; i++){
                     prop = style[i];
 					if(!(element.hasAttribute("grdMeAnchor") && prop.toLowerCase() === "display")){
 						val = style.getPropertyValue(prop);
@@ -157,7 +157,7 @@ function getCSS(element, window){
 					}
                 }
             } else {
-                for (prop in style) {
+                for(prop in style){
 					if(!(element.hasAttribute("grdMeAnchor") && prop.toLowerCase() === "display")){
 						val = style.getPropertyValue(prop) || style[prop];
 						dest[prop] = val;
@@ -167,15 +167,15 @@ function getCSS(element, window){
             return dest;
         }
     }
-    if (style = element.currentStyle) {
-        for (prop in style) {
+    if((style = element.currentStyle)){
+        for(prop in style){
             dest[prop] = style[prop];
         }
         return dest;
     }
-    if (style = element.style) {
-        for (prop in style) {
-            if (typeof style[prop] != 'function') {
+    if((style = element.style)){
+        for(prop in style){
+            if(typeof style[prop] != 'function'){
                 dest[prop] = style[prop];
             }
         }
