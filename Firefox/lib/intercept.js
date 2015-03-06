@@ -248,10 +248,8 @@ function responseListener(event){
 				}
 			}
 		}
-		if(!frameFound){
-			if(defaultFound !== "*"){
-				rules.push("frame-src " + defaultFound + " "+ frameOrigin + " data:;");
-			}
+		if(!frameFound && defaultFound !== "*"){
+			rules.push("frame-src " + defaultFound + " "+ frameOrigin + " data:;");
 		}
 		csp = rules.join(";");
 		
