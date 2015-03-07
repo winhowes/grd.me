@@ -87,6 +87,7 @@ function encryptParse(elem){
 		var html = elem.html();
 		html = html.slice(0, html.indexOf(startTag)) + decryptMark(setupPlaintext(plaintext)) + (html.indexOf(endTag) + 1 ? html.slice(html.indexOf(endTag) + endTag.length) : "");
 		elem.attr("crypto_mark", "").html(html);
+		fixReferences();
 	})});
 }
 
@@ -104,6 +105,25 @@ function decryptMark(plaintext){
 		plaintext = mark + " " + wrapper.html();
 	}
 	return plaintext;
+}
+
+/** Fix all references **/
+function fixReferences(){
+	var refs = ["href", "src"];
+	for(var j=0; j<refs.length; j++){
+		var key = refs[j];
+		$("["+key+"]").each(function(i, e){
+			if($(e).attr(key).trim().indexOf("http://") && $(e).attr(key).trim().indexOf("https://")){
+				if($(e).attr(key).trim().charAt(0) === "/"){
+					$(e).attr(key, locationObj.host + $(e).attr(key));
+				}
+				else {
+					$(e).attr(key, locationObj.full + $(e).attr(key));
+				}
+			}
+		});
+	}
+	$("a[href^='http']").css("cursor", "pointer");
 }
 
 /** Sanitize a string
@@ -305,21 +325,7 @@ $(function(){
 	checkHeight();
 	setInterval(checkHeight, 500);
 	
-	/* Fix all references */
-	var refs = ["href", "src"];
-	for(var j=0; j<refs.length; j++){
-		var key = refs[j];
-		$("["+key+"]").each(function(i, e){
-			if($(e).attr(key).trim().indexOf("http://") && $(e).attr(key).trim().indexOf("https://")){
-				if($(e).attr(key).trim().charAt(0) === "/"){
-					$(e).attr(key, locationObj.host + $(e).attr(key));
-				}
-				else {
-					$(e).attr(key, locationObj.full + $(e).attr(key));
-				}
-			}
-		});
-	}
+	fixReferences();
 	
 	callbackWrap = (function(){
 		var callbackChain = [];
