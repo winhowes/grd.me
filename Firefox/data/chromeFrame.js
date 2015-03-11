@@ -12,11 +12,14 @@ var window = content.window;
 
 addMessageListener("grdMe@grd.me:fetch-frame-css", function(message){
 	var uid = message.data.uid;
-	var element = doc.querySelector("[grdMeUID='"+uid+"']");
-	sendAsyncMessage("grdMe@grd.me:get-frame-css:"+uid, {
-		css: setupChildren(element),
-		fonts: getFonts()
-	});
+	try{
+		var element = doc.querySelector("[grdMeUID='"+uid+"']");
+		sendAsyncMessage("grdMe@grd.me:get-frame-css:"+uid, {
+			css: setupChildren(element),
+			fonts: getFonts()
+		});
+	}
+	catch(e){}
 });
 
 /** Get custom fonts for document */
