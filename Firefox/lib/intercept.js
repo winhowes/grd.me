@@ -1,186 +1,23 @@
 /** This file handles interception of frame requests for decryption */
 
 var data = require("sdk/self").data;
-var { Cc, Ci, Cu } = require('chrome')
+var { Cc, Ci, Cu } = require('chrome');
 var domUtil = Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
 var windowController = require("sdk/window/utils");
 var events = require("sdk/system/events");
 
 Cu.import("resource://gre/modules/Services.jsm");
 
-const failMessage = data.load("interceptFail.phtml"),
-frameOrigin = "https://decrypt.grd.me";
+const frameOrigin = "https://decrypt.grd.me";
 
 var uidMap = {}; //A map of uids to origins, secrets, and message objects
 
-/** Wrap a piece of JS in script tags
- * js: the JS to wrap
+/** Returns a string of an html div with particular JSON encoded contend and an id
+ * id: the id of the div tag
+ * content: the content to be encoded and inserted into the html string
 */
-function scriptWrap(js){
-	return "<script>"+js+"</script>";
-}
-
-/** Get the index of an element in regards to its parent
- * element: the element to index
-*/
-function indexEl(element){
-	var nodeList = Array.prototype.slice.call(element.parentNode.children);
-	return nodeList.indexOf(element);
-}
-
-/** Get the unique selector for qn element
- * elem: the element for which to get the selector
- * stop: the parent the selector should be relative to
-*/
-function getUniqueSelector(elem, stop){
-    var parent = elem.parentNode;
-	if(elem.hasAttribute("grdMeAnchor")){
-		return "body "+elem.nodeName;
-	}
-    var selector = '>' + elem.nodeName + ':nth-child(' + (indexEl(elem) + 1) + ')';
-    while (parent && parent !== stop) {
-        selector = '>' + parent.nodeName + ':nth-child(' + (indexEl(parent) + 1) + ')' + selector;
-        parent = parent.parentNode;
-    }
-    return "body"+selector;
-}
-
-/** Get custom fonts for document
- * doc: the document
-*/
-function getFonts(doc){
-	var fonts = [];
-	for(var i=0; i<doc.styleSheets.length; i++){
-		try{
-			for(var j=0; j<doc.styleSheets[i].cssRules.length; j++){
-				if(!doc.styleSheets[i].cssRules[j].cssText.toLowerCase().indexOf("@font-face")){
-					fonts.push(doc.styleSheets[i].cssRules[j].cssText.replace(/javascript:/gi, ""));
-				}
-			}
-		}
-		catch(e){}
-	}
-	return fonts;
-}
-
-/** Determines whether or not a stylesheet is a page stylesheet (ie not of the browser)
- * styleSheet: the styleSheet in question
-*/
-function isPageStyle(styleSheet){
-  if(styleSheet.ownerNode){
-    return true;
-  }
-
-  if(styleSheet.ownerRule instanceof Ci.nsIDOMCSSImportRule){
-    return isPageStyle(styleSheet.parentStyleSheet);
-  }
-
-  return false;
-}
-
-/** Return an array of selectors and css objects for children of an element
- * parent: the parent element to search down from
- * window: the element's window
-*/
-function setupChildren(parent, window){
-	const states = [{
-		state: ":active",
-		prop: 0x01
-	},
-	{
-		state: ":focus",
-		prop: 0x02
-	},
-	{
-		state: ":hover",
-		prop: 0x04
-	},
-	{
-		state: ":before"
-	},
-	{
-		state: ":after"
-	}];
-	
-	var cssArr = [];
-	var elements = parent.querySelectorAll("*");
-	for(var i=0; i<elements.length; i++){
-		var css = {
-			normal: getCSS(elements[i], window)
-		};
-		if(elements[i].nodeName.toLowerCase() !== "grdme"){
-			for(var j=0; j<states.length; j++){
-				if(states[j].prop){
-					domUtil.setContentState(elements[i], states[j].prop);
-				}
-				css[states[j].state] = getCSS(elements[i], window);
-				var rules = domUtil.getCSSStyleRules(elements[i]);
-				if(rules){
-					for(var k=0; k<rules.Count(); k++){
-						var rule = rules.GetElementAt(k);
-						if(isPageStyle(rule.parentStyleSheet)){
-							for(var m=0; m<rule.style.length; m++){
-								css[states[j].state][rule.style[m]] = rule.style[rule.style[m]];
-							}
-						}
-					}
-				}
-				if(states[j].prop){
-					domUtil.setContentState(elements[i], window);
-				}
-			}
-		}
-		cssArr.push({
-			selector: getUniqueSelector(elements[i], parent),
-			css: css
-		});
-	}
-	return cssArr;
-}
-
-/** Return an object of all CSS attributes for a given element
- * element: the element whose CSS attributes are to be returned
- * window: the element's window
-*/
-function getCSS(element, window){
-    var dest = {},
-    style, prop;
-    if(window.getComputedStyle){
-        if((style = window.getComputedStyle(element, null))){
-            var val;
-            if(style.length){
-                for(var i = 0, l = style.length; i < l; i++){
-                    prop = style[i];
-					if(!(element.hasAttribute("grdMeAnchor") && prop.toLowerCase() === "display")){
-						val = style.getPropertyValue(prop);
-						dest[prop] = val;
-					}
-                }
-            } else {
-                for(prop in style){
-					if(!(element.hasAttribute("grdMeAnchor") && prop.toLowerCase() === "display")){
-						val = style.getPropertyValue(prop) || style[prop];
-						dest[prop] = val;
-					}
-                }
-            }
-            return dest;
-        }
-    }
-    if((style = element.currentStyle)){
-        for(prop in style){
-            dest[prop] = style[prop];
-        }
-        return dest;
-    }
-    if((style = element.style)){
-        for(prop in style){
-            if(typeof style[prop] != 'function'){
-                dest[prop] = style[prop];
-            }
-        }
-    }
-    return dest;
+function divWrap(id, content){
+	return "<div id='"+id+"'>"+encodeURIComponent(content)+"</div>";
 }
 
 /** Intercept requests to decrypt.grd.me */
@@ -190,35 +27,13 @@ function requestListener(event){
 	if(!url.indexOf(frameOrigin)) {
 		let uid = event.subject.URI.path;
 		uid  = uid && uid.slice(1);
-		var cssArr = [],
-		fonts = [];
-		browserWindow = windowController.getMostRecentBrowserWindow();
-		if(browserWindow && "gBrowser" in browserWindow){
-			var doc = browserWindow.gBrowser.contentDocument;
-			var element = doc.querySelector("[grdMeUID='"+uid+"']");
-			cssArr = setupChildren(element, browserWindow);
-			fonts = getFonts(doc);
-		}
 		event.subject.redirectTo(Services.io.newURI("data:text/html," +
-			encodeURIComponent(
-			  data.load("utf8Meta.phtml") +
-			  scriptWrap(
-				  uidMap[uid]? "uid=" + JSON.stringify(uid) +
-				  ";locationObj=" + JSON.stringify(uidMap[uid].location) +
-				  ";FRAME_SECRET=" + JSON.stringify(uidMap[uid].secret) +
-				  ";messageText=" + JSON.stringify(uidMap[uid].message.text) +
-				  ";fonts=" + JSON.stringify(fonts) +
-				  ";fullCSS=" + JSON.stringify(cssArr) +
-				  ";childrenCSS=" + JSON.stringify(uidMap[uid].message.childrenCSS) +
-				  ";messageCSS=" + JSON.stringify(uidMap[uid].message.css) + ";" +
-				  data.load("lib/jquery-2.1.3.min.js") +
-				  data.load("lib/linkify.min.js") +
-				  data.load("lib/aes.js") +
-				  data.load("observer.js") +
-				  data.load("constants.js") + 
-				  data.load("intercept.js") : failMessage
-			  )
-			), null, null));
+		encodeURIComponent(
+		  data.load("utf8Meta.phtml") +
+		  /* These values are untainted and created by grdMe and therefore don't need to be sanitized */
+		  divWrap("frameSecret", uidMap[uid].secret) +
+		  divWrap("uid", uid)
+		), null, null));
 	}
 }
 
@@ -279,6 +94,40 @@ exports.Intercept = {
 			location: location,
 			secret: secret,
 			message: message
+		}
+	},
+	/** Get the info for a frame with a particular uid and secret
+	 * uid: the uid of the frame
+	 * secret: the secret of the frame
+	 * callback: a callback function to receive the info
+	*/
+	getInfo: function(uid, secret, callback){
+		function listener(message){
+			callback({
+				messageText: uidMap[uid].message.text,
+				locationObj: uidMap[uid].location,
+				fonts: message.data.fonts,
+				stylesheetCSS: message.data.css,
+				childrenCSS: uidMap[uid].message.childrenCSS,
+				messageCSS: uidMap[uid].message.css
+			});
+			messageManager.removeMessageListener("grdMe@grd.me:get-frame-css:"+uid, listener);
+		}
+			
+		if(uidMap[uid] && uidMap[uid].secret === secret){
+			var messageManager = windowController.getMostRecentBrowserWindow().gBrowser.selectedBrowser.messageManager;
+			messageManager.loadFrameScript(data.url("chromeFrame.js"), false);
+			messageManager.sendAsyncMessage("grdMe@grd.me:fetch-frame-css", {
+				uid: uid
+			});
+			messageManager.addMessageListener("grdMe@grd.me:get-frame-css:"+uid, listener);
+		}
+		else {
+			console.log("uid", uid, "and secret", secret, "are not valid", uidMap[uid]);
+			for(key in uidMap){
+				console.log("key:", key);
+			}
+			callback(false);
 		}
 	}
 };

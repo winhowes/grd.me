@@ -2,7 +2,7 @@
 
 const padding = 5;
 
-var decryptIndicator = true;
+var decryptIndicator = true, locationObj, uid;
 
 /** Receive a message from the content scripts */
 function receiveMessage(event) {
@@ -253,94 +253,122 @@ function stripScripts(html) {
     return div.innerHTML;
 }
 
-$(function(){
-	$("html").css(messageCSS);
-	var container = $("body").append(clean(messageText)).css(messageCSS);
-	
-	var style = $("<style>", {type: "text/css"});
-	
-	for(var i=0; i<fonts.length; i++){
-		style.append(fonts[i]);
-	}
-	
-	if(fullCSS.length){
-		for(i=0; i<fullCSS.length; i++){
-			for(var pseudo in fullCSS[i].css){
-				var pseudoClass = pseudo !== "normal"? pseudo : ""
-				style.append(document.createTextNode(fullCSS[i].selector + pseudoClass + "{"));
-				for(key in fullCSS[i].css[pseudo]){
-					var value = $.trim(fullCSS[i].css[pseudo][key]);
-					/* Make sure there's no JS */
-					if($.trim(value.toLowerCase().replace("url(", "")
-							   .replace("'", "").replace('"', "")
-							   .replace("/*", "").replace("*/", "")).indexOf("javascript")){
-						style.append(document.createTextNode(key + ":" + value + ";"));
-					}
-				}
-				style.append(document.createTextNode("}"));
-			}
-		}
-	}
-	else {
-		for(i=0; i<childrenCSS.length; i++){
-			$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
-		}
-	}
-	
-	$(document.head).append(style);
-	
-	$("html").bind(getAllEvents($("html").get(0)), function(e){
-		msg({
-			id: "event",
-			event: {
-				type: e.type.toString(),
-				selector: getUniqueSelector(e.target)
-			}
+(function(){
+	FRAME_SECRET = decodeURIComponent($("#frameSecret").text());
+	uid = decodeURIComponent($("#uid").text());
+	$("#uid, #frameSecret").remove();
+	try{
+		self.port.emit("verifyFrame", {
+			secret: FRAME_SECRET,
+			uid: uid
 		});
-	});
+	}
+	catch(e){
+		console.log(e)
+	}
 	
-	$("body").on("click", "a", function(e){
-		e.preventDefault();
-		if($(this).attr("href")){
-			msg({
-				id: "click",
-				href: $(this).attr("href"),
-				target: $(this).attr("target")
-			});
+	self.port.on("frameVerified", function(obj){
+		var messageCSS = obj.messageCSS,
+		stylesheetCSS = obj.stylesheetCSS,
+		childrenCSS = obj.childrenCSS,
+		fonts = obj.fonts,
+		messageText = obj.messageText;
+		locationObj = obj.locationObj;
+		
+		$("html").css(messageCSS);
+		var container = $("body").append(clean(messageText)).css(messageCSS);
+		
+		var style = $("<style>", {type: "text/css"});
+		
+		for(var i=0; i<fonts.length; i++){
+			style.append(fonts[i]);
 		}
-	});
-	
-	$("html, body").css({
-		padding: 0,
-		margin: 0,
-		height: "auto"
-	});
-	
-	container.on("mouseover", "grdme", function(){
-		$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
-	}).on("mouseleave", "grdme", function(){
-		$(this).next("grdme_decrypt").css("font-weight", "");
-	});
-	
-	checkHeight();
-	setInterval(checkHeight, 500);
-	
-	fixReferences();
-	
-	callbackWrap = (function(){
-		var callbackChain = [];
-		$("body").on("callback", function(e, returnId, data){
-			(typeof callbackChain[returnId] == "function") && callbackChain[returnId](data);
+		
+		if(stylesheetCSS.length){
+			for(i=0; i<stylesheetCSS.length; i++){
+				for(var pseudo in stylesheetCSS[i].css){
+					var pseudoClass = pseudo !== "normal"? pseudo : ""
+					style.append(document.createTextNode(stylesheetCSS[i].selector + pseudoClass + "{"));
+					for(key in stylesheetCSS[i].css[pseudo]){
+						var value = $.trim(stylesheetCSS[i].css[pseudo][key]);
+						/* Make sure there's no JS */
+						if($.trim(value.toLowerCase().replace("url(", "")
+								   .replace("'", "").replace('"', "")
+								   .replace("/*", "").replace("*/", "")).indexOf("javascript")){
+							style.append(document.createTextNode(key + ":" + value + ";"));
+						}
+					}
+					style.append(document.createTextNode("}"));
+				}
+			}
+		}
+		else {
+			for(i=0; i<childrenCSS.length; i++){
+				$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
+			}
+		}
+		
+		$(document.head).append(style);
+		
+		$("html").bind(getAllEvents($("html").get(0)), function(e){
+			msg({
+				id: "event",
+				event: {
+					type: e.type.toString(),
+					selector: getUniqueSelector(e.target)
+				}
+			});
 		});
 		
-		return function(func){
-			return callbackChain.push(func) - 1;
-		}
-	}());
+		$("body").on("click", "a", function(e){
+			e.preventDefault();
+			if($(this).attr("href")){
+				msg({
+					id: "click",
+					href: $(this).attr("href"),
+					target: $(this).attr("target")
+				});
+			}
+		});
+		
+		$("html, body").css({
+			padding: 0,
+			margin: 0,
+			height: "auto"
+		});
+		
+		container.on("mouseover", "grdme", function(){
+			$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
+		}).on("mouseleave", "grdme", function(){
+			$(this).next("grdme_decrypt").css("font-weight", "");
+		});
+		
+		checkHeight();
+		setInterval(checkHeight, 500);
+		
+		fixReferences();
+		
+		callbackWrap = (function(){
+			var callbackChain = [];
+			$("body").on("callback", function(e, returnId, data){
+				(typeof callbackChain[returnId] == "function") && callbackChain[returnId](data);
+			});
+			
+			return function(func){
+				return callbackChain.push(func) - 1;
+			}
+		}());
+		
+		initObserver(decryptInterval);
+		
+		msg({id: "ready"});
+	});
 	
-	initObserver(decryptInterval);
-});
-
-msg({id: "ready"});
-
-window.addEventListener("message", receiveMessage, false);
+	self.port.on("frameFailed", function(){
+		if(uid.length && FRAME_SECRET.length){
+			console.log("Error Decrypting");
+		}
+	});
+	
+	window.addEventListener("message", receiveMessage, false);
+}());

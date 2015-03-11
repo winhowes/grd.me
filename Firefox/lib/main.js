@@ -365,6 +365,36 @@ exports.main = function(options){
 			});
 		}
 	});
+	
+	pageMod.PageMod({
+		include: ["data:*"],
+		contentScriptFile: [data.url("lib/jquery-2.1.3.min.js"),
+							data.url("lib/linkify.min.js"),
+							data.url("lib/aes.js"),
+							data.url("constants.js"),
+							data.url("observer.js"),
+							data.url("intercept.js")],
+		contentScriptWhen: "ready",
+		attachTo: attachTo,
+		onAttach: function(worker){
+			workers.push(worker);
+			worker.on('detach', function(){
+				detachWorker(this, workers);
+			});
+			
+			/* Verify frames were created by Grd Me */
+			worker.port.on("verifyFrame", function(obj){
+				Intercept.getInfo(obj.uid, obj.secret, function(returnObj){
+					if(returnObj){
+						worker.port.emit("frameVerified", returnObj);
+					}
+					else {
+						worker.port.emit("frameFailed");
+					}
+				});
+			});
+		}
+	});
 }
 
 /** Detach a worker from an array of workers
