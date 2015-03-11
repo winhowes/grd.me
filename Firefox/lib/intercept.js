@@ -123,10 +123,6 @@ exports.Intercept = {
 			messageManager.addMessageListener("grdMe@grd.me:get-frame-css:"+uid, listener);
 		}
 		else {
-			console.log("uid", uid, "and secret", secret, "are not valid", uidMap[uid]);
-			for(key in uidMap){
-				console.log("key:", key);
-			}
 			callback(false);
 		}
 	}

@@ -263,9 +263,7 @@ function stripScripts(html) {
 			uid: uid
 		});
 	}
-	catch(e){
-		console.log(e)
-	}
+	catch(e){}
 	
 	self.port.on("frameVerified", function(obj){
 		var messageCSS = obj.messageCSS,
