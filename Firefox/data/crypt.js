@@ -46,8 +46,9 @@ self.port.on("preparedIframe", function(uid){
 	elem.append($("<iframe>", {src: 'https://decrypt.grd.me/'+uid, "grdMeFrameUID" : uid, seamless: "seamless"}).css({
 		border: 0,
 		width: elem.css("display") === "block"? elem.width() > 0 ? elem.outerWidth() : "auto" : "100%",
-		height: elem.outerHeight()
-	}).hide());
+		height: elem.outerHeight(),
+		"margin-bottom": "-7px"
+	}).hide()).css("display", "block");
 });
 
 /** Create the grdMe lock icon and establish the frame secret */

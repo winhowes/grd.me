@@ -19,8 +19,8 @@
   },
   {
 	"name": "sandboxDecrypt",
-	"title": "Sandboxed Decryption",
-	"description": "By default, when Grd Me decrypts a message it inserts the decryption right back into the webpage. Turning this on prevents the webpage from reading your decrypted text.",
+	"title": "Sandboxed Decryption (Experimental)",
+	"description": "By default, when Grd Me decrypts a message it inserts the decryption right back into the webpage. Turning this on prevents the webpage from reading your decrypted text. This is experimental solely due to performance reasons.",
 	"type": "bool",
 	"value": false
   }]
