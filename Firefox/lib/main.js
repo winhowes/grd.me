@@ -11,12 +11,15 @@ var notifications = require("sdk/notifications");
 var timers = require("sdk/timers");
 var preferences = require("sdk/simple-prefs");
 var Intercept = require("intercept").Intercept;
+var CryptoJS = require("lib/aes").CryptoJS;
 var workers = [];
 
 ss.storage.keys = ss.storage.keys || [{
 	key: ":N5gaDV7)\P3.r5",
 	description: "This is Grd Me's default shared key"
 }];
+
+ss.storage.encryptedKeys = ss.storage.encryptedKeys || false;
 
 ss.storage.uids = ss.storage.uids || [];
 
@@ -79,9 +82,42 @@ for(var i=0; i<ss.storage.keys.length; i++){
 	}
 }
 
-prefPanel.port.emit("displayKeys", ss.storage.keys);
+/** Refresh the displayed keys in the pref panel */
+prefPanel.refreshKeys = function(){
+	prefPanel.port.emit("displayKeys", {
+		keys: ss.storage.keys,
+		encrypted: ss.storage.encryptedKeys
+	});
+}
+
+prefPanel.refreshKeys();
+
+//importScripts("lib/aes.js");
 
 prefPanel.port.emit("uids", ss.storage.uids);
+
+prefPanel.port.on("encryptKeychain", function(password){
+	if(!password.length){
+		return;
+	}
+	ss.storage.keys = CryptoJS.AES.encrypt(JSON.stringify(ss.storage.keys), password).toString();
+	ss.storage.encryptedKeys = true;
+	prefPanel.refreshKeys();
+});
+
+prefPanel.port.on("decryptKeychain", function(password){
+	if(!password.length){
+		return;
+	}
+	plaintext = CryptoJS.AES.decrypt(ss.storage.keys, password);
+	plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+	try{
+		ss.storage.keys = JSON.parse(plaintext);
+		ss.storage.encryptedKeys = false;
+	}
+	catch(e){}
+	prefPanel.refreshKeys();
+});
 
 prefPanel.port.on("setActiveKeys", function(indices){
 	ss.storage.activeKeys = [];
@@ -96,12 +132,12 @@ prefPanel.port.on("setActiveKeys", function(indices){
 
 prefPanel.port.on("addKey", function(keyObj){
 	ss.storage.keys.push(keyObj);
-	prefPanel.port.emit("displayKeys", ss.storage.keys);
+	prefPanel.refreshKeys();
 });
 
 prefPanel.port.on("deleteKey", function(index){
 	ss.storage.keys.splice(index, 1);
-	prefPanel.port.emit("displayKeys", ss.storage.keys);
+	prefPanel.refreshKeys();
 });
 
 /** Update a key's description
@@ -135,7 +171,7 @@ prefPanel.port.on("publishKey", function(key){
 				ss.storage.keys[key.index].key.published = true;
 				prefPanel.port.emit("publishResult", {success: true, index: key.index});
 				prefPanel.port.emit("uids", ss.storage.uids);
-				prefPanel.port.emit("displayKeys", ss.storage.keys);
+				prefPanel.refreshKeys();
 			}
 		}
 	}).post();
@@ -157,7 +193,7 @@ prefPanel.port.on("revokeKey", function(key){
 			else {
 				ss.storage.keys.splice(key.index, 1);
 				prefPanel.port.emit("revokeResult", {success: true, index: key.index});
-				prefPanel.port.emit("displayKeys", ss.storage.keys);
+				prefPanel.refreshKeys();
 			}
 		}
 	}).post();
@@ -375,7 +411,7 @@ exports.main = function(options){
 							data.url("observer.js"),
 							data.url("intercept.js")],
 		contentScriptWhen: "ready",
-		attachTo: attachTo,
+		attachTo: ["frame"],
 		onAttach: function(worker){
 			workers.push(worker);
 			worker.on('detach', function(){

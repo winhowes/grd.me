@@ -564,56 +564,89 @@ var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
 	return results;
 });
 
+$("#encryptKeychain").on("click", function(){
+	$("#encryptForm, #overlay").stop(true).fadeIn();
+});
+
+$("body").on("click", "#decryptKeychain", function(){
+	$("#decryptForm, #overlay").stop(true).fadeIn();
+});
+
+$("#encryptForm, #decryptForm").on("submit", function(e){
+	e.preventDefault();
+	var pass = $(this).find("input").val().trim();
+	if(!pass){
+		$(this).find("input").focus();
+		return;
+	}
+	var action = ($(this).attr("id") === "encryptForm"? "encrypt" : "decrypt") + "Keychain";
+	self.port.emit(action, pass);
+	$("#overlay").trigger("click");
+});
+
 /** Show the key list */
-self.port.on("displayKeys", function(keys){
+self.port.on("displayKeys", function(keyObj){
+	var keys = keyObj.keys;
 	keyChain = keys;
 	pubKeyMap = {};
 	hasPrivateKey = false;
 	hasOthersPubKey = false;
 	var keyList = $("#keyList");
 	var newKeyList = $("<ul></ul>");
-	for(var i=0; i<keys.length; i++){
-		if(keys[i].key.pub){
-			hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
-			hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv;
-			pubKeyMap[keys[i].key.pub] = true;
-		}
-		newKeyList.append($("<li>").attr({
-				index: i,
-				class: activeIndex[i]? "active" : ""
-			})
-			.append($("<a>", {class: "showHideKey", text: "Show Key"}))
-			.append($("<div>", {class: "key fullToggle", text: "Key: "})
-				.append($("<span>")
-					.append(function(){
-						var $return = $("<span>");
-						typeof keys[i].key === "object"?
-							$return.append($("<br>"))
-							.append($("<b>", {class: "pub", text: "pub"}))
-							.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
-						keys[i].key.priv?
-							$return.append($("<br>"))
-							.append($("<b>", {class: "priv", text: "priv"}))
-							.append(": "+sanitize(keys[i].key.priv)) : "";
-						return $return.html();
-					})
-				)
+	if(keyObj.encrypted || typeof keys !== "object"){
+		$("#decryptForm, #overlay").stop(true).fadeIn();
+		newKeyList.append($("<li>", {text: "Keychain is encrypted."})
+			.append($("<div>")
+				.append($("<a>", {id: "decryptKeychain", text: "Decrypt Keychain"}))
 			)
-			.append($("<div>", {class: "description", text: keys[i].description})
-				.append(i? $("<i>", {class: "pencil"}) : ""))
-			.append(i? $("<form>", {class: "descriptionForm"})
-				.append($("<input>", {placeholder: "Description", maxlength: 50})) :
-				$("<span>", {class: "not_secure", text: "[Not Secure]"}))
-			.append(i && !keys[i].key.published? $("<div>", {class: "delete", text: "x"}) : "")
-			.append($("<div>", {class: "activeIndicator"}))
-			/* Add the appropriate buttons (revoke, publish, share) */
-			.append(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
-				$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Publish Public Key"}) :
-				typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
-					[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
-					$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
-					typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
 		);
+		$("#encryptKeychain").hide();
+	}
+	else {
+		$("#encryptKeychain").show();
+		for(var i=0; i<keys.length; i++){
+			if(keys[i].key.pub){
+				hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
+				hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv;
+				pubKeyMap[keys[i].key.pub] = true;
+			}
+			newKeyList.append($("<li>").attr({
+					index: i,
+					class: activeIndex[i]? "active" : ""
+				})
+				.append($("<a>", {class: "showHideKey", text: "Show Key"}))
+				.append($("<div>", {class: "key fullToggle", text: "Key: "})
+					.append($("<span>")
+						.append(function(){
+							var $return = $("<span>");
+							typeof keys[i].key === "object"?
+								$return.append($("<br>"))
+								.append($("<b>", {class: "pub", text: "pub"}))
+								.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
+							keys[i].key.priv?
+								$return.append($("<br>"))
+								.append($("<b>", {class: "priv", text: "priv"}))
+								.append(": "+sanitize(keys[i].key.priv)) : "";
+							return $return.html();
+						})
+					)
+				)
+				.append($("<div>", {class: "description", text: keys[i].description})
+					.append(i? $("<i>", {class: "pencil"}) : ""))
+				.append(i? $("<form>", {class: "descriptionForm"})
+					.append($("<input>", {placeholder: "Description", maxlength: 50})) :
+					$("<span>", {class: "not_secure", text: "[Not Secure]"}))
+				.append(i && !keys[i].key.published? $("<div>", {class: "delete", text: "x"}) : "")
+				.append($("<div>", {class: "activeIndicator"}))
+				/* Add the appropriate buttons (revoke, publish, share) */
+				.append(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
+					$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Publish Public Key"}) :
+					typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
+						[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
+						$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
+						typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
+			);
+		}
 	}
 	keyList.html(newKeyList.html());
 });

@@ -31,7 +31,14 @@
 			<div id="keyLengthError" class="inputError">Key must be at least 6 characters long</div>
 			<div id="pubKeyError" class="inputError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, "x, y" (without quotes), {"pub": "x"}, or x with valid hex keys x and y</div>
 		</form>
-		<div class="header">Your Keys <span>(shift-select for multiple active keys)</span>:</div>
+		<div class="header">
+			<div>
+				<span>
+					<a id="encryptKeychain">Encrypt Keychain</a>
+				</span>
+			</div>
+			Your Keys <span>(shift-select for multiple active keys)</span>:
+		</div>
 		<ul id="keyList"></ul>
 		<div id="overlay"></div>
 		<div id="searchResultsContainer" class="popup">
@@ -91,6 +98,17 @@
 			<div class="title">Keys shared with you:</div>
 			<ul></ul>
 		</div>
+		<form id="decryptForm" class="popup">
+			<div class="title">Enter your passphrase to decrypt your keychain:</div>
+			<input placeholder="passphrase" type="password">
+			<button type="submit" class="btn blue">Decrypt</button>
+		</form>
+		<form id="encryptForm" class="popup">
+			<div class="title">Enter your passphrase to encrypt your keychain:</div>
+			<input placeholder="passphrase" type="password">
+			<button type="button" class="cancel btn white">Cancel</button>
+			<button type="submit" class="btn blue">Encrypt</button>
+		</form>
 		<input type="hidden" id="pubKey">
 		<input type="hidden" id="privKey">
 		<input type="hidden" id="pubKeyIndex">

@@ -8,8 +8,14 @@ panelMode = false;
 
 /** Called to update the keyring and the active keys */
 self.port.on("secret", function(secret_obj){
-	secrets = secret_obj.active;
-	keyList = secret_obj.keys;
+	if(typeof secret_obj.keys === "object"){
+		secrets = secret_obj.active;
+		keyList = secret_obj.keys;
+	}
+	else {
+		secrets = [];
+		keyList = [];
+	}
 });
 
 /** Called to toggle displaying the decrypt indicator */
@@ -492,6 +498,9 @@ function decrypt(elem, callback){
 
 /** Scan for any crypto on the page and decypt if possible */
 function decryptInterval(){
+	if(!keyList.length){
+		return;
+	}
 	var elements = $(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"]):not(textarea):not(input):not(script)');
 	elements.each(function(i, e){
 		var elem = $(e);
@@ -534,17 +543,21 @@ setTimeout(initObserver.bind(this, decryptInterval), 50);
 /** Bind the keyboard shortcuts **/
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
-	encrypt();
+	if(keyList.length){
+		encrypt();
+	}
 });
 
 Mousetrap.bindGlobal(['mod+alt+e'], function(e) {
-	e.preventDefault();
-	self.port.emit("secureText");
+	if(keyList.length){
+		e.preventDefault();
+		self.port.emit("secureText");
+	}
 });
 
 Mousetrap.bindGlobal(['mod+shift+e'], function(e) {
 	var active = document.activeElement;
-	if(active.value || $(active).attr("contenteditable")){
+	if(keyList.length && (active.value || $(active).attr("contenteditable"))){
 		e.preventDefault();
 		encrypt(true);
 	}
