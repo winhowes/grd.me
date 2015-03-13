@@ -568,11 +568,12 @@ var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
  * block: whether or not to block input
 */
 function toggleInputBlock(block){
+	var elems = $("#searchUID, #key, #description");
 	if(block){
-		$("#searchUID, #key, #description").attr("readonly", "readonly").val("");
+		elems.attr("readonly", "readonly").val("");
 	}
 	else {
-		$("#searchUID, #key, #description").removeAttr("readonly");
+		elems.removeAttr("readonly");
 	}
 }
 
