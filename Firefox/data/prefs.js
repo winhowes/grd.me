@@ -564,12 +564,26 @@ var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
 	return results;
 });
 
+/** Toggle whether or not a user can type in main input fields
+ * block: whether or not to block input
+*/
+function toggleInputBlock(block){
+	if(block){
+		$("#searchUID, #key, #description").attr("readonly", "readonly").val("");
+	}
+	else {
+		$("#searchUID, #key, #description").removeAttr("readonly");
+	}
+}
+
 $("#encryptKeychain").on("click", function(){
 	$("#encryptForm, #overlay").stop(true).fadeIn();
+	$("#encryptForm input").focus();
 });
 
 $("body").on("click", "#decryptKeychain", function(){
 	$("#decryptForm, #overlay").stop(true).fadeIn();
+	$("#decryptForm input").focus();
 });
 
 $("#encryptForm, #decryptForm").on("submit", function(e){
@@ -579,6 +593,7 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 		$(this).find("input").focus();
 		return;
 	}
+	$(this).find("input").val("");
 	var action = ($(this).attr("id") === "encryptForm"? "encrypt" : "decrypt") + "Keychain";
 	self.port.emit(action, pass);
 	$("#overlay").trigger("click");
@@ -594,7 +609,9 @@ self.port.on("displayKeys", function(keyObj){
 	var keyList = $("#keyList");
 	var newKeyList = $("<ul></ul>");
 	if(keyObj.encrypted || typeof keys !== "object"){
+		toggleInputBlock(true);
 		$("#decryptForm, #overlay").stop(true).fadeIn();
+		$("#decryptForm input").focus();
 		newKeyList.append($("<li>", {text: "Keychain is encrypted."})
 			.append($("<div>")
 				.append($("<a>", {id: "decryptKeychain", text: "Decrypt Keychain"}))
@@ -603,6 +620,7 @@ self.port.on("displayKeys", function(keyObj){
 		$("#encryptKeychain").hide();
 	}
 	else {
+		toggleInputBlock(false);
 		$("#encryptKeychain").show();
 		for(var i=0; i<keys.length; i++){
 			if(keys[i].key.pub){

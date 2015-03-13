@@ -92,8 +92,6 @@ prefPanel.refreshKeys = function(){
 
 prefPanel.refreshKeys();
 
-//importScripts("lib/aes.js");
-
 prefPanel.port.emit("uids", ss.storage.uids);
 
 prefPanel.port.on("encryptKeychain", function(password){
@@ -110,8 +108,11 @@ prefPanel.port.on("decryptKeychain", function(password){
 		return;
 	}
 	plaintext = CryptoJS.AES.decrypt(ss.storage.keys, password);
-	plaintext = plaintext.toString(CryptoJS.enc.Utf8);
 	try{
+		plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+		if(!plaintext){
+			throw true;
+		}
 		ss.storage.keys = JSON.parse(plaintext);
 		ss.storage.encryptedKeys = false;
 	}
