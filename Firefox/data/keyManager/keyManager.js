@@ -37,6 +37,115 @@ function sanitize(str){
 	return $("<i>", {text: str}).html();
 }
 
+/** Hide the first page and show second page of sharing shared key */
+function sharedKeyPage2(){
+	$("#shareFormMain1").hide();
+	$("#shareFormMain2").show();
+	keyList = $("<ul></ul>");
+	var count = 0;
+	for(var i=0; i<keyChain.length; i++){
+		if(keyChain[i].key.pub && !keyChain[i].key.priv){
+			keyList.append($("<li>").attr({index: i, class: (count? "" : "active")})
+				.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
+				.append($("<div>")
+					.append($("<div>", {class: 'key partialKey', text: "Key: "})
+						.append($("<span>")
+							.append($("<br>"))
+							.append($("<b>", {class: "pub", text: "pub"}))
+							.append(": "+sanitize(keyChain[i].key.pub)))))
+				.append($("<div>", {class: "description", text: keyChain[i].description}))
+				.append($("<div>", {class: "activeIndicator"})));
+			count++;
+		}
+	}
+	$("#shareFormMain2 ul").html(keyList.html());
+}
+
+/** Toggle whether or not a user can type in main input fields
+ * block: whether or not to block input
+*/
+function toggleInputBlock(block){
+	var elems = $("#searchUID, #key, #description");
+	if(block){
+		elems.attr("readonly", "readonly").val("");
+	}
+	else {
+		elems.removeAttr("readonly");
+	}
+}
+
+/** Open the encrypt keychain popup
+ * confirm: if true, will show the confirm input, otherwise hides it
+*/
+function showEncryptKeyChainPopup(confirm){
+	$("#encryptForm, #overlay").stop(true).fadeIn();
+	$("#encryptForm input.keyChainPassword").val("").focus();
+	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
+	var error = $("#encryptForm .error").stop(true).hide();
+	if(confirm){
+		error.text("Please confirm your passphrase.").fadeIn();
+		confirmInput.focus();
+	}
+}
+
+/** Open the decrypt keychain popup */
+function showDecryptKeyChainPopup(){
+	$("#decryptForm, #overlay").stop(true).fadeIn();
+	$("#decryptForm input.keyChainPassword").focus();
+}
+
+/** Acknowledge receiving a shared key
+ * keyObj: an object of key data to send
+*/
+function acknowledgeKey(keyObj, index){
+	$.ajax({
+		url: "https://grd.me/key/acceptSharedKey",
+		type: "POST",
+		data: keyObj,
+		error: function(){
+			console.log("Error acknowledging shared key received");
+		}
+	});
+}
+
+/** Panel shown. Display any acceptable shared keys
+ * keys: an array of acceptable shared keys that need approval
+*/
+function acceptableSharedKeysPopup(keys){
+	if(keys.length){
+		var list = $("<ul></ul>");
+		for(var i=0; i<keys.length; i++){
+			var key = $.trim($("<i></i>").text(keys[i].key).html());
+			list.append($("<li>")
+				.append($("<form>").attr({key: key, index: i})
+					.append($("<div>", {text: "Key: "+key}))
+					.append($("<input>", {placeholder: "Description", maxlength: 50, value: sanitize(keys[i].from)}))
+					.append($("<button>", {class: "blue btn", type: "submit", text: "Add"}))
+					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
+		}
+		$("#acceptableSharedKeys ul").html(list.html());
+		$("#overlay, #acceptableSharedKeys").show();
+	}
+}
+
+/** Get rid of duplicate elements in an array
+ * arr: the array to do such to
+*/
+function uniq(arr) {
+    var seen = {};
+    var out = [];
+    var len = arr.length;
+    var j = 0;
+    for(var i = 0; i < len; i++) {
+         var item = JSON.stringify(arr[i]);
+         if(seen[item] !== 1) {
+               seen[item] = 1;
+               out[j++] = JSON.parse(item);
+         }
+    }
+    return out;
+}
+
 $(".error, #overlay, .popup").hide();
 
 /** Create a dropdown providing suggestions for others' uids */
@@ -60,6 +169,23 @@ var searchDropdown = new dropdowns($("#searchUID"), $("#searchSuggestions"), fun
 	});
 	return false;
 }, true);
+
+/** Add a dropdown for suggesting uids */
+var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
+	text = text.toLowerCase();
+	var count = 0;
+	var results = [];
+	for(var i=0; i<uids.length; i++){
+		if(!uids[i].toLowerCase().indexOf(text) && text != uids[i].toLowerCase()){
+			count++;
+			results.push($("<i></i>").text(uids[i]).html());
+			if(count>3){
+				break;
+			}
+		}
+	}
+	return results;
+});
 
 /** Handle searching for a public key by uid */
 $("#searchUIDForm").on("submit", function(e){
@@ -400,30 +526,6 @@ $("#keyList").on("click", ".delete", function(e){
 	}
 });
 
-/** Hide the first page and show second page of sharing shared key */
-function sharedKeyPage2(){
-	$("#shareFormMain1").hide();
-	$("#shareFormMain2").show();
-	keyList = $("<ul></ul>");
-	var count = 0;
-	for(var i=0; i<keyChain.length; i++){
-		if(keyChain[i].key.pub && !keyChain[i].key.priv){
-			keyList.append($("<li>").attr({index: i, class: (count? "" : "active")})
-				.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
-				.append($("<div>")
-					.append($("<div>", {class: 'key partialKey', text: "Key: "})
-						.append($("<span>")
-							.append($("<br>"))
-							.append($("<b>", {class: "pub", text: "pub"}))
-							.append(": "+sanitize(keyChain[i].key.pub)))))
-				.append($("<div>", {class: "description", text: keyChain[i].description}))
-				.append($("<div>", {class: "activeIndicator"})));
-			count++;
-		}
-	}
-	$("#shareFormMain2 ul").html(keyList.html());
-}
-
 /** Press continue to move to page 2 of sharing a shared key */
 $("#shareFormMain1").on("click", ".continue", function(e){
 	sharedKeyPage2();
@@ -547,36 +649,6 @@ $(".cancel").on("click", function(){
 	$("#overlay").trigger("click");
 });
 
-/** Add a dropdown for suggesting uids */
-var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
-	text = text.toLowerCase();
-	var count = 0;
-	var results = [];
-	for(var i=0; i<uids.length; i++){
-		if(!uids[i].toLowerCase().indexOf(text) && text != uids[i].toLowerCase()){
-			count++;
-			results.push($("<i></i>").text(uids[i]).html());
-			if(count>3){
-				break;
-			}
-		}
-	}
-	return results;
-});
-
-/** Toggle whether or not a user can type in main input fields
- * block: whether or not to block input
-*/
-function toggleInputBlock(block){
-	var elems = $("#searchUID, #key, #description");
-	if(block){
-		elems.attr("readonly", "readonly").val("");
-	}
-	else {
-		elems.removeAttr("readonly");
-	}
-}
-
 $("#encryptKeychain").on("click", function(){
 	showEncryptKeyChainPopup(false);
 });
@@ -584,26 +656,6 @@ $("#encryptKeychain").on("click", function(){
 $("body").on("click", "#decryptKeychain", function(){
 	showDecryptKeyChainPopup();
 });
-
-/** Open the encrypt keychain popup
- * confirm: if true, will show the confirm input, otherwise hides it
-*/
-function showEncryptKeyChainPopup(confirm){
-	$("#encryptForm, #overlay").stop(true).fadeIn();
-	$("#encryptForm input.keyChainPassword").val("").focus();
-	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
-	var error = $("#encryptForm .error").stop(true).hide();
-	if(confirm){
-		error.text("Please confirm your passphrase.").fadeIn();
-		confirmInput.focus();
-	}
-}
-
-/** Open the decrypt keychain popup */
-function showDecryptKeyChainPopup(){
-	$("#decryptForm, #overlay").stop(true).fadeIn();
-	$("#decryptForm input.keyChainPassword").focus();
-}
 
 $("#encryptForm, #decryptForm").on("submit", function(e){
 	e.preventDefault();
@@ -629,6 +681,32 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 		hash: CryptoJS.SHA256(pass).toString()
 	});
 	$("#overlay").trigger("click");
+});
+
+/** Remove a key from the acceptableSharedKey array */
+$("#acceptableSharedKeys").on("click", ".remove", function(){
+	self.port.emit("removeAcceptableSharedKey", $(this).parent().attr("index"));
+	$(this).parents("li").fadeOut("fast", function(){
+		$(this).remove();
+		if(!$("#acceptableSharedKeys").find("li").length){
+			$("#overlay").trigger("click");
+		}
+	});
+})
+/** Handle adding an acceptableSharedKey to the normal key array */
+.on("submit", "form", function(e){
+	e.preventDefault();
+	var description = $(this).find("input");
+	if(!$.trim(description.val())){
+		description.focus();
+	}
+	else {
+		self.port.emit("addKey", {
+			key: $(this).attr("key"),
+			description: $.trim(description.val())
+		});
+		$(this).find(".remove").trigger("click");
+	}
 });
 
 self.port.on("confirmKeyChainPassword", function(pass){
@@ -760,20 +838,6 @@ self.port.on("uids", function(uidsArr){
 	uids = uidsArr;
 });
 
-/** Acknowledge receiving a shared key
- * keyObj: an object of key data to send
-*/
-function acknowledgeKey(keyObj, index){
-	$.ajax({
-		url: "https://grd.me/key/acceptSharedKey",
-		type: "POST",
-		data: keyObj,
-		error: function(){
-			console.log("Error acknowledging shared key received");
-		}
-	});
-}
-
 /** Check shared keys */
 self.port.on("checkSharedKey", function(data){
 	/* Handle receiving keys shared with this user */
@@ -843,67 +907,3 @@ self.port.on("checkSharedKey", function(data){
 self.port.on("show", function(keys){
 	acceptableSharedKeysPopup(keys);
 });
-
-/** Panel shown. Display any acceptable shared keys
- * keys: an array of acceptable shared keys that need approval
-*/
-function acceptableSharedKeysPopup(keys){
-	if(keys.length){
-		var list = $("<ul></ul>");
-		for(var i=0; i<keys.length; i++){
-			var key = $.trim($("<i></i>").text(keys[i].key).html());
-			list.append($("<li>")
-				.append($("<form>").attr({key: key, index: i})
-					.append($("<div>", {text: "Key: "+key}))
-					.append($("<input>", {placeholder: "Description", maxlength: 50, value: sanitize(keys[i].from)}))
-					.append($("<button>", {class: "blue btn", type: "submit", text: "Add"}))
-					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
-		}
-		$("#acceptableSharedKeys ul").html(list.html());
-		$("#overlay, #acceptableSharedKeys").show();
-	}
-}
-
-/** Remove a key from the acceptableSharedKey array */
-$("#acceptableSharedKeys").on("click", ".remove", function(){
-	self.port.emit("removeAcceptableSharedKey", $(this).parent().attr("index"));
-	$(this).parents("li").fadeOut("fast", function(){
-		$(this).remove();
-		if(!$("#acceptableSharedKeys").find("li").length){
-			$("#overlay").trigger("click");
-		}
-	});
-})
-/** Handle adding an acceptableSharedKey to the normal key array */
-.on("submit", "form", function(e){
-	e.preventDefault();
-	var description = $(this).find("input");
-	if(!$.trim(description.val())){
-		description.focus();
-	}
-	else {
-		self.port.emit("addKey", {
-			key: $(this).attr("key"),
-			description: $.trim(description.val())
-		});
-		$(this).find(".remove").trigger("click");
-	}
-});
-
-/** Get rid of duplicate elements in an array
- * arr: the array to do such to
-*/
-function uniq(arr) {
-    var seen = {};
-    var out = [];
-    var len = arr.length;
-    var j = 0;
-    for(var i = 0; i < len; i++) {
-         var item = JSON.stringify(arr[i]);
-         if(seen[item] !== 1) {
-               seen[item] = 1;
-               out[j++] = JSON.parse(item);
-         }
-    }
-    return out;
-}

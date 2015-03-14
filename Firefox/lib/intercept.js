@@ -1,16 +1,15 @@
 /** This file handles interception of frame requests for decryption */
 
-var data = require("sdk/self").data;
 var { Cc, Ci, Cu } = require('chrome');
+var data = require("sdk/self").data;
 var domUtil = Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
-var windowController = require("sdk/window/utils");
 var events = require("sdk/system/events");
+const frameOrigin = "https://decrypt.grd.me";
+var pageMod = require("sdk/page-mod");
+var uidMap = {}; //A map of uids to origins, secrets, and message objects
+var windowController = require("sdk/window/utils");
 
 Cu.import("resource://gre/modules/Services.jsm");
-
-const frameOrigin = "https://decrypt.grd.me";
-
-var uidMap = {}; //A map of uids to origins, secrets, and message objects
 
 /** Returns a string of an html div with particular JSON encoded contend and an id
  * id: the id of the div tag
@@ -18,6 +17,40 @@ var uidMap = {}; //A map of uids to origins, secrets, and message objects
 */
 function divWrap(id, content){
 	return "<div id='"+id+"'>"+encodeURIComponent(content)+"</div>";
+}
+
+/** Get the info for a frame with a particular uid and secret
+ * uid: the uid of the frame
+ * secret: the secret of the frame
+ * callback: a callback function to receive the info
+*/
+function getInfo(uid, secret, callback){
+	/** The listener for the chromeFrame's responses
+	 * message: the chromeFrame's response
+	*/
+	function listener(message){
+		callback({
+			messageText: uidMap[uid].message.text,
+			locationObj: uidMap[uid].location,
+			fonts: message.data.fonts,
+			stylesheetCSS: message.data.css,
+			childrenCSS: uidMap[uid].message.childrenCSS,
+			messageCSS: uidMap[uid].message.css
+		});
+		messageManager.removeMessageListener("grdMe@grd.me:get-frame-css:"+uid, listener);
+	}
+		
+	if(uidMap[uid] && uidMap[uid].secret === secret){
+		var messageManager = windowController.getMostRecentBrowserWindow().gBrowser.selectedBrowser.messageManager;
+		messageManager.loadFrameScript(data.url("chrome/chromeFrame.js"), false);
+		messageManager.sendAsyncMessage("grdMe@grd.me:fetch-frame-css", {
+			uid: uid
+		});
+		messageManager.addMessageListener("grdMe@grd.me:get-frame-css:"+uid, listener);
+	}
+	else {
+		callback(false);
+	}
 }
 
 /** Intercept requests to decrypt.grd.me */
@@ -79,6 +112,41 @@ events.on("http-on-modify-request", requestListener);
 events.on("http-on-examine-response", responseListener);
 
 exports.Intercept = {
+	/** Intialize the intercepter's page mod
+	 * workerArray: the array of workers
+	 * detachWorker: a function to detach workers
+	*/
+	init: function(workerArray, detachWorker){
+		pageMod.PageMod({
+			include: ["data:*"],
+			contentScriptFile: [data.url("lib/jquery-2.1.3.min.js"),
+								data.url("lib/linkify.min.js"),
+								data.url("lib/aes.js"),
+								data.url("constants.js"),
+								data.url("observer.js"),
+								data.url("intercept.js")],
+			contentScriptWhen: "ready",
+			attachTo: ["frame"],
+			onAttach: function(worker){
+				workerArray.push(worker);
+				worker.on('detach', function(){
+					detachWorker(this, workerArray);
+				});
+				
+				/* Verify frames were created by Grd Me */
+				worker.port.on("verifyFrame", function(obj){
+					getInfo(obj.uid, obj.secret, function(returnObj){
+						if(returnObj){
+							worker.port.emit("frameVerified", returnObj);
+						}
+						else {
+							worker.port.emit("frameFailed");
+						}
+					});
+				});
+			}
+		});
+	},
 	/** Add a uid to the array
 	 * uid: the unique id of a message
 	 * location: an object containing the host, origin, and full location of the frame's parent
@@ -96,36 +164,6 @@ exports.Intercept = {
 			location: location,
 			secret: secret,
 			message: message
-		}
-	},
-	/** Get the info for a frame with a particular uid and secret
-	 * uid: the uid of the frame
-	 * secret: the secret of the frame
-	 * callback: a callback function to receive the info
-	*/
-	getInfo: function(uid, secret, callback){
-		function listener(message){
-			callback({
-				messageText: uidMap[uid].message.text,
-				locationObj: uidMap[uid].location,
-				fonts: message.data.fonts,
-				stylesheetCSS: message.data.css,
-				childrenCSS: uidMap[uid].message.childrenCSS,
-				messageCSS: uidMap[uid].message.css
-			});
-			messageManager.removeMessageListener("grdMe@grd.me:get-frame-css:"+uid, listener);
-		}
-			
-		if(uidMap[uid] && uidMap[uid].secret === secret){
-			var messageManager = windowController.getMostRecentBrowserWindow().gBrowser.selectedBrowser.messageManager;
-			messageManager.loadFrameScript(data.url("chromeFrame.js"), false);
-			messageManager.sendAsyncMessage("grdMe@grd.me:fetch-frame-css", {
-				uid: uid
-			});
-			messageManager.addMessageListener("grdMe@grd.me:get-frame-css:"+uid, listener);
-		}
-		else {
-			callback(false);
 		}
 	}
 };
