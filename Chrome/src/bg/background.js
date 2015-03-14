@@ -206,6 +206,9 @@ function main(keys, activeKeys){
 				Intercept.add(msg.data.uid, msg.data.location, msg.data.secret, msg.data.message, msg.data.fonts);
 				port.postMessage({id: "prepareIframe", uid: msg.data.uid});
 			}
+			else if(msg.id == "newTab"){
+				chrome.tabs.create({url: msg.href});
+			}
 		});
 		
 		port.onDisconnect.addListener(function(port){

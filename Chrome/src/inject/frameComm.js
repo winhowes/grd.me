@@ -34,7 +34,7 @@ function receiveMessage(event){
 		}
 		else if(data.id == "click"){
 			if(data.target === "_blank"){
-				chrome.tabs.create({url: data.href});
+				port.postMessage({id: "newTab", href: data.href});
 			}
 			else{
 				window.location.assign(data.href);

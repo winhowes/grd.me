@@ -66,6 +66,7 @@ var checkHeight = (function(){
 	var lastBodyHeight = 0;
 	return function(){
 		var outerHeight = $("body").outerHeight();
+		//TODO: find out why they are off by 5
 		if(lastBodyHeight - outerHeight > 5){
 			lastBodyHeight = outerHeight;
 			msg({
