@@ -35,6 +35,124 @@ function detachWorker(worker, workerArray) {
 	}
 }
 
+var Intercept = (function(){
+	/** Read a packaged file
+	 * url: the url to the file
+	 * callback: a function which takes the contents of the file
+	*/
+	function getFile(url, callback){
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', chrome.extension.getURL(url), true);
+		xhr.onreadystatechange = function(){
+			if(xhr.readyState == XMLHttpRequest.DONE && xhr.status == 200){
+				callback(xhr.responseText);
+			}
+		};
+		xhr.send();
+	}
+	
+	/** Returns a string of an html div with particular JSON encoded contend and an id
+	 * id: the id of the div tag
+	 * content: the content to be encoded and inserted into the html string
+	*/
+	function divWrap(id, content){
+		return "<div id='" + id + "'>" + encodeURIComponent(content) + "</div>";
+	}
+	
+	/** Wrap some js in script tags
+	 * content: the content to be wrapped
+	*/
+	function scriptWrap(content){
+		return "<script>" + content + "</script>";
+	}
+	
+	var uidMap = {},
+	baseURL = "https://decrypt.grd.me/",
+	metaTag, jquery, aes, linkify, constants, observer, intercept;
+	
+	getFile('/src/inject/utf8Meta.phtml', function(response){
+		metaTag = response;
+	});
+	
+	getFile('/src/inject/lib/jquery-2.1.3.min.js', function(response){
+		jquery = scriptWrap(response);
+	});
+	
+	getFile('/src/inject/lib/aes.js', function(response){
+		aes = scriptWrap(response);
+	});
+	
+	getFile('/src/inject/lib/linkify.min.js', function(response){
+		linkify = scriptWrap(response);
+	});
+	
+	getFile('/src/inject/constants.js', function(response){
+		constants = scriptWrap(response);
+	});
+	
+	getFile('/src/inject/observer.js', function(response){
+		observer = scriptWrap(response);
+	});
+	
+	getFile('/src/inject/interceptFrame.js', function(response){
+		intercept = scriptWrap(response);
+	});
+	
+	
+	chrome.webRequest.onBeforeRequest.addListener(
+		function(details) {
+			var uid = details.url.slice(baseURL.length);
+			return {redirectUrl: "data:text/html," + encodeURIComponent(
+				metaTag +
+				jquery +
+				aes +
+				linkify +
+				constants +
+				observer +
+				scriptWrap("locationObj=" + JSON.stringify(uidMap[uid].location) + ";") +
+				scriptWrap("messageCSS=" + JSON.stringify(uidMap[uid].message.css) + ";") +
+				scriptWrap("childrenCSS=" + JSON.stringify(uidMap[uid].message.childrenCSS) + ";") +
+				scriptWrap("fonts=" + JSON.stringify(uidMap[uid].fonts) + ";") +
+				scriptWrap("messageText=" + JSON.stringify(uidMap[uid].message.text) + ";") +
+				scriptWrap("FRAME_SECRET=" + JSON.stringify( uidMap[uid].secret) + ";") +
+				scriptWrap("uid=" + JSON.stringify(uid) + ";") +
+				intercept
+			)}
+		},
+		{
+			urls: [
+				baseURL+"*",
+			],
+			types: ["sub_frame"]
+		},
+		["blocking"]
+	);
+	
+	return {
+		/** Tell the background script to add a uid to the array
+		 * uid: the unique id of a message
+		 * location: an object containing the host, origin, and full location of the frame's parent
+		 * secret: the window's symmetric key
+		 * message: the message object containing both the text and css object
+		 * fonts: the fonts in the outer frame
+		*/
+		add: function(uid, location, secret, message, fonts){
+			var endings = ["?", "#"];
+			for(var i=0; i<endings.length; i++){
+				if(location.full.indexOf(endings[i]) > 0){
+					location.full = location.full.slice(0, location.full.indexOf(endings[i]));
+				}
+			}
+			uidMap[uid] = {
+				location: location,
+				secret: secret,
+				message: message,
+				fonts: fonts
+			}
+		},
+	}
+}());
+
 /** The main function
  * keys: an array of all keys
  * activeKeys: an array of all activeKeys
@@ -84,6 +202,10 @@ function main(keys, activeKeys){
 					left: left
 				});
 			}
+			else if(msg.id == "interceptAdd"){
+				Intercept.add(msg.data.uid, msg.data.location, msg.data.secret, msg.data.message, msg.data.fonts);
+				port.postMessage({id: "prepareIframe", uid: msg.data.uid});
+			}
 		});
 		
 		port.onDisconnect.addListener(function(port){
@@ -93,10 +215,15 @@ function main(keys, activeKeys){
 }
 
 /** Initialize preferences */	
-chrome.storage.sync.get("decryptIndicator", function(items) {
-	if(items.decryptIndicator!==false){
+chrome.storage.sync.get(["decryptIndicator", "sandboxDecrypt"], function(items) {
+	if(items.decryptIndicator !== false && items.decryptIndicator !== true){
 		chrome.storage.sync.set({
 			decryptIndicator: true
+		});
+	}
+	if(items.sandboxDecrypt !== false && items.sandboxDecrypt !== true){
+		chrome.storage.sync.set({
+			sandboxDecrypt: false
 		});
 	}
 });

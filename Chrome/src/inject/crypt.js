@@ -3,6 +3,7 @@
 var secrets = [],
 keyList = [],
 decryptIndicator = false,
+sandboxDecrypt = false,
 panelMode = false;
 
 var port = chrome.runtime.connect();
@@ -24,13 +25,18 @@ port.onMessage.addListener(function(msg) {
 			}
 		});
 	}
+	else if(msg.id == "prepareIframe"){
+		Intercept.prepareIframe(msg.uid);
+	}
 });
 
 /** Get the decrypt Indicator */
 chrome.storage.sync.get({
-    decryptIndicator: false
+    decryptIndicator: false,
+	sandboxDecrypt: false
   }, function(items) {
 	decryptIndicator = items.decryptIndicator;
+	sandboxDecrypt = items.sandboxDecrypt;
 });
 
 setTimeout(function(){
@@ -45,12 +51,83 @@ setTimeout(function(){
 	}).appendTo(container);
 	DECRYPTED_MARK = container.html();
 	
+	FRAME_SECRET = getRandomString(64);
+	
 	$("body").on("mouseover", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "bold");
 	}).on("mouseleave", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "");
 	});
 }, 0);
+
+/** Get the unique selector for qn element
+ * elem: the element for which to get the selector
+ * stop: the parent the selector should be relative to
+*/
+function getUniqueSelector(elem, stop){
+    var parent = elem.parentNode;
+    var selector = '>' + elem.nodeName + ':nth-child(' + ($(elem).index() + 1) + ')';
+    while (parent && parent !== stop) {
+        selector = '>' + parent.nodeName + ':nth-child(' + ($(parent).index() + 1) + ')' + selector;
+        parent = parent.parentNode;
+    }
+    return selector;
+}
+
+/** Return an array of selectors and css objects for children of an element
+ * parent: the parent element to search down from
+*/
+function setupChildren(parent){
+	var cssArr = [];
+	var elements = parent.querySelectorAll("*");
+	for(var i=0; i<elements.length; i++){
+		cssArr.push({
+			selector: getUniqueSelector(elements[i], parent),
+			css: getCSS(elements[i])
+		});
+	}
+	return cssArr;
+}
+
+/** Return an object of all CSS attributes for a given element
+ * element: the element whose CSS attributes are to be returned
+*/
+function getCSS(element){
+    var dest = {},
+    style, prop;
+    if(window.getComputedStyle){
+        if((style = window.getComputedStyle(element, null))){
+            var val;
+            if(style.length){
+                for(var i = 0, l = style.length; i < l; i++){
+                    prop = style[i];
+                    val = style.getPropertyValue(prop);
+                    dest[prop] = val;
+                }
+            } else {
+                for(prop in style){
+                    val = style.getPropertyValue(prop) || style[prop];
+                    dest[prop] = val;
+                }
+            }
+            return dest;
+        }
+    }
+    if((style = element.currentStyle)){
+        for(prop in style){
+            dest[prop] = style[prop];
+        }
+        return dest;
+    }
+    if((style = element.style)){
+        for(prop in style){
+            if(typeof style[prop] != 'function'){
+                dest[prop] = style[prop];
+            }
+        }
+    }
+    return dest;
+}
 
 /** Sanitize a string
  * str: the string to sanitize
@@ -214,8 +291,40 @@ function decrypt(elem, callback){
 	function finish(plaintext, ciphertext){
 		var end = index2>0 ? html.substring(html.indexOf(endTag) + endTag.length) : "";
 		var start = html.substring(0, html.indexOf(startTag));
+		var uid = encodeURIComponent(getRandomString(64));
+		elem.attr("grdMeUID", uid);
 		val = start + decryptMark(setupPlaintext(plaintext)) + end;
-		elem.html(val);
+		if(sandboxDecrypt){
+			plaintext  = "[Decrypting Message...]";
+			elem.html(start + decryptMark(plaintext) + end);
+			elem.append($("<a>", {grdMeAnchor: ""}).hide());
+			elem.contents().filter(function() {
+				return this.nodeType===3;
+			}).remove();
+			Intercept.add({
+				location: {
+					full: window.location.href,
+					host: window.location.host,
+					origin: window.location.origin
+				},
+				message: {
+					childrenCSS: setupChildren(elem.get(0)),
+					css: getCSS(elem.get(0)),
+					text: val
+				},
+				secret: FRAME_SECRET,
+				uid: uid
+			});
+			if(elem.css("display") === "inline"){
+				elem.css("display", "inline-block");
+				if(elem.css("vertical-align") === "baseline"){
+					elem.css("vertical-align", "-moz-middle-with-baseline");
+				}
+			}
+		}
+		else {
+			elem.html(val);
+		}
 		callback({endTagFound: index2>0, plaintext: sanitize(plaintext), ciphertext: ciphertext});
 	}
 	
@@ -394,18 +503,8 @@ function decryptInterval(){
 	});
 }
 
-/** Check for changes to the dom before running decryptInterval */
-(function(){
-	var otherDecryptTimeout = false;
-	var observer = new MutationObserver(function(mutations) {
-		clearTimeout(otherDecryptTimeout);
-		otherDecryptTimeout = setTimeout(decryptInterval, 50);
-	});
-	
-	var config = { subtree: true, childList: true, characterData: true, attributes: true };
-	
-	observer.observe(document.body, config);
-}());
+/** Check for changes to the dom before running decryptInterval **/
+setTimeout(initObserver.bind(this, decryptInterval), 50);
 
 setTimeout(decryptInterval, 50);
 

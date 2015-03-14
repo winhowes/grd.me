@@ -23,6 +23,9 @@ function receiveMessage(event) {
 		else if(data.id == "decryptIndicator"){
 			decryptIndicator = data.decryptIndicator;
 		}
+		else if(data.id == "frameVerified"){
+			frameVerified(data.data);
+		}
 	}
 	catch(e){}
 }
@@ -63,7 +66,7 @@ var checkHeight = (function(){
 	var lastBodyHeight = 0;
 	return function(){
 		var outerHeight = $("body").outerHeight();
-		if(lastBodyHeight != outerHeight){
+		if(lastBodyHeight - outerHeight > 5){
 			lastBodyHeight = outerHeight;
 			msg({
 				id: "adjustHeight",
@@ -253,120 +256,104 @@ function stripScripts(html) {
     return div.innerHTML;
 }
 
-(function(){
-	FRAME_SECRET = decodeURIComponent($("#frameSecret").text());
-	uid = decodeURIComponent($("#uid").text());
-	$("#uid, #frameSecret").remove();
-	try{
-		self.port.emit("verifyFrame", {
-			secret: FRAME_SECRET,
-			uid: uid
-		});
+/** The callback function for when the fram is verified
+ * obj: an object containing the stylesheet CSS and font info
+*/
+function frameVerified(obj){
+	stylesheetCSS = obj.stylesheetCSS || [],
+	fonts = obj.fonts || [],
+	
+	$("html").css(messageCSS);
+	var container = $("body").append(clean(messageText)).css(messageCSS);
+	
+	var style = $("<style>", {type: "text/css"});
+	
+	for(var i=0; i<fonts.length; i++){
+		style.append(fonts[i]);
 	}
-	catch(e){}
 	
-	self.port.on("frameVerified", function(obj){
-		var messageCSS = obj.messageCSS,
-		stylesheetCSS = obj.stylesheetCSS,
-		childrenCSS = obj.childrenCSS,
-		fonts = obj.fonts,
-		messageText = obj.messageText;
-		locationObj = obj.locationObj;
-		
-		$("html").css(messageCSS);
-		var container = $("body").append(clean(messageText)).css(messageCSS);
-		
-		var style = $("<style>", {type: "text/css"});
-		
-		for(var i=0; i<fonts.length; i++){
-			style.append(fonts[i]);
-		}
-		
-		if(stylesheetCSS.length){
-			for(i=0; i<stylesheetCSS.length; i++){
-				for(var pseudo in stylesheetCSS[i].css){
-					var pseudoClass = pseudo !== "normal"? pseudo : ""
-					style.append(document.createTextNode(stylesheetCSS[i].selector + pseudoClass + "{"));
-					for(key in stylesheetCSS[i].css[pseudo]){
-						var value = $.trim(stylesheetCSS[i].css[pseudo][key]);
-						/* Make sure there's no JS */
-						if($.trim(value.toLowerCase().replace("url(", "")
-								   .replace("'", "").replace('"', "")
-								   .replace("/*", "").replace("*/", "")).indexOf("javascript")){
-							style.append(document.createTextNode(key + ":" + value + ";"));
-						}
+	if(stylesheetCSS.length){
+		for(i=0; i<stylesheetCSS.length; i++){
+			for(var pseudo in stylesheetCSS[i].css){
+				var pseudoClass = pseudo !== "normal"? pseudo : ""
+				style.append(document.createTextNode(stylesheetCSS[i].selector + pseudoClass + "{"));
+				for(key in stylesheetCSS[i].css[pseudo]){
+					var value = $.trim(stylesheetCSS[i].css[pseudo][key]);
+					/* Make sure there's no JS */
+					if($.trim(value.toLowerCase().replace("url(", "")
+							   .replace("'", "").replace('"', "")
+							   .replace("/*", "").replace("*/", "")).indexOf("javascript")){
+						style.append(document.createTextNode(key + ":" + value + ";"));
 					}
-					style.append(document.createTextNode("}"));
 				}
+				style.append(document.createTextNode("}"));
 			}
 		}
-		else {
-			for(i=0; i<childrenCSS.length; i++){
-				$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
-			}
+	}
+	else {
+		for(i=0; i<childrenCSS.length; i++){
+			$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
 		}
-		
-		$(document.head).append(style);
-		
-		$("html").bind(getAllEvents($("html").get(0)), function(e){
-			msg({
-				id: "event",
-				event: {
-					type: e.type.toString(),
-					selector: getUniqueSelector(e.target)
-				}
-			});
-		});
-		
-		$("body").on("click", "a", function(e){
-			e.preventDefault();
-			if($(this).attr("href")){
-				msg({
-					id: "click",
-					href: $(this).attr("href"),
-					target: $(this).attr("target")
-				});
+	}
+	
+	$(document.head).append(style);
+	
+	$("html").bind(getAllEvents($("html").get(0)), function(e){
+		msg({
+			id: "event",
+			event: {
+				type: e.type.toString(),
+				selector: getUniqueSelector(e.target)
 			}
 		});
-		
-		$("html, body").css({
-			padding: 0,
-			margin: 0,
-			height: "auto"
-		});
-		
-		container.on("mouseover", "grdme", function(){
-			$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
-		}).on("mouseleave", "grdme", function(){
-			$(this).next("grdme_decrypt").css("font-weight", "");
-		});
-		
-		checkHeight();
-		setInterval(checkHeight, 500);
-		
-		fixReferences();
-		
-		callbackWrap = (function(){
-			var callbackChain = [];
-			$("body").on("callback", function(e, returnId, data){
-				(typeof callbackChain[returnId] == "function") && callbackChain[returnId](data);
-			});
-			
-			return function(func){
-				return callbackChain.push(func) - 1;
-			}
-		}());
-		
-		initObserver(decryptInterval);
-		
-		msg({id: "ready"});
 	});
 	
-	self.port.on("frameFailed", function(){
-		if(uid.length && FRAME_SECRET.length){
-			console.log("Error Decrypting");
+	$("body").on("click", "a", function(e){
+		e.preventDefault();
+		if($(this).attr("href")){
+			msg({
+				id: "click",
+				href: $(this).attr("href"),
+				target: $(this).attr("target")
+			});
 		}
 	});
+	
+	$("html, body").css({
+		padding: 0,
+		margin: 0,
+		height: "auto"
+	});
+	
+	container.on("mouseover", "grdme", function(){
+		$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
+	}).on("mouseleave", "grdme", function(){
+		$(this).next("grdme_decrypt").css("font-weight", "");
+	});
+	
+	checkHeight();
+	setInterval(checkHeight, 500);
+	
+	fixReferences();
+	
+	callbackWrap = (function(){
+		var callbackChain = [];
+		$("body").on("callback", function(e, returnId, data){
+			(typeof callbackChain[returnId] == "function") && callbackChain[returnId](data);
+		});
+		
+		return function(func){
+			return callbackChain.push(func) - 1;
+		}
+	}());
+	
+	initObserver(decryptInterval);
+	
+	msg({id: "ready"});
+}
+
+$(function(){
+	frameVerified({});
 	
 	window.addEventListener("message", receiveMessage, false);
-}());
+});

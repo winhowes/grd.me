@@ -29,7 +29,10 @@
     "clipboardWrite",
     "https://grd.me/",
     "notifications",
-    "storage"
+    "storage",
+    "webRequest",
+    "webRequestBlocking",
+    "https://decrypt.grd.me/*"
   ],
   "content_scripts": [
     {
@@ -44,6 +47,9 @@
         "src/inject/lib/mousetrap.min.js",
         "src/inject/lib/linkify.min.js",
         "src/inject/constants.js",
+        "src/inject/intercept.js",
+        "src/inject/frameComm.js",
+        "src/inject/observer.js",
         "src/inject/crypt.js"
       ]
     }
