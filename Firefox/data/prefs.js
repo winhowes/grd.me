@@ -634,7 +634,6 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 self.port.on("confirmKeyChainPassword", function(pass){
 	showEncryptKeyChainPopup(true);
 	$("#encryptForm input.keyChainPassword").val(pass);
-	
 });
 
 /** Show the key list */
