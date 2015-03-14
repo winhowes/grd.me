@@ -109,13 +109,15 @@ var Intercept = (function(){
 				linkify +
 				constants +
 				observer +
-				scriptWrap("locationObj=" + JSON.stringify(uidMap[uid].location) + ";") +
-				scriptWrap("messageCSS=" + JSON.stringify(uidMap[uid].message.css) + ";") +
-				scriptWrap("childrenCSS=" + JSON.stringify(uidMap[uid].message.childrenCSS) + ";") +
-				scriptWrap("fonts=" + JSON.stringify(uidMap[uid].fonts) + ";") +
-				scriptWrap("messageText=" + JSON.stringify(uidMap[uid].message.text) + ";") +
-				scriptWrap("FRAME_SECRET=" + JSON.stringify( uidMap[uid].secret) + ";") +
-				scriptWrap("uid=" + JSON.stringify(uid) + ";") +
+				scriptWrap(
+					"locationObj=" + JSON.stringify(uidMap[uid].location) +
+					";messageCSS=" + JSON.stringify(uidMap[uid].message.css) +
+					";childrenCSS=" + JSON.stringify(uidMap[uid].message.childrenCSS) +
+					";fonts=" + JSON.stringify(uidMap[uid].fonts) +
+					";messageText=" + JSON.stringify(uidMap[uid].message.text) +
+					";FRAME_SECRET=" + JSON.stringify( uidMap[uid].secret) +
+					";uid=" + JSON.stringify(uid) + ";"
+				) +
 				intercept
 			)}
 		},
