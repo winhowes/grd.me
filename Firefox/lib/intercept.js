@@ -62,7 +62,7 @@ function requestListener(event){
 		let uid = event.subject.URI.path;
 		uid  = uid && uid.slice(1);
 		if(uidMap[uid] && uidMap[uid].secret){
-			event.subject.redirectTo(Services.io.newURI("data:text/html," +
+			event.subject.redirectTo(Services.io.newURI("data:text/html;charset=utf-8," +
 			encodeURIComponent(
 			  data.load("utf8Meta.phtml") +
 			  /* These values are untainted and created by grdMe and therefore don't need to be sanitized */
