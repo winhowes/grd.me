@@ -41,18 +41,14 @@ for(var i=0; i<ss.storage.activeKeys.length; i++){
 	ss.storage.activeKeys[JSON.stringify(ss.storage.activeKeys[i])] = true;
 }
 
-// Initialize the key manager and intercepter
-
-
 exports.main = function(options){
 	var attachTo = ["top", "frame"];
 	if(options.loadReason === "install"){
 		attachTo.push("existing");
 	}
-	
+	// Initialize the key manager, intercepter, and secureTextPanel
 	KeyManager.init(workers);
 	Intercept.init(workers, detachWorker);
-	
 	var secureTextPanel = require("secureTextPanel").secureTextPanel;
 	
 	pageMod.PageMod({

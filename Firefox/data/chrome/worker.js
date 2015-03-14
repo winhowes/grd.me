@@ -1,9 +1,9 @@
 var window = {};
 
-importScripts("constants.js",
-			  "lib/sha256.js",
-			  "lib/ecc.min.js",
-			  "lib/aes.js");
+importScripts("../constants.js",
+			  "../lib/sha256.js",
+			  "../lib/ecc.min.js",
+			  "../lib/aes.js");
 
 onmessage = function(e) {
 	var eData = JSON.parse(e.data);
