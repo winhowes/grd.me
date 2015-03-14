@@ -32,19 +32,19 @@ function trim(str){
  * keyList: the current list of keys
 */
 function recheckDecryption(text, returnObj, keyList){
-	while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
+	while(returnObj.plaintext.indexOf(startTag) + 1 && returnObj.plaintext.indexOf(endTag) + 1){
 		var pre = returnObj.plaintext.substring(0, returnObj.plaintext.indexOf(startTag)),
 		ciphertext = returnObj.plaintext.substring(returnObj.plaintext.indexOf(startTag) + startTag.length, returnObj.plaintext.indexOf(endTag)),
 		post = returnObj.plaintext.substring(returnObj.plaintext.indexOf(endTag) + endTag.length);
-		returnObj.plaintext = pre+decryptText(ciphertext, keyList)+post;
+		returnObj.plaintext = pre + decryptText(ciphertext, keyList) + post;
 	}
 	if(returnObj.plaintext.length){
-		return text.substring(0, text.indexOf(returnObj.plaintext+""))+
-					startTag+
-					returnObj.ciphertext+
+		return text.substring(0, text.indexOf(returnObj.plaintext+"")) +
+					startTag +
+					returnObj.ciphertext +
 					text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length);
 	}
-	return text.replace(UNABLE_TO_DECRYPT+" "+UNABLE_startTag, startTag);
+	return text.replace(UNABLE_TO_DECRYPT + " " + UNABLE_startTag, startTag);
 }
 
 /** Decrypt ciphertext with all available keys. Returns false if no decryption possible

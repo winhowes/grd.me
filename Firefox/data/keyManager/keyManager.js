@@ -52,7 +52,7 @@ function sharedKeyPage2(){
 						.append($("<span>")
 							.append($("<br>"))
 							.append($("<b>", {class: "pub", text: "pub"}))
-							.append(": "+sanitize(keyChain[i].key.pub)))))
+							.append(": " + sanitize(keyChain[i].key.pub)))))
 				.append($("<div>", {class: "description", text: keyChain[i].description}))
 				.append($("<div>", {class: "activeIndicator"})));
 			count++;
@@ -118,7 +118,7 @@ function acceptableSharedKeysPopup(keys){
 			var key = $.trim($("<i></i>").text(keys[i].key).html());
 			list.append($("<li>")
 				.append($("<form>").attr({key: key, index: i})
-					.append($("<div>", {text: "Key: "+key}))
+					.append($("<div>", {text: "Key: " + key}))
 					.append($("<input>", {placeholder: "Description", maxlength: 50, value: sanitize(keys[i].from)}))
 					.append($("<button>", {class: "blue btn", type: "submit", text: "Add"}))
 					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
@@ -220,10 +220,10 @@ $("#searchUIDForm").on("submit", function(e){
 									.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
 									.append(revoked? $("<span>", {class: 'revoked_msg', text: '[Revoked]'}) : "")
 									.append($("<div>")
-										.append($("<span>", {class: 'key partialKey', text: "Key: "+data.keys[i].pub}))
+										.append($("<span>", {class: 'key partialKey', text: "Key: " + data.keys[i].pub}))
 										.append(!revoked? $("<button>", {class: 'btn blue addKey', uid: data.uid, pub: data.keys[i].pub, text: "Add"}) : ""))
-									.append(revoked? $("<div>", {class: 'timestamp', text: "Revoked: "+data.keys[i].revoked_at}): "")
-									.append($("<div>", {class: 'timestamp', text: "Created: "+data.keys[i].created_at})));
+									.append(revoked? $("<div>", {class: 'timestamp', text: "Revoked: " + data.keys[i].revoked_at}): "")
+									.append($("<div>", {class: 'timestamp', text: "Created: " + data.keys[i].created_at})));
 						}
 					}
 					catch(e){
@@ -272,7 +272,7 @@ $("#addKey").on("submit", function(e){
 	catch(e){
 		if(keyVal[0] != '"' && keyVal[0] != "'"){
 			try{
-				var key = JSON.parse('"'+keyVal+'"');
+				var key = JSON.parse('"' + keyVal + '"');
 			}
 			catch(e){
 				$("#pubKeyError").fadeIn();
@@ -510,10 +510,10 @@ $("#keyList").on("click", ".delete", function(e){
 							.append($("<span>")
 								.append($("<br>"))
 								.append($("<b>", {class: "pub", text: "pub"}))
-								.append(": "+sanitize(keyChain[i].key.pub))
+								.append(": " + sanitize(keyChain[i].key.pub))
 								.append($("<br>"))
 								.append($("<b>", {class: "priv", text: "priv"}))
-								.append(": "+sanitize(keyChain[i].key.priv)))))
+								.append(": " + sanitize(keyChain[i].key.priv)))))
 					.append($("<div>", {class: "description", text: keyChain[i].description}))
 					.append($("<div>", {class: "activeIndicator"})));
 				count++;
@@ -573,7 +573,7 @@ $("#revokeForm").on("submit", function(e){
 		index: $("#pubKeyIndex").val(),
 		sig: JSON.stringify(ecc.sign($("#privKey").val(), "REVOKED"))
 	}
-	$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".revoke").addClass("disabled").prop("disabled", true);
+	$("#keyList").find("li[index='" + $("#pubKeyIndex").val() + "']").find(".revoke").addClass("disabled").prop("disabled", true);
 	self.port.emit("revokeKey", key);
 	$("#overlay").trigger("click");
 });
@@ -621,7 +621,7 @@ $("#publishForm").on("submit", function(e){
 						uid: uid,
 						sig: JSON.stringify(ecc.sign($("#privKey").val(), uid.toLowerCase()))
 					}
-					$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".publish").addClass("disabled").prop("disabled", true);
+					$("#keyList").find("li[index='" + $("#pubKeyIndex").val() + "']").find(".publish").addClass("disabled").prop("disabled", true);
 					self.port.emit("publishKey", key);
 					$("#overlay").trigger("click");
 				}
@@ -754,11 +754,11 @@ self.port.on("displayKeys", function(keyObj){
 							typeof keys[i].key === "object"?
 								$return.append($("<br>"))
 								.append($("<b>", {class: "pub", text: "pub"}))
-								.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
+								.append(": " + sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
 							keys[i].key.priv?
 								$return.append($("<br>"))
 								.append($("<b>", {class: "priv", text: "priv"}))
-								.append(": "+sanitize(keys[i].key.priv)) : "";
+								.append(": " + sanitize(keys[i].key.priv)) : "";
 							return $return.html();
 						})
 					)
@@ -786,7 +786,7 @@ self.port.on("displayKeys", function(keyObj){
 /** Set a particular key to being the active key */
 self.port.on("activeKeyIndex", function(index){
 	activeIndex[index] = true;
-	$("#keyList [index='"+index+"']").addClass("active");
+	$("#keyList [index='" + index + "']").addClass("active");
 });
 
 /** Indicate whether a key was published or failed to publish
@@ -796,7 +796,7 @@ self.port.on("activeKeyIndex", function(index){
 self.port.on("publishResult", function(obj){
 	var id = obj.success? "#publishSuccess" : "#publishFail";
 	if(!obj.success){
-		$("#keyList").find("li[index='"+obj.index+"']").find(".publish").removeClass("disabled").prop("disabled", false);
+		$("#keyList").find("li[index='" + obj.index + "']").find(".publish").removeClass("disabled").prop("disabled", false);
 	}
 	$(id).stop(true).css("top", "-20px").animate({
 		top: 0
@@ -812,7 +812,7 @@ self.port.on("publishResult", function(obj){
 self.port.on("revokeResult", function(obj){
 	var id = obj.success? "#revokeSuccess" : "#revokeFail";
 	if(!obj.success){
-		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled").prop("disabled", false);
+		$("#keyList").find("li[index='" + obj.index + "']").find(".revoke").removeClass("disabled").prop("disabled", false);
 	}
 	$(id).stop(true).css("top", "-20px").animate({
 		top: 0
