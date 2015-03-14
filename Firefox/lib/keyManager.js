@@ -54,7 +54,7 @@ var keyManager = Panel({
 	contentScriptFile: [data.url("lib/jquery-2.1.3.min.js"),
 						data.url('lib/ecc.min.js'),
 						data.url('lib/sha256.js'),
-						data.url('dropdown.js'),
+						data.url('keyManager/dropdown.js'),
 						data.url("keyManager/keyManager.js")],
 	position: button,
 	onHide: handleHide,
