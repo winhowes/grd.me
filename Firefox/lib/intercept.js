@@ -1,10 +1,11 @@
 /** This file handles interception of frame requests for decryption */
 
+const frameOrigin = "https://decrypt.grd.me";
+
 var { Cc, Ci, Cu } = require('chrome');
 var data = require("sdk/self").data;
 var domUtil = Cc["@mozilla.org/inspector/dom-utils;1"].getService(Ci.inIDOMUtils);
 var events = require("sdk/system/events");
-const frameOrigin = "https://decrypt.grd.me";
 var pageMod = require("sdk/page-mod");
 var uidMap = {}; //A map of uids to origins, secrets, and message objects
 var windowController = require("sdk/window/utils");

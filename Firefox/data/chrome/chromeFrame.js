@@ -178,5 +178,5 @@ function getUniqueSelector(elem, stop){
         selector = '>' + parent.nodeName + ':nth-child(' + (indexEl(parent) + 1) + ')' + selector;
         parent = parent.parentNode;
     }
-    return "body"+selector;
+    return "body" + selector;
 }
