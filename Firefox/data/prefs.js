@@ -37,7 +37,7 @@ function sanitize(str){
 	return $("<i>", {text: str}).html();
 }
 
-$(".inputError, #overlay, .popup").hide();
+$(".error, #overlay, .popup").hide();
 
 /** Create a dropdown providing suggestions for others' uids */
 var searchDropdown = new dropdowns($("#searchUID"), $("#searchSuggestions"), function(text, callback){
@@ -138,7 +138,7 @@ $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey"
 /** Add a key to the key list */
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
-	$(".inputError").stop(true).hide();
+	$(".error").stop(true).hide();
 	var keyVal = $.trim($("#key").val());
 	try{
 		var key = $("#ecc").is(":checked")? JSON.parse(keyVal) : keyVal;
@@ -578,26 +578,63 @@ function toggleInputBlock(block){
 }
 
 $("#encryptKeychain").on("click", function(){
-	$("#encryptForm, #overlay").stop(true).fadeIn();
-	$("#encryptForm input").focus();
+	showEncryptKeyChainPopup(false);
 });
 
 $("body").on("click", "#decryptKeychain", function(){
-	$("#decryptForm, #overlay").stop(true).fadeIn();
-	$("#decryptForm input").focus();
+	showDecryptKeyChainPopup();
 });
+
+/** Open the encrypt keychain popup
+ * confirm: if true, will show the confirm input, otherwise hides it
+*/
+function showEncryptKeyChainPopup(confirm){
+	$("#encryptForm, #overlay").stop(true).fadeIn();
+	$("#encryptForm input.keyChainPassword").val("").focus();
+	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
+	var error = $("#encryptForm .error").stop(true).hide();
+	if(confirm){
+		error.text("Please confirm your passphrase.").fadeIn();
+		confirmInput.focus();
+	}
+}
+
+/** Open the decrypt keychain popup */
+function showDecryptKeyChainPopup(){
+	$("#decryptForm, #overlay").stop(true).fadeIn();
+	$("#decryptForm input.keyChainPassword").focus();
+}
 
 $("#encryptForm, #decryptForm").on("submit", function(e){
 	e.preventDefault();
-	var pass = $(this).find("input").val().trim();
+	$(this).find(".error").stop(true).hide();
+	var passInput = $(this).find("input.keyChainPassword");
+	var pass = passInput.val().trim();
 	if(!pass){
-		$(this).find("input").focus();
+		passInput.focus();
+		return;
+	}
+	var confirmInput = $(this).find("input.confirmKeyChainPassword");
+	confirm = confirmInput.is(":visible")? confirmInput.val().trim() : null;
+	if(confirmInput.is(":visible") && confirm != pass){
+		confirmInput.focus();
+		$(this).find(".error").text("Your passphrases don't match.").stop(true).hide().fadeIn();
 		return;
 	}
 	$(this).find("input").val("");
 	var action = ($(this).attr("id") === "encryptForm"? "encrypt" : "decrypt") + "Keychain";
-	self.port.emit(action, pass);
+	self.port.emit(action, {
+		pass: pass,
+		confirm: confirm,
+		hash: CryptoJS.SHA256(pass).toString()
+	});
 	$("#overlay").trigger("click");
+});
+
+self.port.on("confirmKeyChainPassword", function(pass){
+	showEncryptKeyChainPopup(true);
+	$("#encryptForm input.keyChainPassword").val(pass);
+	
 });
 
 /** Show the key list */
@@ -611,8 +648,7 @@ self.port.on("displayKeys", function(keyObj){
 	var newKeyList = $("<ul></ul>");
 	if(keyObj.encrypted || typeof keys !== "object"){
 		toggleInputBlock(true);
-		$("#decryptForm, #overlay").stop(true).fadeIn();
-		$("#decryptForm input").focus();
+		showDecryptKeyChainPopup();
 		newKeyList.append($("<li>", {text: "Keychain is encrypted."})
 			.append($("<div>")
 				.append($("<a>", {id: "decryptKeychain", text: "Decrypt Keychain"}))

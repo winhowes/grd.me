@@ -14,19 +14,28 @@ var Intercept = require("intercept").Intercept;
 var CryptoJS = require("lib/aes").CryptoJS;
 var workers = [];
 
+// Their keychain
 ss.storage.keys = ss.storage.keys || [{
 	key: ":N5gaDV7)\P3.r5",
 	description: "This is Grd Me's default shared key"
 }];
 
+// A flag indicating whether or not the keys are encrypted
 ss.storage.encryptedKeys = ss.storage.encryptedKeys || false;
 
+// A hash of their last password for keychain encryption
+ss.storage.lastPass = ss.storage.lastPass || "";
+
+// An array of unique ids they've used when publishing to the keyserver
 ss.storage.uids = ss.storage.uids || [];
 
+// A map of shared symmetric keys to a random value generated for each key as part of the protocol
 ss.storage.randomMap = ss.storage.randomMap || {};
 
+// An array of legitimate keys shared with the user
 ss.storage.acceptableSharedKeys = ss.storage.acceptableSharedKeys || [];
 
+// An array of the active encryption keys (MUST always have length >= 1)
 if(!ss.storage.activeKeys){
 	ss.storage.activeKeys = [ss.storage.keys[0].key];
 }
@@ -51,23 +60,21 @@ var button = require("sdk/ui/button/toggle").ToggleButton({
 	onChange: handleChange
 });
 
-preferences.on("decryptIndicator", function(){
-	for(var i=0; i<workers.length; i++){
-		workers[i] && workers[i].port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
-	}
-});
-
-preferences.on("sandboxDecrypt", function(){
-	for(var i=0; i<workers.length; i++){
-		workers[i] && workers[i].port.emit("sandboxDecrypt", preferences.prefs.sandboxDecrypt);
-	}
-});
+var prefs = ["decryptIndicator", "sandboxDecrypt"];
+for(var pref of prefs){
+	preferences.on(pref, function(){
+		for(var i=0; i<workers.length; i++){
+			workers[i] && workers[i].port.emit(pref, preferences.prefs[pref]);
+		}
+	});
+}
 
 var prefPanel = Panel({
 	contentURL: data.url("prefs.html"),
 	contentStyleFile: data.url("prefs.css"),
 	contentScriptFile: [data.url("lib/jquery-2.1.3.min.js"),
 						data.url('lib/ecc.min.js'),
+						data.url('lib/sha256.js'),
 						data.url('dropdown.js'),
 						data.url("prefs.js")],
 	position: button,
@@ -94,17 +101,31 @@ prefPanel.refreshKeys();
 
 prefPanel.port.emit("uids", ss.storage.uids);
 
-prefPanel.port.on("encryptKeychain", function(password){
-	if(!password.length){
+prefPanel.port.on("encryptKeychain", function(passwordObj){
+	var password = passwordObj.pass;
+	var confirm = passwordObj.confirm;
+	var hash = passwordObj.hash;
+	if(!password){
 		return;
+	}
+	if(!confirm && hash != ss.storage.lastPass){
+		prefPanel.port.emit("confirmKeyChainPassword", password);
+		return;
+	}
+	else if(confirm){
+		if(confirm != password){
+			return;
+		}
+		ss.storage.lastPass = hash;
 	}
 	ss.storage.keys = CryptoJS.AES.encrypt(JSON.stringify(ss.storage.keys), password).toString();
 	ss.storage.encryptedKeys = true;
 	prefPanel.refreshKeys();
 });
 
-prefPanel.port.on("decryptKeychain", function(password){
-	if(!password.length){
+prefPanel.port.on("decryptKeychain", function(passwordObj){
+	var password = passwordObj.pass;
+	if(!password){
 		return;
 	}
 	plaintext = CryptoJS.AES.decrypt(ss.storage.keys, password);
@@ -122,9 +143,11 @@ prefPanel.port.on("decryptKeychain", function(password){
 
 prefPanel.port.on("setActiveKeys", function(indices){
 	ss.storage.activeKeys = [];
-	for(var i=0; i<indices.length; i++){
-		ss.storage.activeKeys.push(ss.storage.keys[indices[i]].key);
-		ss.storage.activeKeys[JSON.stringify(ss.storage.keys[indices[i]].key)] = true;
+	if(typeof ss.storage.keys === "object"){
+		for(var i=0; i<indices.length; i++){
+			ss.storage.activeKeys.push(ss.storage.keys[indices[i]].key);
+			ss.storage.activeKeys[JSON.stringify(ss.storage.keys[indices[i]].key)] = true;
+		}
 	}
 	for(i=0; i<workers.length; i++){
 		workers[i].port.emit("secret", {active: ss.storage.activeKeys, keys: ss.storage.keys});

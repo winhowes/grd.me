@@ -27,13 +27,15 @@ function requestListener(event){
 	if(!url.indexOf(frameOrigin)) {
 		let uid = event.subject.URI.path;
 		uid  = uid && uid.slice(1);
-		event.subject.redirectTo(Services.io.newURI("data:text/html," +
-		encodeURIComponent(
-		  data.load("utf8Meta.phtml") +
-		  /* These values are untainted and created by grdMe and therefore don't need to be sanitized */
-		  divWrap("frameSecret", uidMap[uid].secret) +
-		  divWrap("uid", uid)
-		), null, null));
+		if(uidMap[uid] && uidMap[uid].secret){
+			event.subject.redirectTo(Services.io.newURI("data:text/html," +
+			encodeURIComponent(
+			  data.load("utf8Meta.phtml") +
+			  /* These values are untainted and created by grdMe and therefore don't need to be sanitized */
+			  divWrap("frameSecret", uidMap[uid].secret) +
+			  divWrap("uid", uid)
+			), null, null));
+		}
 	}
 }
 
