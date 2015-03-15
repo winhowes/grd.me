@@ -43,7 +43,6 @@ function receiveMessage(event){
 		else if(data.id == "decrypt"){
 			var ciphertext = data.ciphertext;
 			var finish = function(plaintext){
-				console.log(plaintext);
 				if(!plaintext){
 					plaintext = UNABLE_TO_DECRYPT+" "+UNABLE_startTag + data.ciphertext + UNABLE_endTag;
 				}

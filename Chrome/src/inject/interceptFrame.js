@@ -67,7 +67,7 @@ var checkHeight = (function(){
 	return function(){
 		var outerHeight = $("body").outerHeight();
 		//TODO: find out why they are off by 5
-		if(lastBodyHeight - outerHeight > 5){
+		if(Math.abs(lastBodyHeight - outerHeight) > padding){
 			lastBodyHeight = outerHeight;
 			msg({
 				id: "adjustHeight",
@@ -332,7 +332,6 @@ function frameVerified(obj){
 		$(this).next("grdme_decrypt").css("font-weight", "");
 	});
 	
-	checkHeight();
 	setInterval(checkHeight, 500);
 	
 	fixReferences();
@@ -355,6 +354,6 @@ function frameVerified(obj){
 
 $(function(){
 	frameVerified({});
-	
-	window.addEventListener("message", receiveMessage, false);
 });
+
+window.addEventListener("message", receiveMessage, false);
