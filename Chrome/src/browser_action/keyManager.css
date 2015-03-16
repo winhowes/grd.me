@@ -30,13 +30,10 @@ body {
 	font-size: 15px;
 }
 
-#acceptableSharedKeys input:not([type='checkbox']),
-#searchUIDForm input:not([type='checkbox']),
-#publishForm input:not([type='checkbox']),
-#addKey input:not([type='checkbox']) {
+input:not([type='checkbox']) {
 	font-size: inherit;
 	margin-bottom: 5px;
-	width: calc(100% - 10px);
+	width: calc(100% - 12px);
 	border: 1px solid #aaa;
 	border-radius: 2px;
     background: #fff;
@@ -48,15 +45,13 @@ body {
 	font-weight: bold;
 }
 
-a {
-	cursor: pointer;
-	color: #1f8dd6;
-	text-decoration: none;
-	outline: none;
+.popup input:not([type='checkbox']) {
+	margin: 5px auto;
 }
 
-a:hover {
-	text-decoration: underline;
+#keyList input:not([type='checkbox']) {
+	margin-top: 5px;
+	width: calc(100% - 35px);
 }
 
 input:focus, input:hover, textarea:focus, textarea:hover {
@@ -74,6 +69,17 @@ input[type="checkbox"] {
     -webkit-box-shadow: none;
 }
 
+a {
+	cursor: pointer;
+	color: #1f8dd6;
+	text-decoration: none;
+	outline: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
 #eccLabel {
 	display: inline-block;
 	font-size: 11px;
@@ -81,7 +87,7 @@ input[type="checkbox"] {
 	vertical-align: middle;
 }
 
-.inputError {
+.error {
 	margin: 5px 0px;
 	color: #d61f1f;
 }

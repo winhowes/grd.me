@@ -35,6 +35,7 @@ function detachWorker(worker, workerArray) {
 	}
 }
 
+/** Handle interception of https://decrypt.grd.me/UID iframes */
 var Intercept = (function(){
 	/** Read a packaged file
 	 * url: the url to the file
@@ -420,6 +421,9 @@ function uniq(arr) {
 /** Check for shared keys and delete old shared keys - run every minute */
 setInterval(function(){
 	chrome.storage.local.get("keys", function(items){
+		if(typeof items.keys !== "object"){
+			return;
+		}
 		keyObj.keys = items.keys;
 		var keys = [];
 		for(var i=0; i<keyObj.keys.length; i++){
@@ -434,6 +438,9 @@ setInterval(function(){
 				keys: keys
 			},
 			success: function (data) {
+				if(typeof items.keys !== "object"){
+					return;
+				}
 				if(data && data.status && data.status[0] && !data.status[0].code){
 					chrome.storage.local.get("acceptableSharedKeys", function(items){
 						data.acceptableSharedKeys = items.acceptableSharedKeys;

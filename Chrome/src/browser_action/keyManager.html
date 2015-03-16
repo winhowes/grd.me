@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<title>Grd Me Key Management</title>
-		<link href="prefs.css" media="screen" rel="stylesheet" type="text/css">
+		<link href="keyManager.css" media="screen" rel="stylesheet" type="text/css">
 	</head>
 	<body>
 		<div id="publishFail" class="indicator">Failed to Publish Key</div>
@@ -28,11 +28,19 @@
 			<button class="blue btn" id="addKeyBtn">Add Key</button>
 			<button id="keyGen" class="blue btn" type="button">Generate Key</button>
 			<input type="checkbox" id="ecc"><label for="ecc" id="eccLabel">Pub/Priv Keypair</label>
-			<div id="addKeyError" class="inputError">Please enter both a key and a description</div>
-			<div id="keyLengthError" class="inputError">Key must be at least 6 characters long</div>
-			<div id="pubKeyError" class="inputError">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, "x, y" (without quotes), {"pub": "x"}, or x with valid hex keys x and y</div>
+			<div id="addKeyError" class="error">Please enter both a key and a description</div>
+			<div id="keyLengthError" class="error">Key must be at least 6 characters long</div>
+			<div id="pubKeyError" class="error">Public/Private key pair must be of the form: {"pub": "x", "priv": "y"}, "x, y" (without quotes), {"pub": "x"}, or x with valid hex keys x and y</div>
 		</form>
-		<div class="header">Your Keys <span>(shift-select for multiple active keys)</span>:</div>
+		<div class="header">
+			<div>
+				<span>
+					<a id="encryptKeychain">Encrypt Keychain</a>
+				</span>
+			</div>
+			Your Keys <span>(shift-select for multiple active keys)</span>:
+		</div>
+		</div>
 		<ul id="keyList"></ul>
 		<div id="overlay"></div>
 		<div id="searchResultsContainer" class="popup">
@@ -58,9 +66,9 @@
 			<ul id="uidSuggestions"></ul>
 			<button type="button" class="cancel btn white">Cancel</button>
 			<button type="submit" class="publish btn blue">Publish</button>
-			<div id="uidError" class="inputError publishError">Must be at least 3 characters long</div>
-			<div id="existsError" class="inputError publishError">This key and id are already published</div>
-			<div id="publishingError" class="inputError publishError">Error publishing</div>
+			<div id="uidError" class="error publishError">Must be at least 3 characters long</div>
+			<div id="existsError" class="error publishError">This key and id are already published</div>
+			<div id="publishingError" class="error publishError">Error publishing</div>
 		</form>
 		<div id="shareForm" class="popup">
 			<div id="noPrivateKey" class="shareFormMessage">
@@ -92,13 +100,27 @@
 			<div class="title">Keys shared with you:</div>
 			<ul></ul>
 		</div>
+		<form id="decryptForm" class="popup">
+			<div class="title">Enter your passphrase to decrypt your keychain:</div>
+			<input placeholder="Passphrase" type="password" class="keyChainPassword">
+			<button type="submit" class="btn blue">Decrypt</button>
+		</form>
+		<form id="encryptForm" class="popup">
+			<div class="title">Enter your passphrase to encrypt your keychain:</div>
+			<input placeholder="Passphrase" type="password" class="keyChainPassword">
+			<input placeholder="Confirm Passphrase" type="password" class="confirmKeyChainPassword">
+			<div class="error"></div>
+			<button type="button" class="cancel btn white">Cancel</button>
+			<button type="submit" class="btn blue">Encrypt</button>
+		</form>
 		<input type="hidden" id="pubKey">
 		<input type="hidden" id="privKey">
 		<input type="hidden" id="pubKeyIndex">
-		<ul id="keyList"></ul>
 		<script src="/src/inject/lib/jquery-2.1.3.min.js"></script>
 		<script src="/src/inject/lib/ecc.min.js"></script>
+		<script src="/src/inject/lib/aes.js"></script>
+		<script src="/src/inject/lib/sha256.js"></script>
 		<script src="dropdown.js"></script>
-		<script src="prefs.js"></script>
+		<script src="keyManager.js"></script>
 	</body>
 </html>

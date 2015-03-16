@@ -9,8 +9,14 @@ panelMode = false;
 var port = chrome.runtime.connect();
 port.onMessage.addListener(function(msg) {
 	if(msg.id == "secret"){
-		secrets = msg.active;
-		keyList = msg.keys;
+		if(typeof msg.keys === "object"){
+			secrets = msg.active;
+			keyList = msg.keys;
+		}
+		else {
+			secrets = [];
+			keyList = [];
+		}
 	}
 	else if(msg.id == "panelMode"){
 		panelMode = true;
@@ -509,20 +515,22 @@ function decryptInterval(){
 /** Check for changes to the dom before running decryptInterval **/
 setTimeout(initObserver.bind(this, decryptInterval), 50);
 
-setTimeout(decryptInterval, 50);
-
 Mousetrap.bindGlobal(['mod+e'], function(e) {
-    encrypt();
+	if(keyList.length){
+		encrypt();
+	}
 });
 
 Mousetrap.bindGlobal(['mod+alt+e'], function(e) {
-	e.preventDefault();
-	port.postMessage({id: "secureText"});
+	if(keyList.length){
+		e.preventDefault();
+		port.postMessage({id: "secureText"});
+	}
 });
 
 Mousetrap.bindGlobal(['mod+shift+e'], function(e) {
 	var active = document.activeElement;
-	if(active.value || $(active).attr("contenteditable")){
+	if(keyList.length && (active.value || $(active).attr("contenteditable"))){
 		e.preventDefault();
 		encrypt(true);
 	}

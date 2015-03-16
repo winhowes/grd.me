@@ -23,7 +23,7 @@
   "browser_action": {
     "default_icon": "icons/icon19.png",
     "default_title": "Grd Me Key Manager",
-    "default_popup": "src/browser_action/prefs.html"
+    "default_popup": "src/browser_action/keyManager.html"
   },
   "permissions": [
     "clipboardWrite",

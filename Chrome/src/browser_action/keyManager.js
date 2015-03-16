@@ -36,7 +36,7 @@ function sanitize(str){
 	return $("<i>", {text: str}).html();
 }
 
-$(".inputError, #overlay, .popup").hide();
+$(".error, #overlay, .popup").hide();
 
 /** Create a dropdown providing suggestions for others' uids */
 var searchDropdown = new dropdowns($("#searchUID"), $("#searchSuggestions"), function(text, callback){
@@ -136,7 +136,7 @@ $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey"
 /** Add a key to the key list */
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
-	$(".inputError").stop(true).hide();
+	$(".error").stop(true).hide();
 	var keyVal = $.trim($("#key").val());
 	try{
 		var key = $("#ecc").is(":checked")? JSON.parse(keyVal) : keyVal;
@@ -728,63 +728,78 @@ $("#shareFormMain1, #shareFormMain2").on("click", "li", function(){
 /** Layout the keys and highlight the active keys */
 function displayKeys(){
 	pubKeyMap = {};
-	chrome.storage.local.get("keys", function(keys){
-		keys = keys.keys;
+	chrome.storage.local.get(["keys", "encrypted"], function(items){
+		keys = items.keys;
 		keyChain = keys;
 		var keyList = $("#keyList");
 		var newKeyList = $("<ul></ul>");
-		for(var i=0; i<keys.length; i++){
-			if(keys[i].key.pub){
-				hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
-				hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv
-				pubKeyMap[keys[i].key.pub] = true;
-			}
-			newKeyList.append($("<li>").attr({index: i})
-			.append($("<a>", {class: "showHideKey", text: "Show Key"}))
-			.append($("<div>", {class: "key fullToggle", text: "Key: "})
-				.append($("<span>")
-					.append(function(){
-						var $return = $("<span>");
-						typeof keys[i].key === "object"?
-							$return.append($("<br>"))
-							.append($("<b>", {class: "pub", text: "pub"}))
-							.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
-						keys[i].key.priv?
-							$return.append($("<br>"))
-							.append($("<b>", {class: "priv", text: "priv"}))
-							.append(": "+sanitize(keys[i].key.priv)) : "";
-						return $return.html();
-					})
+		if(items.encrypted || typeof keys !== "object"){
+			toggleInputBlock(true);
+			showDecryptKeyChainPopup();
+			newKeyList.append($("<li>", {text: "Keychain is encrypted."})
+				.append($("<div>")
+					.append($("<a>", {id: "decryptKeychain", text: "Decrypt Keychain"}))
 				)
-			)
-			.append($("<div>", {class: "description", text: keys[i].description})
-				.append(i? $("<i>", {class: "pencil"}) : ""))
-			.append(i? $("<form>", {class: "descriptionForm"})
-				.append($("<input>", {placeholder: "Description", maxlength: 50})) :
-				$("<span>", {class: "not_secure", text: "[Not Secure]"}))
-			.append(i && !keys[i].key.published? $("<div>", {class: "delete", text: "x"}) : "")
-			.append($("<div>", {class: "activeIndicator"}))
-			/* Add the appropriate buttons (revoke, publish, share) */
-			.append(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
-				$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Publish Public Key"}) :
-				typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
-					[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
-					$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
-					typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
-		);
+			);
+			$("#encryptKeychain").hide();
+			keyList.html(newKeyList.html());
 		}
-		keyList.html(newKeyList.html());
-		chrome.storage.local.get("activeKeys", function(activeKeys){
-			activeKeys = activeKeys.activeKeys;
-			for(var i=0; i<activeKeys.length; i++){
-				for(var j=0; j<keys.length; j++){
-					if(JSON.stringify(activeKeys[i]) === JSON.stringify(keys[j].key)){
-						$("#keyList [index='"+j+"']").addClass("active");
-						break;
+		else {
+			toggleInputBlock(false);
+			$("#encryptKeychain").show();
+			for(var i=0; i<keys.length; i++){
+				if(keys[i].key.pub){
+					hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
+					hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv
+					pubKeyMap[keys[i].key.pub] = true;
+				}
+				newKeyList.append($("<li>").attr({index: i})
+				.append($("<a>", {class: "showHideKey", text: "Show Key"}))
+				.append($("<div>", {class: "key fullToggle", text: "Key: "})
+					.append($("<span>")
+						.append(function(){
+							var $return = $("<span>");
+							typeof keys[i].key === "object"?
+								$return.append($("<br>"))
+								.append($("<b>", {class: "pub", text: "pub"}))
+								.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
+							keys[i].key.priv?
+								$return.append($("<br>"))
+								.append($("<b>", {class: "priv", text: "priv"}))
+								.append(": "+sanitize(keys[i].key.priv)) : "";
+							return $return.html();
+						})
+					)
+				)
+				.append($("<div>", {class: "description", text: keys[i].description})
+					.append(i? $("<i>", {class: "pencil"}) : ""))
+				.append(i? $("<form>", {class: "descriptionForm"})
+					.append($("<input>", {placeholder: "Description", maxlength: 50})) :
+					$("<span>", {class: "not_secure", text: "[Not Secure]"}))
+				.append(i && !keys[i].key.published? $("<div>", {class: "delete", text: "x"}) : "")
+				.append($("<div>", {class: "activeIndicator"}))
+				/* Add the appropriate buttons (revoke, publish, share) */
+				.append(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
+					$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Publish Public Key"}) :
+					typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
+						[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
+						$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
+						typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
+			);
+			}
+			keyList.html(newKeyList.html());
+			chrome.storage.local.get("activeKeys", function(activeKeys){
+				activeKeys = activeKeys.activeKeys;
+				for(var i=0; i<activeKeys.length; i++){
+					for(var j=0; j<keys.length; j++){
+						if(JSON.stringify(activeKeys[i]) === JSON.stringify(keys[j].key)){
+							$("#keyList [index='"+j+"']").addClass("active");
+							break;
+						}
 					}
 				}
-			}
-		});
+			});
+		}
 	});
 }
 displayKeys();
@@ -916,4 +931,133 @@ function uniq(arr) {
         }
     }
     return out;
+}
+
+$("#encryptKeychain").on("click", function(){
+	showEncryptKeyChainPopup(false);
+});
+
+$("body").on("click", "#decryptKeychain", function(){
+	showDecryptKeyChainPopup();
+});
+
+$("#encryptForm, #decryptForm").on("submit", function(e){
+	e.preventDefault();
+	$(this).find(".error").stop(true).hide();
+	var passInput = $(this).find("input.keyChainPassword");
+	var pass = passInput.val().trim();
+	if(!pass){
+		passInput.focus();
+		return;
+	}
+	var confirmInput = $(this).find("input.confirmKeyChainPassword");
+	confirm = confirmInput.is(":visible")? confirmInput.val().trim() : null;
+	if(confirmInput.is(":visible") && confirm != pass){
+		confirmInput.focus();
+		$(this).find(".error").text("Your passphrases don't match.").stop(true).hide().fadeIn();
+		return;
+	}
+	$(this).find("input").val("");
+	var passObj = {
+		pass: pass,
+		confirm: confirm,
+		hash: CryptoJS.SHA256(pass).toString()
+	};
+	if($(this).attr("id") === "encryptForm"){
+		encryptKeychain(passObj);
+	}
+	else {
+		decryptKeychain(passObj);
+	}
+	$("#overlay").trigger("click");
+});
+
+/** Toggle whether or not a user can type in main input fields
+ * block: whether or not to block input
+*/
+function toggleInputBlock(block){
+	var elems = $("#searchUID, #key, #description");
+	if(block){
+		elems.attr("readonly", "readonly").val("");
+	}
+	else {
+		elems.removeAttr("readonly");
+	}
+}
+
+/** Open the encrypt keychain popup
+ * confirm: if true, will show the confirm input, otherwise hides it
+*/
+function showEncryptKeyChainPopup(confirm){
+	$("#encryptForm, #overlay").stop(true).fadeIn();
+	$("#encryptForm input.keyChainPassword").val("").focus();
+	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
+	var error = $("#encryptForm .error").stop(true).hide();
+	if(confirm){
+		error.text("Please confirm your passphrase.").fadeIn();
+		confirmInput.focus();
+	}
+}
+
+/** Open the decrypt keychain popup */
+function showDecryptKeyChainPopup(){
+	$("#decryptForm, #overlay").stop(true).fadeIn();
+	$("#decryptForm input.keyChainPassword").focus();
+}
+
+function confirmKeyChainPassword(pass){
+	showEncryptKeyChainPopup(true);
+	$("#encryptForm input.keyChainPassword").val(pass);
+}
+
+function encryptKeychain(passwordObj){
+	var password = passwordObj.pass;
+	var confirm = passwordObj.confirm;
+	var hash = passwordObj.hash;
+	if(!password){
+		return;
+	}
+	chrome.storage.local.get("lastPass", function(items){
+		lastPass = items.lastPass;
+		if(!confirm && hash != lastPass){
+			confirmKeyChainPassword(password);
+			return;
+		}
+		else if(confirm){
+			if(confirm != password){
+				return;
+			}
+			lastPass = hash;
+		}
+		chrome.storage.local.set({
+			'keys': CryptoJS.AES.encrypt(JSON.stringify(keyChain), password).toString(),
+			"encryptedKeys": true,
+			"lastPass": lastPass
+		}, function() {
+			displayKeys();
+		});
+	});
+}
+
+function decryptKeychain(passwordObj){
+	var password = passwordObj.pass;
+	if(!password){
+		return;
+	}
+	plaintext = CryptoJS.AES.decrypt(keyChain, password);
+	try{
+		plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+		if(!plaintext){
+			throw true;
+		}
+		chrome.storage.local.set({
+			'keys': JSON.parse(plaintext),
+			"encryptedKeys": false,
+		}, function() {
+			displayKeys();
+		});
+	}
+	catch(e){
+		displayKeys();
+	}
 }

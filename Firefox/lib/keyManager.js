@@ -269,6 +269,9 @@ exports.keyManager = {
 		
 		/** Check for shared keys and delete old shared keys - run every minute */
 		timers.setInterval(function(){
+			if(typeof ss.storage.keys !== "object"){
+				return;
+			}
 			var keys = [];
 			for(var i=0; i<ss.storage.keys.length; i++){
 				if(ss.storage.keys[i].key.priv){
@@ -281,6 +284,9 @@ exports.keyManager = {
 					keys: keys
 				},
 				onComplete: function (data) {
+					if(typeof ss.storage.keys !== "object"){
+						return;
+					}
 					data = data.json;
 					if(data && data.status && data.status[0] && !data.status[0].code){
 						data.acceptableSharedKeys = ss.storage.acceptableSharedKeys;
