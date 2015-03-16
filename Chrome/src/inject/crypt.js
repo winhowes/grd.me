@@ -87,9 +87,18 @@ function setupChildren(parent){
 	var cssArr = [];
 	var elements = parent.querySelectorAll("*");
 	for(var i=0; i<elements.length; i++){
+		var css = getCSS(elements[i]);
+		if(elements[i].hasAttribute("grdMeAnchor")){
+			var selector = "A";
+			delete css.display;
+		}
+		else{
+			var selector = getUniqueSelector(elements[i], parent);
+		}
+		console.log(getCSS(elements[i]));
 		cssArr.push({
-			selector: getUniqueSelector(elements[i], parent),
-			css: getCSS(elements[i])
+			selector: selector,
+			css: css
 		});
 	}
 	return cssArr;
