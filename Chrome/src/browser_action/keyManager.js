@@ -36,29 +36,455 @@ function sanitize(str){
 	return $("<i>", {text: str}).html();
 }
 
-$(".error, #overlay, .popup").hide();
+/** Get rid of duplicate elements in an array
+ * arr: the array to do such to
+*/
+function uniq(arr) {
+    var seen = {};
+    var out = [];
+    var len = arr.length;
+    var j = 0;
+    for(var i = 0; i < len; i++) {
+        var item = arr[i];
+        if(seen[item] !== 1) {
+            seen[item] = 1;
+           out[j++] = item;
+        }
+    }
+    return out;
+}
 
-/** Create a dropdown providing suggestions for others' uids */
-var searchDropdown = new dropdowns($("#searchUID"), $("#searchSuggestions"), function(text, callback){
-	latestRequest++;
+/** Publish a key to the key server
+ * key: the key object to publish containing the pub key, a signature, and a uid
+*/
+function publishKey(key){
+	function error(){
+		publishResult({success: false, index: key.index});
+		
+	}
 	$.ajax({
-		url: "https://grd.me/key/search",
-		type: "GET",
+		url: "https://grd.me/key/add",
+		type: "POST",
 		data: {
-			uid: text,
-			returnVal: latestRequest
+			uid: key.uid,
+			pub: key.pub,
+			sig: key.sig
 		},
-		success: function(data){
-			if(data && data.returnVal == latestRequest && data.status && data.status[0] && !data.status[0].code){
-				callback(data.uids);
+		success: function (data) {
+			if(!data || !data.status || !data.status[0] || data.status[0].code){
+				error();
 			}
-			else{
-				callback([]);
+			else {
+				uids.push(key.uid);
+				chrome.storage.local.set({'uids': uniq(uids)}, function() {
+					publishResult({success: true, index: key.index});
+					getUIDS();
+					chrome.storage.local.get("keys", function(keys){
+						keys = keys.keys;
+						keys[key.index].key.published = true;
+						chrome.storage.local.set({'keys': keys}, function() {
+							displayKeys();
+						});
+					});
+				});
 			}
+		},
+		error: error
+	});	
+}
+
+/** Revoke a key
+ * key: the key object to publish containing the pub key, a revocation signature
+*/
+function revokeKey(key){
+	function error(){
+		revokeResult({success: false, index: key.index});
+	}
+	
+	$.ajax({
+		url: "https://grd.me/key/revoke",
+		type: "POST",
+		data: {
+			pub: key.pub,
+			sig: key.sig
+		},
+		success: function (data) {
+			if(!data || !data.status || !data.status[0] || data.status[0].code){
+				error();
+			}
+			else {
+				deleteKey(key.index);
+				revokeResult({success: true, index: key.index});
+			}
+		},
+		error: error
+	});
+}
+
+/** Share a shared key with another user
+ * keyObj: a key object containing the sender and receiver's public key, a signature,
+ * a random string, and the encrypted shared key
+*/
+function shareKey(keyObj){
+	function error(){
+		shareKeyResult(false);
+	}
+	
+	$.ajax({
+		url: "https://grd.me/key/shareKey",
+		type: "POST",
+		data: keyObj,
+		success: function (data) {
+			if(!data || !data.status || !data.status[0] || data.status[0].code){
+				error();
+			}
+			else {
+				shareKeyResult(true);
+				chrome.storage.local.get("randomMap", function(items){
+					randomMap = items.randomMap;
+					randomMap[keyObj.sharedKey] = keyObj.rand;
+					chrome.storage.local.set({'randomMap': randomMap});
+				});
+			}
+		},
+		error: error
+	});
+}
+
+/** Set various active keys
+ * indices: the indices of the keys to be made active in the array of keys
+*/
+function setActiveKeys(indices){
+	chrome.storage.local.get("keys", function(keys){
+		keys = keys.keys;
+		var activeKeys = [];
+		for(var i=0; i<indices.length; i++){
+			activeKeys.push(keys[indices[i]].key);
+		}
+		chrome.storage.local.set({'activeKeys': activeKeys});
+		var workers = chrome.extension.getBackgroundPage().workers.slice(0);
+		chrome.extension.getBackgroundPage().keyObj.activeKeys = activeKeys.slice(0);
+		for(i=0; i<workers.length; i++){
+			workers[i].postMessage({
+				id: "secret",
+				active: activeKeys,
+				keys: keys
+			});
 		}
 	});
-	return false;
-}, true);
+}
+
+/** Add a new key
+ * keyObj: a key object
+*/
+function addKey(keyObj){
+	chrome.storage.local.get("keys", function(keys){
+		keys = keys.keys;
+		keys.push(keyObj);
+		chrome.extension.getBackgroundPage().keyObj.keys.push(keyObj);
+		chrome.storage.local.set({'keys': keys}, function(){
+			displayKeys();
+		});
+	});
+}
+
+/** Delete a key
+ * index: the index of the key to delete in the array of keys
+*/
+function deleteKey(index){
+	chrome.storage.local.get("keys", function(keys){
+		keys = keys.keys;
+		keys.splice(index, 1);
+		chrome.extension.getBackgroundPage().keyObj.keys.splice(index, 1);
+		chrome.storage.local.set({'keys': keys}, function(){
+			displayKeys();
+		});
+	});
+}
+
+/** Update a key's description
+ * index: the index of the key to have its description updated
+ * description: the updated description
+*/
+function updateDescription(index, description){
+	chrome.storage.local.get("keys", function(keys){
+		keys = keys.keys;
+		keys[index].description = description;
+		chrome.extension.getBackgroundPage().keyObj.keys[index].description = description;
+		chrome.storage.local.set({'keys': keys});
+	});
+}
+
+/** Toggle whether or not a user can type in main input fields
+ * block: whether or not to block input
+*/
+function toggleInputBlock(block){
+	var elems = $("#searchUID, #key, #description");
+	if(block){
+		elems.attr("readonly", "readonly").val("");
+	}
+	else {
+		elems.removeAttr("readonly");
+	}
+}
+
+/** Open the encrypt keychain popup
+ * confirm: if true, will show the confirm input, otherwise hides it
+*/
+function showEncryptKeyChainPopup(confirm){
+	$("#encryptForm, #overlay").stop(true).fadeIn();
+	$("#encryptForm input.keyChainPassword").val("").focus();
+	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
+	var error = $("#encryptForm .error").stop(true).hide();
+	if(confirm){
+		error.text("Please confirm your passphrase.").fadeIn();
+		confirmInput.focus();
+	}
+}
+
+/** Open the decrypt keychain popup */
+function showDecryptKeyChainPopup(){
+	$("#decryptForm, #overlay").stop(true).fadeIn();
+	$("#decryptForm input.keyChainPassword").focus();
+}
+
+/** Ask the user to confirm their password
+ * pass: the value they entered as their password
+*/
+function confirmKeyChainPassword(pass){
+	showEncryptKeyChainPopup(true);
+	$("#encryptForm input.keyChainPassword").val(pass);
+}
+
+/** Encrypt the keychain
+ * passwordObj: an object containing the encryption password, the last hash of the last password used, and a confirmation of the password
+*/
+function encryptKeychain(passwordObj){
+	var password = passwordObj.pass;
+	var confirm = passwordObj.confirm;
+	var hash = passwordObj.hash;
+	if(!password){
+		return;
+	}
+	chrome.storage.local.get("lastPass", function(items){
+		lastPass = items.lastPass;
+		if(!confirm && hash != lastPass){
+			confirmKeyChainPassword(password);
+			return;
+		}
+		else if(confirm){
+			if(confirm != password){
+				return;
+			}
+			lastPass = hash;
+		}
+		chrome.storage.local.set({
+			'keys': CryptoJS.AES.encrypt(JSON.stringify(keyChain), password).toString(),
+			"encryptedKeys": true,
+			"lastPass": lastPass
+		}, function() {
+			displayKeys();
+		});
+	});
+}
+
+/** Decrypt the keychain
+ * password: the decryption password
+*/
+function decryptKeychain(password){
+	if(!password){
+		return;
+	}
+	plaintext = CryptoJS.AES.decrypt(keyChain, password);
+	try{
+		plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+		if(!plaintext){
+			throw true;
+		}
+		chrome.storage.local.set({
+			'keys': JSON.parse(plaintext),
+			"encryptedKeys": false,
+		}, function() {
+			displayKeys();
+		});
+	}
+	catch(e){
+		displayKeys();
+	}
+}
+
+/** Hide the first page and show second page of sharing shared key */
+function sharedKeyPage2(){
+	$("#shareFormMain1").hide();
+	$("#shareFormMain2").show();
+	keyList = $("<ul></ul>");
+	var count = 0;
+	for(var i=0; i<keyChain.length; i++){
+		if(keyChain[i].key.pub && !keyChain[i].key.priv){
+			keyList.append($("<li>").attr({index: i, class: (count? "" : "active")})
+				.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
+				.append($("<div>")
+					.append($("<div>", {class: 'key partialKey', text: "Key: "})
+						.append($("<span>")
+							.append($("<br>"))
+							.append($("<b>", {class: "pub", text: "pub"}))
+							.append(": "+sanitize(keyChain[i].key.pub)))))
+				.append($("<div>", {class: "description", text: keyChain[i].description}))
+				.append($("<div>", {class: "activeIndicator"})));
+			count++;
+		}
+	}
+	$("#shareFormMain2 ul").html(keyList.html());
+}
+
+/** Panel shown. Display any acceptable shared keys
+ * keys: an array of acceptable shared keys that need approval
+*/
+function acceptableSharedKeysPopup(keys){
+	if(keys.length){
+		var list = $("<ul></ul>");
+		for(var i=0; i<keys.length; i++){
+			var key = $.trim(sanitize(keys[i].key));
+			list.append($("<li>")
+				.append($("<form>").attr({key: key, index: i})
+					.append($("<div>", {text: "Key: "+key}))
+					.append($("<input>", {placeholder: "Description", maxlength: 50, value: sanitize(keys[i].from)}))
+					.append($("<button>", {class: "blue btn", type: "submit", text: "Add"}))
+					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
+		}
+		$("#acceptableSharedKeys ul").html(list.html());
+		$("#overlay, #acceptableSharedKeys").show();
+	}
+}
+
+/** Layout the keys and highlight the active keys */
+function displayKeys(){
+	pubKeyMap = {};
+	chrome.storage.local.get(["keys", "encrypted"], function(items){
+		keys = items.keys;
+		keyChain = keys;
+		var keyList = $("#keyList");
+		var newKeyList = $("<ul></ul>");
+		if(items.encrypted || typeof keys !== "object"){
+			toggleInputBlock(true);
+			showDecryptKeyChainPopup();
+			newKeyList.append($("<li>", {text: "Keychain is encrypted."})
+				.append($("<div>")
+					.append($("<a>", {id: "decryptKeychain", text: "Decrypt Keychain"}))
+				)
+			);
+			$("#encryptKeychain").hide();
+			keyList.html(newKeyList.html());
+		}
+		else {
+			toggleInputBlock(false);
+			$("#encryptKeychain").show();
+			for(var i=0; i<keys.length; i++){
+				if(keys[i].key.pub){
+					hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
+					hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv
+					pubKeyMap[keys[i].key.pub] = true;
+				}
+				newKeyList.append($("<li>").attr({index: i})
+				.append($("<a>", {class: "showHideKey", text: "Show Key"}))
+				.append($("<div>", {class: "key fullToggle", text: "Key: "})
+					.append($("<span>")
+						.append(function(){
+							var $return = $("<span>");
+							typeof keys[i].key === "object"?
+								$return.append($("<br>"))
+								.append($("<b>", {class: "pub", text: "pub"}))
+								.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
+							keys[i].key.priv?
+								$return.append($("<br>"))
+								.append($("<b>", {class: "priv", text: "priv"}))
+								.append(": "+sanitize(keys[i].key.priv)) : "";
+							return $return.html();
+						})
+					)
+				)
+				.append($("<div>", {class: "description", text: keys[i].description})
+					.append(i? $("<i>", {class: "pencil"}) : ""))
+				.append(i? $("<form>", {class: "descriptionForm"})
+					.append($("<input>", {placeholder: "Description", maxlength: 50})) :
+					$("<span>", {class: "not_secure", text: "[Not Secure]"}))
+				.append(i && !keys[i].key.published? $("<div>", {class: "delete", text: "x"}) : "")
+				.append($("<div>", {class: "activeIndicator"}))
+				/* Add the appropriate buttons (revoke, publish, share) */
+				.append(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
+					$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Publish Public Key"}) :
+					typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
+						[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
+						$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
+						typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
+			);
+			}
+			keyList.html(newKeyList.html());
+			chrome.storage.local.get("activeKeys", function(activeKeys){
+				activeKeys = activeKeys.activeKeys;
+				for(var i=0; i<activeKeys.length; i++){
+					for(var j=0; j<keys.length; j++){
+						if(JSON.stringify(activeKeys[i]) === JSON.stringify(keys[j].key)){
+							$("#keyList [index='"+j+"']").addClass("active");
+							break;
+						}
+					}
+				}
+			});
+		}
+	});
+}
+
+/** Indicate whether a key was published or failed to publish
+ * obj: an object containing a success boolean property and an index property when success is
+ * false of the index of the published key
+*/
+function publishResult(obj){
+	var id = obj.success? "#publishSuccess" : "#publishFail";
+	if(!obj.success){
+		$("#keyList").find("li[index='"+obj.index+"']").find(".publish").removeClass("disabled").prop("disabled", false);
+	}
+	$(id).stop(true).css("top", "-20px").animate({
+		top: 0
+	}).delay(2500).animate({
+		top : "-20px"
+	});
+}
+
+/** Indicate whether a key was revoked or failed to be revoked
+ * obj: an object containing a success boolean property and an index property when success is
+ * false of the index of the revoked key
+*/
+function revokeResult(obj){
+	var id = obj.success? "#revokeSuccess" : "#revokeFail";
+	if(!obj.success){
+		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled").prop("disabled", false);
+	}
+	$(id).stop(true).css("top", "-20px").animate({
+		top: 0
+	}).delay(2500).animate({
+		top : "-20px"
+	});
+}
+
+/** Indicate whether a key was shared or failed to be shared
+ * success: a boolean indicating whether or not the share was successful
+*/
+function shareKeyResult(success){
+	var id = success? "#shareKeySuccess" : "#shareKeyFail";
+	$(id).stop(true).css("top", "-20px").animate({
+		top: 0
+	}).delay(2500).animate({
+		top : "-20px"
+	});
+}
+
+/** Update the known uids */
+function getUIDS(){
+	chrome.storage.local.get("uids", function(uidsArr){
+		uids = (uidsArr && uidsArr.uids) || [];
+	});
+}
 
 /** Handle searching for a public key by uid */
 $("#searchUIDForm").on("submit", function(e){
@@ -409,184 +835,6 @@ $(".cancel").on("click", function(){
 	$("#overlay").trigger("click");
 });
 
-/** Add a dropdown for suggesting uids */
-var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
-	text = text.toLowerCase();
-	var count = 0;
-	var results = [];
-	for(var i=0; i<uids.length; i++){
-		if(!uids[i].toLowerCase().indexOf(text) && text != uids[i].toLowerCase()){
-			count++;
-			results.push(sanitize(uids[i]));
-			if(count>3){
-				break;
-			}
-		}
-	}
-	return results;
-});
-
-/** Publish a key to the key server
- * key: the key object to publish containing the pub key, a signature, and a uid
-*/
-function publishKey(key){
-	function error(){
-		publishResult({success: false, index: key.index});
-		
-	}
-	$.ajax({
-		url: "https://grd.me/key/add",
-		type: "POST",
-		data: {
-			uid: key.uid,
-			pub: key.pub,
-			sig: key.sig
-		},
-		success: function (data) {
-			if(!data || !data.status || !data.status[0] || data.status[0].code){
-				error();
-			}
-			else {
-				uids.push(key.uid);
-				chrome.storage.local.set({'uids': uniq(uids)}, function() {
-					publishResult({success: true, index: key.index});
-					getUIDS();
-					chrome.storage.local.get("keys", function(keys){
-						keys = keys.keys;
-						keys[key.index].key.published = true;
-						chrome.storage.local.set({'keys': keys}, function() {
-							displayKeys();
-						});
-					});
-				});
-			}
-		},
-		error: error
-	});	
-}
-
-/** Revoke a key
- * key: the key object to publish containing the pub key, a revocation signature
-*/
-function revokeKey(key){
-	function error(){
-		revokeResult({success: false, index: key.index});
-	}
-	
-	$.ajax({
-		url: "https://grd.me/key/revoke",
-		type: "POST",
-		data: {
-			pub: key.pub,
-			sig: key.sig
-		},
-		success: function (data) {
-			if(!data || !data.status || !data.status[0] || data.status[0].code){
-				error();
-			}
-			else {
-				deleteKey(key.index);
-				revokeResult({success: true, index: key.index});
-			}
-		},
-		error: error
-	});
-}
-
-/** Share a shared key with another user
- * keyObj: a key object containing the sender and receiver's public key, a signature,
- * a random string, and the encrypted shared key
-*/
-function shareKey(keyObj){
-	function error(){
-		shareKeyResult(false);
-	}
-	
-	$.ajax({
-		url: "https://grd.me/key/shareKey",
-		type: "POST",
-		data: keyObj,
-		success: function (data) {
-			if(!data || !data.status || !data.status[0] || data.status[0].code){
-				error();
-			}
-			else {
-				shareKeyResult(true);
-				chrome.storage.local.get("randomMap", function(items){
-					randomMap = items.randomMap;
-					randomMap[keyObj.sharedKey] = keyObj.rand;
-					chrome.storage.local.set({'randomMap': randomMap});
-				});
-			}
-		},
-		error: error
-	});
-}
-
-/** Set various active keys
- * indices: the indices of the keys to be made active in the array of keys
-*/
-function setActiveKeys(indices){
-	chrome.storage.local.get("keys", function(keys){
-		keys = keys.keys;
-		var activeKeys = [];
-		for(var i=0; i<indices.length; i++){
-			activeKeys.push(keys[indices[i]].key);
-		}
-		chrome.storage.local.set({'activeKeys': activeKeys});
-		var workers = chrome.extension.getBackgroundPage().workers.slice(0);
-		chrome.extension.getBackgroundPage().keyObj.activeKeys = activeKeys.slice(0);
-		for(i=0; i<workers.length; i++){
-			workers[i].postMessage({
-				id: "secret",
-				active: activeKeys,
-				keys: keys
-			});
-		}
-	});
-}
-
-/** Add a new key
- * keyObj: a key object
-*/
-function addKey(keyObj){
-	chrome.storage.local.get("keys", function(keys){
-		keys = keys.keys;
-		keys.push(keyObj);
-		chrome.extension.getBackgroundPage().keyObj.keys.push(keyObj);
-		chrome.storage.local.set({'keys': keys}, function(){
-			displayKeys();
-		});
-	});
-}
-
-/** Delete a key
- * index: the index of the key to delete in the array of keys
-*/
-function deleteKey(index){
-	chrome.storage.local.get("keys", function(keys){
-		keys = keys.keys;
-		keys.splice(index, 1);
-		chrome.extension.getBackgroundPage().keyObj.keys.splice(index, 1);
-		chrome.storage.local.set({'keys': keys}, function(){
-			displayKeys();
-		});
-	});
-}
-
-/** Update a key's description
- * index: the index of the key to have its description updated
- * description: the updated description
-*/
-function updateDescription(index, description){
-	chrome.storage.local.get("keys", function(keys){
-		keys = keys.keys;
-		keys[index].description = description;
-		chrome.extension.getBackgroundPage().keyObj.keys[index].description = description;
-		chrome.storage.local.set({'keys': keys});
-	});
-}
-
 /** Show/hide a key in the key list */
 $("#keyList").on("click", ".showHideKey", function(e){
 	e.stopImmediatePropagation();
@@ -675,30 +923,6 @@ $("#keyList").on("click", ".showHideKey", function(e){
 	}
 });
 
-/** Hide the first page and show second page of sharing shared key */
-function sharedKeyPage2(){
-	$("#shareFormMain1").hide();
-	$("#shareFormMain2").show();
-	keyList = $("<ul></ul>");
-	var count = 0;
-	for(var i=0; i<keyChain.length; i++){
-		if(keyChain[i].key.pub && !keyChain[i].key.priv){
-			keyList.append($("<li>").attr({index: i, class: (count? "" : "active")})
-				.append($("<a>", {class: 'showHideKey', text: "Show Key"}))
-				.append($("<div>")
-					.append($("<div>", {class: 'key partialKey', text: "Key: "})
-						.append($("<span>")
-							.append($("<br>"))
-							.append($("<b>", {class: "pub", text: "pub"}))
-							.append(": "+sanitize(keyChain[i].key.pub)))))
-				.append($("<div>", {class: "description", text: keyChain[i].description}))
-				.append($("<div>", {class: "activeIndicator"})));
-			count++;
-		}
-	}
-	$("#shareFormMain2 ul").html(keyList.html());
-}
-
 /** Press continue to move to page 2 of sharing a shared key */
 $("#shareFormMain1").on("click", ".continue", function(e){
 	sharedKeyPage2();
@@ -724,165 +948,6 @@ $("#shareFormMain1, #shareFormMain2").on("click", "li", function(){
 	$(this).parent().find(".active").removeClass("active");
 	$(this).addClass("active");
 });
-
-/** Layout the keys and highlight the active keys */
-function displayKeys(){
-	pubKeyMap = {};
-	chrome.storage.local.get(["keys", "encrypted"], function(items){
-		keys = items.keys;
-		keyChain = keys;
-		var keyList = $("#keyList");
-		var newKeyList = $("<ul></ul>");
-		if(items.encrypted || typeof keys !== "object"){
-			toggleInputBlock(true);
-			showDecryptKeyChainPopup();
-			newKeyList.append($("<li>", {text: "Keychain is encrypted."})
-				.append($("<div>")
-					.append($("<a>", {id: "decryptKeychain", text: "Decrypt Keychain"}))
-				)
-			);
-			$("#encryptKeychain").hide();
-			keyList.html(newKeyList.html());
-		}
-		else {
-			toggleInputBlock(false);
-			$("#encryptKeychain").show();
-			for(var i=0; i<keys.length; i++){
-				if(keys[i].key.pub){
-					hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
-					hasOthersPubKey = hasOthersPubKey || !keys[i].key.priv
-					pubKeyMap[keys[i].key.pub] = true;
-				}
-				newKeyList.append($("<li>").attr({index: i})
-				.append($("<a>", {class: "showHideKey", text: "Show Key"}))
-				.append($("<div>", {class: "key fullToggle", text: "Key: "})
-					.append($("<span>")
-						.append(function(){
-							var $return = $("<span>");
-							typeof keys[i].key === "object"?
-								$return.append($("<br>"))
-								.append($("<b>", {class: "pub", text: "pub"}))
-								.append(": "+sanitize(keys[i].key.pub)) : $return.append(sanitize(keys[i].key));
-							keys[i].key.priv?
-								$return.append($("<br>"))
-								.append($("<b>", {class: "priv", text: "priv"}))
-								.append(": "+sanitize(keys[i].key.priv)) : "";
-							return $return.html();
-						})
-					)
-				)
-				.append($("<div>", {class: "description", text: keys[i].description})
-					.append(i? $("<i>", {class: "pencil"}) : ""))
-				.append(i? $("<form>", {class: "descriptionForm"})
-					.append($("<input>", {placeholder: "Description", maxlength: 50})) :
-					$("<span>", {class: "not_secure", text: "[Not Secure]"}))
-				.append(i && !keys[i].key.published? $("<div>", {class: "delete", text: "x"}) : "")
-				.append($("<div>", {class: "activeIndicator"}))
-				/* Add the appropriate buttons (revoke, publish, share) */
-				.append(typeof keys[i].key === "object" && keys[i].key.priv && !keys[i].key.published?
-					$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Publish Public Key"}) :
-					typeof keys[i].key === "object" && keys[i].key.priv && keys[i].key.published?
-						[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
-						$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
-						typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
-			);
-			}
-			keyList.html(newKeyList.html());
-			chrome.storage.local.get("activeKeys", function(activeKeys){
-				activeKeys = activeKeys.activeKeys;
-				for(var i=0; i<activeKeys.length; i++){
-					for(var j=0; j<keys.length; j++){
-						if(JSON.stringify(activeKeys[i]) === JSON.stringify(keys[j].key)){
-							$("#keyList [index='"+j+"']").addClass("active");
-							break;
-						}
-					}
-				}
-			});
-		}
-	});
-}
-displayKeys();
-
-/** Indicate whether a key was published or failed to publish
- * obj: an object containing a success boolean property and an index property when success is
- * false of the index of the published key
-*/
-function publishResult(obj){
-	var id = obj.success? "#publishSuccess" : "#publishFail";
-	if(!obj.success){
-		$("#keyList").find("li[index='"+obj.index+"']").find(".publish").removeClass("disabled").prop("disabled", false);
-	}
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
-}
-
-/** Indicate whether a key was revoked or failed to be revoked
- * obj: an object containing a success boolean property and an index property when success is
- * false of the index of the revoked key
-*/
-function revokeResult(obj){
-	var id = obj.success? "#revokeSuccess" : "#revokeFail";
-	if(!obj.success){
-		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled").prop("disabled", false);
-	}
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
-}
-
-/** Indicate whether a key was shared or failed to be shared
- * success: a boolean indicating whether or not the share was successful
-*/
-function shareKeyResult(success){
-	var id = success? "#shareKeySuccess" : "#shareKeyFail";
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
-}
-
-/** Update the known uids */
-function getUIDS(){
-	chrome.storage.local.get("uids", function(uidsArr){
-		uids = (uidsArr && uidsArr.uids) || [];
-	});
-}
-getUIDS();
-
-/** Panel shown. Call function to open acceptable shared keys popup */
-$(function(){
-	chrome.storage.local.get("acceptableSharedKeys", function(keys){
-		keys = keys.acceptableSharedKeys;
-		acceptableSharedKeysPopup(keys);
-	});
-});
-
-/** Panel shown. Display any acceptable shared keys
- * keys: an array of acceptable shared keys that need approval
-*/
-function acceptableSharedKeysPopup(keys){
-	if(keys.length){
-		var list = $("<ul></ul>");
-		for(var i=0; i<keys.length; i++){
-			var key = $.trim(sanitize(keys[i].key));
-			list.append($("<li>")
-				.append($("<form>").attr({key: key, index: i})
-					.append($("<div>", {text: "Key: "+key}))
-					.append($("<input>", {placeholder: "Description", maxlength: 50, value: sanitize(keys[i].from)}))
-					.append($("<button>", {class: "blue btn", type: "submit", text: "Add"}))
-					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
-		}
-		$("#acceptableSharedKeys ul").html(list.html());
-		$("#overlay, #acceptableSharedKeys").show();
-	}
-}
 
 /** Remove a key from the acceptableSharedKey array */
 $("#acceptableSharedKeys").on("click", ".remove", function(){
@@ -915,24 +980,6 @@ $("#acceptableSharedKeys").on("click", ".remove", function(){
 	}
 });
 
-/** Get rid of duplicate elements in an array
- * arr: the array to do such to
-*/
-function uniq(arr) {
-    var seen = {};
-    var out = [];
-    var len = arr.length;
-    var j = 0;
-    for(var i = 0; i < len; i++) {
-        var item = arr[i];
-        if(seen[item] !== 1) {
-            seen[item] = 1;
-           out[j++] = item;
-        }
-    }
-    return out;
-}
-
 $("#encryptKeychain").on("click", function(){
 	showEncryptKeyChainPopup(false);
 });
@@ -958,106 +1005,68 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 		return;
 	}
 	$(this).find("input").val("");
-	var passObj = {
-		pass: pass,
-		confirm: confirm,
-		hash: CryptoJS.SHA256(pass).toString()
-	};
 	if($(this).attr("id") === "encryptForm"){
-		encryptKeychain(passObj);
+		encryptKeychain({
+			pass: pass,
+			confirm: confirm,
+			hash: CryptoJS.SHA256(pass).toString()
+		});
 	}
 	else {
-		decryptKeychain(passObj);
+		decryptKeychain(pass);
 	}
 	$("#overlay").trigger("click");
 });
 
-/** Toggle whether or not a user can type in main input fields
- * block: whether or not to block input
-*/
-function toggleInputBlock(block){
-	var elems = $("#searchUID, #key, #description");
-	if(block){
-		elems.attr("readonly", "readonly").val("");
-	}
-	else {
-		elems.removeAttr("readonly");
-	}
-}
-
-/** Open the encrypt keychain popup
- * confirm: if true, will show the confirm input, otherwise hides it
-*/
-function showEncryptKeyChainPopup(confirm){
-	$("#encryptForm, #overlay").stop(true).fadeIn();
-	$("#encryptForm input.keyChainPassword").val("").focus();
-	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
-	var error = $("#encryptForm .error").stop(true).hide();
-	if(confirm){
-		error.text("Please confirm your passphrase.").fadeIn();
-		confirmInput.focus();
-	}
-}
-
-/** Open the decrypt keychain popup */
-function showDecryptKeyChainPopup(){
-	$("#decryptForm, #overlay").stop(true).fadeIn();
-	$("#decryptForm input.keyChainPassword").focus();
-}
-
-function confirmKeyChainPassword(pass){
-	showEncryptKeyChainPopup(true);
-	$("#encryptForm input.keyChainPassword").val(pass);
-}
-
-function encryptKeychain(passwordObj){
-	var password = passwordObj.pass;
-	var confirm = passwordObj.confirm;
-	var hash = passwordObj.hash;
-	if(!password){
-		return;
-	}
-	chrome.storage.local.get("lastPass", function(items){
-		lastPass = items.lastPass;
-		if(!confirm && hash != lastPass){
-			confirmKeyChainPassword(password);
-			return;
-		}
-		else if(confirm){
-			if(confirm != password){
-				return;
+/** Panel shown. Call function to open acceptable shared keys popup */
+(function(){
+	$(".error, #overlay, .popup").hide();
+	
+	/** Add a dropdown for suggesting uids */
+	var uidDropdown = new dropdowns($("#uid"), $("#uidSuggestions"), function(text){
+		text = text.toLowerCase();
+		var count = 0;
+		var results = [];
+		for(var i=0; i<uids.length; i++){
+			if(!uids[i].toLowerCase().indexOf(text) && text != uids[i].toLowerCase()){
+				count++;
+				results.push(sanitize(uids[i]));
+				if(count>3){
+					break;
+				}
 			}
-			lastPass = hash;
 		}
-		chrome.storage.local.set({
-			'keys': CryptoJS.AES.encrypt(JSON.stringify(keyChain), password).toString(),
-			"encryptedKeys": true,
-			"lastPass": lastPass
-		}, function() {
-			displayKeys();
-		});
+		return results;
 	});
-}
-
-function decryptKeychain(passwordObj){
-	var password = passwordObj.pass;
-	if(!password){
-		return;
-	}
-	plaintext = CryptoJS.AES.decrypt(keyChain, password);
-	try{
-		plaintext = plaintext.toString(CryptoJS.enc.Utf8);
-		if(!plaintext){
-			throw true;
-		}
-		chrome.storage.local.set({
-			'keys': JSON.parse(plaintext),
-			"encryptedKeys": false,
-		}, function() {
-			displayKeys();
+	
+	/** Create a dropdown providing suggestions for others' uids */
+	var searchDropdown = new dropdowns($("#searchUID"), $("#searchSuggestions"), function(text, callback){
+		latestRequest++;
+		$.ajax({
+			url: "https://grd.me/key/search",
+			type: "GET",
+			data: {
+				uid: text,
+				returnVal: latestRequest
+			},
+			success: function(data){
+				if(data && data.returnVal == latestRequest && data.status && data.status[0] && !data.status[0].code){
+					callback(data.uids);
+				}
+				else{
+					callback([]);
+				}
+			}
 		});
-	}
-	catch(e){
-		displayKeys();
-	}
-}
+		return false;
+	}, true);
+	
+	chrome.storage.local.get("acceptableSharedKeys", function(keys){
+		keys = keys.acceptableSharedKeys;
+		acceptableSharedKeysPopup(keys);
+	});
+	
+	displayKeys();
+	
+	getUIDS();
+}());
