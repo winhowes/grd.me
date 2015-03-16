@@ -1018,7 +1018,6 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 	$("#overlay").trigger("click");
 });
 
-/** Panel shown. Call function to open acceptable shared keys popup */
 (function(){
 	$(".error, #overlay, .popup").hide();
 	
@@ -1061,6 +1060,7 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 		return false;
 	}, true);
 	
+	/** Panel shown. Call function to open acceptable shared keys popup */
 	chrome.storage.local.get("acceptableSharedKeys", function(keys){
 		keys = keys.acceptableSharedKeys;
 		acceptableSharedKeysPopup(keys);
