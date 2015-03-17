@@ -79,8 +79,8 @@ function publishKey(key){
 				chrome.storage.local.set({'uids': uniq(uids)}, function() {
 					publishResult({success: true, index: key.index});
 					getUIDS();
-					chrome.storage.local.get("keys", function(keys){
-						keys = keys.keys;
+					chrome.storage.local.get("keys", function(items){
+						keys = items.keys;
 						keys[key.index].key.published = true;
 						chrome.storage.local.set({'keys': keys}, function() {
 							displayKeys();
@@ -186,6 +186,34 @@ function addKey(keyObj){
 			displayKeys();
 		});
 	});
+	if(keyObj.key.priv && !keyObj.key.published){
+		$.ajax({
+			url: "https://grd.me/key/pubKeyExists",
+			type: "GET",
+			data: {
+				pub: keyObj.key.pub
+			},
+			success: function(data){
+				if(data.exists){
+					chrome.storage.local.get("keys", function(items){
+						keys = items.keys;
+						for(var i = keys.length - 1; i>=0; i--){
+							if(keys[i].key.pub === keyObj.key.pub &&
+							   keys[i].key.priv === keyObj.key.priv &&
+							   keys[i].key.published === keyObj.key.published &&
+							   keys[i].description === keyObj.description){
+								keys[i].key.published = true;
+								chrome.storage.local.set({'keys': keys}, function() {
+									displayKeys();
+								});
+								return;
+							}
+						}
+					});
+				}
+			}
+		});
+	}
 }
 
 /** Delete a key
@@ -617,6 +645,13 @@ $("#addKey").on("submit", function(e){
 				priv: priv,
 				published: false
 			}
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub &&
+				   keyChain[i].key.priv === key.priv){
+					$("#keyExistsError").fadeIn();
+					return;
+				}
+			}
 		}
 		else{
 			try{
@@ -631,12 +666,26 @@ $("#addKey").on("submit", function(e){
 				return;
 			}
 			key = {pub: key.pub};
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub && !keyChain[i].key.priv){
+					$("#keyExistsError").fadeIn();
+					return;
+				}
+			}
 		}
 	}
 	else if(key.length<6){
 		$("#key").focus();
 		$("#keyLengthError").fadeIn();
 		return;
+	}
+	else {
+		for(var i = 0; i<keyChain.length; i++){
+			if(keyChain[i].key === key){
+				$("#keyExistsError").fadeIn();
+				return;
+			}
+		}
 	}
 	$("#key").val("").focus();
 	$("#description").val("");

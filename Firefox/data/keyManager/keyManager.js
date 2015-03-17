@@ -319,6 +319,13 @@ $("#addKey").on("submit", function(e){
 				priv: priv,
 				published: false
 			}
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub &&
+				   keyChain[i].key.priv === key.priv){
+					$("#keyExistsError").fadeIn();
+					return;
+				}
+			}
 		}
 		else{
 			try{
@@ -333,12 +340,26 @@ $("#addKey").on("submit", function(e){
 				return;
 			}
 			key = {pub: key.pub};
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub && !keyChain[i].key.priv){
+					$("#keyExistsError").fadeIn();
+					return;
+				}
+			}
 		}
 	}
 	else if(key.length<6){
 		$("#key").focus();
 		$("#keyLengthError").fadeIn();
 		return;
+	}
+	else {
+		for(var i = 0; i<keyChain.length; i++){
+			if(keyChain[i].key === key){
+				$("#keyExistsError").fadeIn();
+				return;
+			}
+		}
 	}
 	$("#key").val("").focus();
 	$("#description").val("");

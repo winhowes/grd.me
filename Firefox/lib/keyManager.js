@@ -7,6 +7,7 @@ var Panel = require("sdk/panel").Panel;
 var Request = require("sdk/request").Request;
 var ss = require("sdk/simple-storage");
 var timers = require("sdk/timers");
+var sharedKeyInterval;
 var workers = [];
 
 /** Keep the panel visibility in sync with the button state
@@ -126,6 +127,31 @@ keyManager.port.on("setActiveKeys", function(indices){
 keyManager.port.on("addKey", function(keyObj){
 	ss.storage.keys.push(keyObj);
 	keyManager.refreshKeys();
+	if(keyObj.key.priv && !keyObj.key.published){
+		Request({
+			url: "https://grd.me/key/pubKeyExists",
+			content: {
+				pub: keyObj.key.pub
+			},
+			onComplete: function(data){
+				data = data.json;
+				if(data && data.exists){
+					var keys = ss.storage.keys;
+					for(var i = keys.length - 1; i>=0; i--){
+						if(keys[i].key.pub === keyObj.key.pub &&
+						   keys[i].key.priv === keyObj.key.priv &&
+						   keys[i].key.published === keyObj.key.published &&
+						   keys[i].description === keyObj.description){
+							keys[i].key.published = true;
+							ss.storage.keys = keys;
+							keyManager.refreshKeys();
+							return;
+						}
+					}
+				}
+			}
+		}).get();
+	}
 });
 
 keyManager.port.on("deleteKey", function(index){
@@ -266,6 +292,8 @@ exports.keyManager = {
 		keyManager.refreshKeys();
 	
 		keyManager.port.emit("uids", ss.storage.uids);
+		
+		timers.clearInterval(sharedKeyInterval);
 		
 		/** Check for shared keys and delete old shared keys - run every minute */
 		timers.setInterval(function(){
