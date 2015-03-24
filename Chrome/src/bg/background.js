@@ -99,7 +99,6 @@ var Intercept = (function(){
 		intercept = scriptWrap(response);
 	});
 	
-	
 	chrome.webRequest.onBeforeRequest.addListener(
 		function(details) {
 			var uid = details.url.slice(baseURL.length);
@@ -196,7 +195,7 @@ function main(keys, activeKeys){
 				var left = Math.floor((screen.width/2)-(w/2));
 				var top = Math.floor((screen.height/2)-(h/2));
 				chrome.windows.create({
-					url: chrome.extension.getURL('src/popup/popup.html'),
+					url: chrome.extension.getURL('src/secureTextPopup/secureTextPopup.html'),
 					focused: true,
 					type: "popup",
 					width: w,
