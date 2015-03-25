@@ -4,12 +4,16 @@
 		<title>Grd Me Key Management</title>
 	</head>
 	<body>
+		<!-- Flash messages -->
 		<div id="publishFail" class="indicator">Failed to Publish Key</div>
 		<div id="publishSuccess" class="indicator">Key Published</div>
 		<div id="revokeFail" class="indicator">Failed to Revoke Key</div>
 		<div id="revokeSuccess" class="indicator">Key Revoked</div>
 		<div id="shareKeyFail" class="indicator">Failed to Share Key</div>
 		<div id="shareKeySuccess" class="indicator">Key Shared</div>
+		<div id="exportCopied" class="indicator">Keychain Copied to Clipboard</div>
+		<div id="exportCreated" class="indicator">Keychain Exported to File</div>
+		<!-- End of Flash messages -->
 		<div id="onlyPubWarning">We recommend shift-selecting another key which contains a private key so that you will be able to read messages that you encrypt.</div>
 		<div class="help_links">
 			<a href="https://grd.me/#feedback" target="_blank">Feedback</a>
@@ -36,6 +40,9 @@
 			<div>
 				<span>
 					<a id="encryptKeychain">Encrypt Keychain</a>
+				</span>
+				<span>
+					<a id="exportKeychain">Export Keychain</a>
 				</span>
 			</div>
 			Your Keys <span>(shift-select for multiple active keys)</span>:
@@ -111,6 +118,14 @@
 			<div class="error"></div>
 			<button type="button" class="cancel btn white">Cancel</button>
 			<button type="submit" class="btn blue">Encrypt</button>
+		</form>
+		<form id="exportKeychainPopup" class="popup">
+			<div class="title">Optionally enter a password to encrypt your exported keychain:</div>
+			<input placeholder="Passphrase" type="password" class="keyChainPassword">
+			<div class="space"></div>
+			<button type="submit" class="btn blue wide">Export to File</button>
+			<button type="button" class="btn blue wide" id="exportToClipboard">Export to Clipboard</button>
+			<button type="button" class="cancel btn white wide">Cancel</button>
 		</form>
 		<input type="hidden" id="pubKey">
 		<input type="hidden" id="privKey">

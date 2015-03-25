@@ -132,6 +132,10 @@ button{
     padding: 0;
     border: 0;
 }
+.btn.wide {
+	width: 100%;
+	margin: 3px auto;
+}
 .red.btn {
 	background-color: #d61f1f;
 }
@@ -166,7 +170,9 @@ button{
     color: #FFF;
     background: none repeat scroll 0% 0% #1a75bb;
 }
-
+.space {
+	height: 10px;
+}
 .header {
 	margin: 7px 0px 5px;
 	font-size: 15px;

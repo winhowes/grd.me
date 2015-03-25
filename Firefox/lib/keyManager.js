@@ -1,5 +1,9 @@
 /** This file handles the key manager */
 
+const { Cu } = require('chrome');
+const {TextDecoder, TextEncoder, OS} = Cu.import("resource://gre/modules/osfile.jsm", {});
+
+var clipboard = require("sdk/clipboard");
 var CryptoJS = require("lib/aes").CryptoJS;
 var data = require("sdk/self").data;
 var notifications = require("sdk/notifications");
@@ -40,6 +44,20 @@ function uniq(arr) {
          }
     }
     return out;
+}
+
+/** Write a file
+ * data: the file data
+ * name: the name of the file
+ * succes: a success callback
+ * fail: a failure callback
+*/
+function writeKeychain(data, name, success, fail){
+	let promise = OS.File.writeAtomic(name, data, {
+		tmpPath: name + ".tmp",
+		noOverwrite: true
+	});
+	promise.then(success).catch(fail);
 }
 
 var button = require("sdk/ui/button/toggle").ToggleButton({
@@ -109,6 +127,34 @@ keyManager.port.on("decryptKeychain", function(passwordObj){
 	}
 	catch(e){}
 	keyManager.refreshKeys();
+});
+
+keyManager.port.on("exportKeychain", function(passwordObj){
+	var password = passwordObj.pass;
+	var jsonKeys = JSON.stringify(ss.storage.keys);
+	var exported = password? CryptoJS.AES.encrypt(jsonKeys, password).toString() : jsonKeys;
+	switch(passwordObj.type){
+		case "clipboard":
+			clipboard.set(exported, "text");
+			keyManager.port.emit("exportCopied");
+			break;
+		case "file":
+		default:
+			let i = 0;
+			let encoder = new TextEncoder();
+			let array = encoder.encode(exported);
+			let name = "Grd\ Me\ Keychain.json";
+			let success = function(){
+				keyManager.port.emit("exportCreated");
+			};
+			let fail = function(){
+				i++;
+				name = "Grd\ Me\ Keychain\ " + i + ".json";
+				writeKeychain(array, name, success, fail);
+			}
+			writeKeychain(array, name, success, fail);
+			break;
+	}
 });
 
 keyManager.port.on("setActiveKeys", function(indices){

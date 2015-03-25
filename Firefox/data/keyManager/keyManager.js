@@ -8,6 +8,29 @@ hasPrivateKey = false,
 hasOthersPubKey = false,
 keyChain = [];
 
+/** Show a flash message
+ * id: id of the flash message (has class indicator)
+*/
+function showFlash(id){
+	$("#"+id).stop(true).css("top", "-20px").animate({
+		top: 0
+	}).delay(2500).animate({
+		top : "-20px"
+	});
+}
+
+/** Close the open popups and the overlay */
+function closePopup(){
+	$("#overlay, .popup").stop(true).fadeOut("fast");
+}
+
+/** Open a popup with the given id
+ * id: the id of the popup
+*/
+function openPopup(id){
+	$("#"+id+", #overlay").stop(true).fadeIn();
+}
+
 /** Generate an ECC pub/priv keypair */
 function generateECCKeys() {
 	var curve = 384;
@@ -78,7 +101,7 @@ function toggleInputBlock(block){
  * confirm: if true, will show the confirm input, otherwise hides it
 */
 function showEncryptKeyChainPopup(confirm){
-	$("#encryptForm, #overlay").stop(true).fadeIn();
+	openPopup("encryptForm");
 	$("#encryptForm input.keyChainPassword").val("").focus();
 	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
 	var error = $("#encryptForm .error").stop(true).hide();
@@ -90,7 +113,7 @@ function showEncryptKeyChainPopup(confirm){
 
 /** Open the decrypt keychain popup */
 function showDecryptKeyChainPopup(){
-	$("#decryptForm, #overlay").stop(true).fadeIn();
+	openPopup("decryptForm");
 	$("#decryptForm input.keyChainPassword").focus();
 }
 
@@ -124,7 +147,7 @@ function acceptableSharedKeysPopup(keys){
 					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
 		}
 		$("#acceptableSharedKeys ul").html(list.html());
-		$("#overlay, #acceptableSharedKeys").show();
+		openPopup("acceptableSharedKeys");
 	}
 }
 
@@ -198,7 +221,7 @@ $("#searchUIDForm").on("submit", function(e){
 	$("#searchResults").html("");
 	$("#searchLoading").show();
 	$("#searchResultsContainer").find(".title").text(text);
-	$("#overlay, #searchResultsContainer").fadeIn();
+	openPopup("searchResultsContainer");
 	$.ajax({
 		url: "https://grd.me/key/get",
 		type: "GET",
@@ -258,7 +281,7 @@ $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey"
 	$("#description").focus().val($(this).attr("uid"));
 	$("#ecc").prop('checked', true);
 	$("#addKey").trigger("submit");
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Add a key to the key list */
@@ -398,7 +421,7 @@ $("#keyGen").on("click", function(){
 $("#keyList").on("click", ".delete", function(e){
 	e.stopImmediatePropagation();
 	$("#pubKeyIndex").val($(this).parent().attr("index"));
-	$("#deleteForm, #overlay").stop(true).fadeIn();
+	openPopup("deleteForm");
 })
 /** Show/hide the key in the key list */
 .on("click", ".showHideKey", function(e){
@@ -444,7 +467,7 @@ $("#keyList").on("click", ".delete", function(e){
 /** Handle clicking the publish button in the key list */
 .on("click", ".publish", function(e){
 	e.stopImmediatePropagation();
-	$("#publishForm, #overlay").stop(true).fadeIn();
+	openPopup("publishForm");
 	$("#uidError").hide();
 	$("#uid").focus();
 	$("#pubKey").val($(this).attr("pub"));
@@ -454,7 +477,7 @@ $("#keyList").on("click", ".delete", function(e){
 /** Handle clicking the revoke button in the key list */
 .on("click", ".revoke", function(e){
 	e.stopImmediatePropagation();
-	$("#revokeForm, #overlay").stop(true).fadeIn();
+	openPopup("revokeForm");
 	$("#pubKey").val($(this).attr("pub"));
 	$("#privKey").val($(this).attr("priv"));
 	$("#pubKeyIndex").val($(this).parent().attr("index"));
@@ -509,7 +532,7 @@ $("#keyList").on("click", ".delete", function(e){
 /** Handle clicking he share button in the key list */
 .on("click", ".share", function(e){
 	e.stopImmediatePropagation();
-	$("#shareForm, #overlay").stop(true).fadeIn();
+	openPopup("shareForm");
 	$(".shareFormMessage").hide();
 	if(!hasPrivateKey){
 		$("#noPrivateKey").show();
@@ -564,7 +587,7 @@ $("#shareFormMain2").on("click", ".continue", function(e){
 			sendSig: JSON.stringify(ecc.sign(fromKey.priv, sharedKey)),
 			rand: getRandomString(64)
 	});
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Select which key to encrypt shared key with */
@@ -583,7 +606,7 @@ $("#onlyPubWarning").on("click", function(){
 $("#deleteForm").on("submit", function(e){
 	e.preventDefault();
 	self.port.emit("deleteKey", $("#pubKeyIndex").val());
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Revoke the key */
@@ -596,7 +619,7 @@ $("#revokeForm").on("submit", function(e){
 	}
 	$("#keyList").find("li[index='" + $("#pubKeyIndex").val() + "']").find(".revoke").addClass("disabled").prop("disabled", true);
 	self.port.emit("revokeKey", key);
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Publish the key */
@@ -644,7 +667,7 @@ $("#publishForm").on("submit", function(e){
 					}
 					$("#keyList").find("li[index='" + $("#pubKeyIndex").val() + "']").find(".publish").addClass("disabled").prop("disabled", true);
 					self.port.emit("publishKey", key);
-					$("#overlay").trigger("click");
+					closePopup();
 				}
 				else {
 					$("#existsError").stop(true).fadeIn();
@@ -660,14 +683,9 @@ $("#publishForm").on("submit", function(e){
 	});
 });
 
-/** Clicking the overlay closes the overlay and appropriate popups */
-$("#overlay").on("click", function(){
-	$("#overlay, .popup").stop(true).fadeOut("fast");
-});
-
-/** Close the overlay on clicking a cancel btn */
-$(".cancel").on("click", function(){
-	$("#overlay").trigger("click");
+/** Clicking the overlay or cancel button closes the overlay and appropriate popups */
+$("#overlay, .cancel").on("click", function(){
+	closePopup();
 });
 
 $("#encryptKeychain").on("click", function(){
@@ -701,7 +719,7 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 		confirm: confirm,
 		hash: CryptoJS.SHA256(pass).toString()
 	});
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Remove a key from the acceptableSharedKey array */
@@ -710,7 +728,7 @@ $("#acceptableSharedKeys").on("click", ".remove", function(){
 	$(this).parents("li").fadeOut("fast", function(){
 		$(this).remove();
 		if(!$("#acceptableSharedKeys").find("li").length){
-			$("#overlay").trigger("click");
+			closePopup();
 		}
 	});
 })
@@ -728,6 +746,34 @@ $("#acceptableSharedKeys").on("click", ".remove", function(){
 		});
 		$(this).find(".remove").trigger("click");
 	}
+});
+
+$("#exportKeychain").on("click", function(){
+	openPopup("exportKeychainPopup");
+});
+
+$("#exportToClipboard").on("click", function(){
+	$("#exportKeychainPopup").trigger("submit", ["clipboard"]);
+});
+
+$("#exportKeychainPopup").on("submit", function(e, type){
+	e.preventDefault();
+	closePopup();
+	type = type || "file";
+	var pass = $(this).find("input.keyChainPassword");
+	self.port.emit("exportKeychain", {
+		type: type,
+		pass: pass.val().trim()
+	});
+	pass.val("");
+});
+
+self.port.on("exportCopied", function(){
+	showFlash("exportCopied");
+});
+
+self.port.on("exportCreated", function(){
+	showFlash("exportCreated");
 });
 
 self.port.on("confirmKeyChainPassword", function(pass){
@@ -815,15 +861,11 @@ self.port.on("activeKeyIndex", function(index){
  * false of the index of the revoked key
 */
 self.port.on("publishResult", function(obj){
-	var id = obj.success? "#publishSuccess" : "#publishFail";
+	var id = obj.success? "publishSuccess" : "publishFail";
 	if(!obj.success){
 		$("#keyList").find("li[index='" + obj.index + "']").find(".publish").removeClass("disabled").prop("disabled", false);
 	}
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
+	showFlash(id);
 });
 
 /** Indicate whether a key was revoked or failed to be revoked
@@ -831,27 +873,19 @@ self.port.on("publishResult", function(obj){
  * false of the index of the revoked key
 */
 self.port.on("revokeResult", function(obj){
-	var id = obj.success? "#revokeSuccess" : "#revokeFail";
+	var id = obj.success? "revokeSuccess" : "revokeFail";
 	if(!obj.success){
 		$("#keyList").find("li[index='" + obj.index + "']").find(".revoke").removeClass("disabled").prop("disabled", false);
 	}
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
+	showFlash(id);
 });
 
 /** Indicate whether a key was shared or failed to be shared
  * success: a boolean indicating whether or not the share was successful
 */
 self.port.on("shareKeyResult", function(success){
-	var id = success? "#shareKeySuccess" : "#shareKeyFail";
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
+	var id = success? "shareKeySuccess" : "shareKeyFail";
+	showFlash(id);
 });
 
 /** Update the known uids */
