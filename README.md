@@ -16,7 +16,7 @@ For more details about Grd Me features and protocols, visit https://grd.me/docs.
 
 Compatibility
 ==============
-Right now this browser plugin is supported in Firefox (≥ 21) and Chrome (≥ 11).
+Right now this browser plugin is supported in Firefox (≥ 26) and Chrome (≥ 11).
 
 Cryptography Notice
 ======================
