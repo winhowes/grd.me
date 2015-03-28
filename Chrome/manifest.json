@@ -30,6 +30,7 @@
     "https://grd.me/",
     "notifications",
     "storage",
+    "unlimitedStorage",
     "webRequest",
     "webRequestBlocking",
     "https://decrypt.grd.me/*"
