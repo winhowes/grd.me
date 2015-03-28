@@ -1,17 +1,21 @@
 /** This file handles the key manager */
 
-const { Cu } = require('chrome');
+const { Cc, Ci, Cu } = require('chrome');
+const nsIFilePicker = Ci.nsIFilePicker;
 const {TextDecoder, TextEncoder, OS} = Cu.import("resource://gre/modules/osfile.jsm", {});
 
 var clipboard = require("sdk/clipboard");
 var CryptoJS = require("lib/aes").CryptoJS;
 var data = require("sdk/self").data;
+var fp = Cc["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
 var notifications = require("sdk/notifications");
 var Panel = require("sdk/panel").Panel;
 var Request = require("sdk/request").Request;
 var ss = require("sdk/simple-storage");
 var timers = require("sdk/timers");
 var sharedKeyInterval;
+var windows = require("sdk/windows").browserWindows;
+var wm = Cc["@mozilla.org/appshell/window-mediator;1"].getService(Ci.nsIWindowMediator);
 var workers = [];
 
 /** Keep the panel visibility in sync with the button state
@@ -26,6 +30,11 @@ function handleChange(state) {
 /** Sync the button with the panel hiding */
 function handleHide() {
 	button.state('window', {checked: false});
+}
+
+/** Sync the button with the panel showing */
+function handleShow() {
+	button.state('window', {checked: true});
 }
 
 /** Get rid of duplicate elements in an array
@@ -77,6 +86,7 @@ var keyManager = Panel({
 						data.url("keyManager/keyManager.js")],
 	position: button,
 	onHide: handleHide,
+	onShow: handleShow,
 	width: 300,
 	height: 400
 });
@@ -87,7 +97,7 @@ keyManager.refreshKeys = function(){
 		keys: ss.storage.keys,
 		encrypted: ss.storage.encryptedKeys
 	});
-}
+};
 
 keyManager.port.on("encryptKeychain", function(passwordObj){
 	var password = passwordObj.pass;
@@ -130,9 +140,15 @@ keyManager.port.on("decryptKeychain", function(passwordObj){
 });
 
 keyManager.port.on("exportKeychain", function(passwordObj){
+	if(ss.storage.encryptedKeys){
+		return;
+	}
 	var password = passwordObj.pass;
 	var jsonKeys = JSON.stringify(ss.storage.keys);
-	var exported = password? CryptoJS.AES.encrypt(jsonKeys, password).toString() : jsonKeys;
+	var exported = JSON.stringify({
+		encrypted: !!password,
+		file: password? CryptoJS.AES.encrypt(jsonKeys, password).toString() : jsonKeys
+	});
 	switch(passwordObj.type){
 		case "clipboard":
 			clipboard.set(exported, "text");
@@ -153,6 +169,82 @@ keyManager.port.on("exportKeychain", function(passwordObj){
 				writeKeychain(array, name, success, fail);
 			}
 			writeKeychain(array, name, success, fail);
+			break;
+	}
+});
+
+/** Verify imported keychain is an actual keychain and merge it
+ * text: the JSON stringified keychain to be imported
+*/
+function mergeImportKeychain(text){
+	try{
+		text = JSON.parse(text);
+		if(!text){
+			throw true;
+		}
+		if(text.encrypted){
+			keyManager.port.emit("getImportPassword", JSON.stringify(text));
+		}
+		else if(text.file){
+			keyManager.port.emit("mergeKeychain", text.file);
+		}
+		else{
+			throw true;
+		}
+	}
+	catch(e){
+		importKeychainError();
+	}
+}
+
+/** Show a import keychain error */
+function importKeychainError(){
+	keyManager.port.emit("importKeychainError");
+}
+
+keyManager.port.on("decryptImportKeychain", function(passwordObj){
+	var password = passwordObj.pass;
+	try{
+		var text = JSON.parse(passwordObj.text);
+		plaintext = CryptoJS.AES.decrypt(text.file, password);
+		plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+		if(!plaintext){
+			throw true;
+		}
+		mergeImportKeychain(JSON.stringify({
+			encrypted: false,
+			file: plaintext
+		}));
+	}
+	catch(e){
+		importKeychainError();
+	}
+});
+
+keyManager.port.on("importKeychain", function(type){
+	if(ss.storage.encryptedKeys){
+		return;
+	}
+	switch(type){
+		case "clipboard":
+			mergeImportKeychain(clipboard.get("text"));
+			break;
+		case "file":
+		default:
+			var win = wm.getMostRecentWindow("");
+			fp.init(win, "Choose your Grd Me Keychain", nsIFilePicker.modeOpen);
+			fp.appendFilters(nsIFilePicker.filterAll | nsIFilePicker.filterText);
+			
+			var rv = fp.show();
+			keyManager.show();
+			if (rv == nsIFilePicker.returnOK || rv == nsIFilePicker.returnReplace) {
+				let promise = OS.File.read(fp.file.path, {encoding: "utf-8"});
+				promise.then(function(text){
+					mergeImportKeychain(text);
+				}).catch(function(){
+					importKeychainError();
+				});
+			}
 			break;
 	}
 });

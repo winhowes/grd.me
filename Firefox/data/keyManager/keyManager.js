@@ -64,7 +64,7 @@ function sanitize(str){
 function sharedKeyPage2(){
 	$("#shareFormMain1").hide();
 	$("#shareFormMain2").show();
-	keyList = $("<ul></ul>");
+	var keyList = $("<ul></ul>");
 	var count = 0;
 	for(var i=0; i<keyChain.length; i++){
 		if(keyChain[i].key.pub && !keyChain[i].key.priv){
@@ -167,6 +167,139 @@ function uniq(arr) {
          }
     }
     return out;
+}
+
+/** Add a key to the keychain
+ * keyVal: the key, either a string or object
+ * description: a description of the key
+ * isECC: boolean indicating whether or not the key is for ECC
+ * showError: boolean indicating whether or not to show errors on fail
+*/
+function addKey(keyVal, description, isECC, showError){
+	if(showError){
+		$(".error").stop(true).hide();
+	}
+	try{
+		var key = isECC && typeof keyVal !== "object" ? JSON.parse(keyVal) : keyVal;
+	}
+	catch(e){
+		if(keyVal[0] != '"' && keyVal[0] != "'"){
+			try{
+				var key = JSON.parse('"' + keyVal + '"');
+			}
+			catch(e){
+				if(showError){
+					$("#pubKeyError").fadeIn();
+				}
+				return false;
+			}
+		}
+		else{
+			if(showError){
+				$("#pubKeyError").fadeIn();
+			}
+			return false;
+		}
+	}
+	if(!key || !description){
+		if(showError){
+			$("#description").focus();
+			$("#addKeyError").fadeIn();
+		}
+		return false;
+	}
+	if(isECC){
+		if(typeof key !== "object"){
+			key = key.split(",");
+			key = {
+				pub: $.trim(key[0]),
+				priv: key[1]? $.trim(key[1]) : undefined
+			};
+		}
+		var hexRegex = /[^A-F0-9]/gi;
+		var plaintext = "Hello World";
+		if(key.priv){
+			/* Check that it's a valid public/private key */
+			try{
+				var pub = key.pub.replace(hexRegex, "");
+				var priv = key.priv.replace(hexRegex, "");
+				var ciphertext = ecc.encrypt(pub, plaintext);
+				if(plaintext != ecc.decrypt(priv, ciphertext)){
+					throw true;
+				}
+			}
+			catch(e){
+				if(showError){
+					$("#pubKeyError").fadeIn();
+				}
+				return false;
+			}
+			key = {
+				pub: pub,
+				priv: priv,
+				published: false
+			}
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub &&
+				   keyChain[i].key.priv === key.priv){
+					if(showError){
+						$("#keyExistsError").fadeIn();
+					}
+					return false;
+				}
+			}
+		}
+		else{
+			try{
+				key.pub = key.pub.replace(hexRegex, "");
+				if(!key.pub){
+					throw true;
+				}
+				ecc.encrypt(key.pub, plaintext);
+			}
+			catch(e){
+				if(showError){
+					$("#pubKeyError").fadeIn();
+				}
+				return false;
+			}
+			key = {pub: key.pub};
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub && !keyChain[i].key.priv){
+					if(showError){
+						$("#keyExistsError").fadeIn();
+					}
+					return false;
+				}
+			}
+		}
+	}
+	else if(key.length<6){
+		if(showError){
+			$("#key").focus();
+			$("#keyLengthError").fadeIn();
+		}
+		return false;
+	}
+	else {
+		for(var i = 0; i<keyChain.length; i++){
+			if(keyChain[i].key === key){
+				if(showError){
+					$("#keyExistsError").fadeIn();
+				}
+				return false;
+			}
+		}
+	}
+	if(showError){
+		$("#key").val("").focus();
+		$("#description").val("");
+	}
+	self.port.emit("addKey", {
+		key: key,
+		description: description
+	});
+	return true;
 }
 
 $(".error, #overlay, .popup").hide();
@@ -287,109 +420,10 @@ $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey"
 /** Add a key to the key list */
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
-	$(".error").stop(true).hide();
-	var keyVal = $.trim($("#key").val());
-	try{
-		var key = $("#ecc").is(":checked")? JSON.parse(keyVal) : keyVal;
-	}
-	catch(e){
-		if(keyVal[0] != '"' && keyVal[0] != "'"){
-			try{
-				var key = JSON.parse('"' + keyVal + '"');
-			}
-			catch(e){
-				$("#pubKeyError").fadeIn();
-				return;
-			}
-		}
-		else{
-			$("#pubKeyError").fadeIn();
-			return;
-		}
-	}
-	var description = $.trim($("#description").val());
-	if(!key || !description){
-		$("#description").focus();
-		$("#addKeyError").fadeIn();
-		return;
-	}
-	if($("#ecc").is(":checked")){
-		if(typeof key !== "object"){
-			key = key.split(",");
-			key = {
-				pub: $.trim(key[0]),
-				priv: key[1]? $.trim(key[1]) : undefined
-			};
-		}
-		var hexRegex = /[^A-F0-9]/gi;
-		var plaintext = "Hello World";
-		if(key.priv){
-			/* Check that it's a valid public/private key */
-			try{
-				var pub = key.pub.replace(hexRegex, "");
-				var priv = key.priv.replace(hexRegex, "");
-				var ciphertext = ecc.encrypt(pub, plaintext);
-				if(plaintext != ecc.decrypt(priv, ciphertext)){
-					throw true;
-				}
-			}
-			catch(e){
-				$("#pubKeyError").fadeIn();
-				return;
-			}
-			key = {
-				pub: pub,
-				priv: priv,
-				published: false
-			}
-			for(var i = 0; i<keyChain.length; i++){
-				if(keyChain[i].key.pub === key.pub &&
-				   keyChain[i].key.priv === key.priv){
-					$("#keyExistsError").fadeIn();
-					return;
-				}
-			}
-		}
-		else{
-			try{
-				key.pub = key.pub.replace(hexRegex, "");
-				if(!key.pub){
-					throw true;
-				}
-				ecc.encrypt(key.pub, plaintext);
-			}
-			catch(e){
-				$("#pubKeyError").fadeIn();
-				return;
-			}
-			key = {pub: key.pub};
-			for(var i = 0; i<keyChain.length; i++){
-				if(keyChain[i].key.pub === key.pub && !keyChain[i].key.priv){
-					$("#keyExistsError").fadeIn();
-					return;
-				}
-			}
-		}
-	}
-	else if(key.length<6){
-		$("#key").focus();
-		$("#keyLengthError").fadeIn();
-		return;
-	}
-	else {
-		for(var i = 0; i<keyChain.length; i++){
-			if(keyChain[i].key === key){
-				$("#keyExistsError").fadeIn();
-				return;
-			}
-		}
-	}
-	$("#key").val("").focus();
-	$("#description").val("");
-	self.port.emit("addKey", {
-		key: key,
-		description: description
-	});
+	var keyVal = $("#key").val().trim(),
+	description = $("#description").val().trim(),
+	isECC = $("#ecc").is(":checked");
+	addKey(keyVal, description, isECC, true);
 });
 
 /** Handle checing the pub/priv checkbox. If appropriate, generate a ecc key */
@@ -752,6 +786,20 @@ $("#exportKeychain").on("click", function(){
 	openPopup("exportKeychainPopup");
 });
 
+$("#importKeychain").on("click", function(){
+	openPopup("importKeychainPopup");
+});
+
+$("#importFromClipboard").on("click", function(){
+	$("#importKeychainPopup").trigger("submit", ["clipboard"]);
+});
+
+$("#importKeychainPopup").on("submit", function(e, type){
+	e.preventDefault();
+	type = type || "file";
+	self.port.emit("importKeychain", type);
+});
+
 $("#exportToClipboard").on("click", function(){
 	$("#exportKeychainPopup").trigger("submit", ["clipboard"]);
 });
@@ -768,12 +816,60 @@ $("#exportKeychainPopup").on("submit", function(e, type){
 	pass.val("");
 });
 
+$("#importKeychainPassword").on("submit", function(e){
+	e.preventDefault();
+	var pass = $(this).find(".keyChainPassword");
+	if(!pass.val().trim()){
+		pass.val("").focus();
+		return;
+	}
+	closePopup();
+	var text = $(this).find("input[type='hidden']").val();
+	self.port.emit("decryptImportKeychain", {
+		text: text,
+		pass: pass.val().trim()
+	});
+	pass.val("");
+});
+
+self.port.on("mergeKeychain", function(keys){
+	closePopup();
+	keys = JSON.parse(keys);
+	for(var i=0; i<keys.length; i++){
+		var notFound = true;
+		if(!keys[i].key || !keys[i].description){
+			continue;
+		}
+		for(var j=0; j<keyChain.length; j++){
+			if(keys[i].key === keyChain[j].key && (keys[i].key.priv || keys[i].description == keyChain[j].description)){
+				notFound = false;
+				break;
+			}
+		}
+		if(notFound){
+			addKey(keys[i].key, keys[i].description, !!keys[i].key.pub, false);
+		}
+	}
+	showFlash("importKeychainSuccess");
+});
+
 self.port.on("exportCopied", function(){
 	showFlash("exportCopied");
 });
 
 self.port.on("exportCreated", function(){
 	showFlash("exportCreated");
+});
+
+self.port.on("importKeychainError", function(){
+	closePopup();
+	showFlash("importKeychainError");
+});
+
+self.port.on("getImportPassword", function(text){
+	closePopup();
+	openPopup("importKeychainPassword");
+	$("#importKeychainPassword input[type='hidden']").val(text);
 });
 
 self.port.on("confirmKeyChainPassword", function(pass){

@@ -170,9 +170,11 @@ button{
     color: #FFF;
     background: none repeat scroll 0% 0% #1a75bb;
 }
+
 .space {
 	height: 10px;
 }
+
 .header {
 	margin: 7px 0px 5px;
 	font-size: 15px;
@@ -182,6 +184,16 @@ button{
 
 .header span {
 	font-size: 12px;
+}
+
+.flex_container {
+	display: flex;
+	flex-direction: row;
+}
+
+.header .flex_container span {
+	font-size: 11px;
+	flex-grow: 1;
 }
 
 ul {
@@ -377,7 +389,7 @@ ul {
 	top: 37px;
 }
 
-.indicator {
+.indicator, .indicator_error {
 	color: #fff;
 	height: 20px;
 	position: absolute;
@@ -390,7 +402,7 @@ ul {
 	line-height: 20px;
 }
 
-#publishFail, #revokeFail {
+.indicator_error {
 	background: #d61f1f;
 }
 
@@ -526,7 +538,7 @@ ul {
 }
 
 .loading_icon {
-	background-image: url("icons/loader.gif");
+	background-image: url("../icons/loader.gif");
 	height: 11px;
 	width: 43px;
 }
@@ -586,7 +598,7 @@ ul {
 }
 
 .pencil {
-	background-image: url("icons/pencil.png");
+	background-image: url("../icons/pencil.png");
 	width: 12px;
 	height: 12px;
 	cursor: pointer;
