@@ -173,6 +173,11 @@ button{
 
 .space {
 	height: 10px;
+	display: block;
+}
+
+.space.small {
+	height: 5px;
 }
 
 .header {
@@ -194,6 +199,14 @@ button{
 .header .flex_container span {
 	font-size: 11px;
 	flex-grow: 1;
+}
+
+.header .flex_container span:nth-child(2) {
+	text-align: center;
+}
+
+.header .flex_container span:last-child {
+	text-align: right;
 }
 
 ul {
