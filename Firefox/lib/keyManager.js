@@ -69,6 +69,35 @@ function writeKeychain(data, name, success, fail){
 	promise.then(success).catch(fail);
 }
 
+/** Verify imported keychain is an actual keychain and merge it
+ * text: the JSON stringified keychain to be imported
+*/
+function mergeImportKeychain(text){
+	try{
+		text = JSON.parse(text);
+		if(!text){
+			throw true;
+		}
+		if(text.encrypted){
+			keyManager.port.emit("getImportPassword", JSON.stringify(text));
+		}
+		else if(text.file){
+			keyManager.port.emit("mergeKeychain", text.file);
+		}
+		else{
+			throw true;
+		}
+	}
+	catch(e){
+		importKeychainError();
+	}
+}
+
+/** Show a import keychain error */
+function importKeychainError(){
+	keyManager.port.emit("importKeychainError");
+}
+
 var button = require("sdk/ui/button/toggle").ToggleButton({
 	id: "crypt_btn",
 	label: "Grd Me Key Manager",
@@ -172,35 +201,6 @@ keyManager.port.on("exportKeychain", function(passwordObj){
 			break;
 	}
 });
-
-/** Verify imported keychain is an actual keychain and merge it
- * text: the JSON stringified keychain to be imported
-*/
-function mergeImportKeychain(text){
-	try{
-		text = JSON.parse(text);
-		if(!text){
-			throw true;
-		}
-		if(text.encrypted){
-			keyManager.port.emit("getImportPassword", JSON.stringify(text));
-		}
-		else if(text.file){
-			keyManager.port.emit("mergeKeychain", text.file);
-		}
-		else{
-			throw true;
-		}
-	}
-	catch(e){
-		importKeychainError();
-	}
-}
-
-/** Show a import keychain error */
-function importKeychainError(){
-	keyManager.port.emit("importKeychainError");
-}
 
 keyManager.port.on("decryptImportKeychain", function(passwordObj){
 	var password = passwordObj.pass;
