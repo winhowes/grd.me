@@ -902,11 +902,11 @@ self.port.on("displayKeys", function(keyObj){
 				.append($("<a>", {id: "decryptKeychain", text: "Decrypt Keychain"}))
 			)
 		);
-		$("#encryptKeychain").hide();
+		$("#encryptKeychain").parents(".flex_container").hide();
 	}
 	else {
 		toggleInputBlock(false);
-		$("#encryptKeychain").show();
+		$("#encryptKeychain").parents(".flex_container").show();
 		for(var i=0; i<keys.length; i++){
 			if(keys[i].key.pub){
 				hasPrivateKey = hasPrivateKey || !!keys[i].key.priv;
