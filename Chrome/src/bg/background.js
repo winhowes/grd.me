@@ -100,7 +100,7 @@ var Intercept = (function(){
 		metaTag = response;
 	});
 	
-	getFile('/src/inject/lib/jquery-2.1.3.min.js', function(response){
+	getFile('/src/inject/lib/jquery-2.1.3.js', function(response){
 		jquery = scriptWrap(response);
 	});
 	
@@ -108,7 +108,7 @@ var Intercept = (function(){
 		aes = scriptWrap(response);
 	});
 	
-	getFile('/src/inject/lib/linkify.min.js', function(response){
+	getFile('/src/inject/lib/linkify.js', function(response){
 		linkify = scriptWrap(response);
 	});
 	

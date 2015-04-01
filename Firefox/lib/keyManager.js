@@ -94,8 +94,8 @@ var button = require("sdk/ui/button/toggle").ToggleButton({
 var keyManager = Panel({
 	contentURL: data.url("keyManager/keyManager.html"),
 	contentStyleFile: data.url("keyManager/keyManager.css"),
-	contentScriptFile: [data.url("lib/jquery-2.1.3.min.js"),
-						data.url('lib/ecc.min.js'),
+	contentScriptFile: [data.url("lib/jquery-2.1.3.js"),
+						data.url('lib/ecc.js'),
 						data.url('lib/sha256.js'),
 						data.url('keyManager/dropdown.js'),
 						data.url("keyManager/keyManager.js")],

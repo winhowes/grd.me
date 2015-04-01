@@ -2,7 +2,7 @@ var window = {};
 
 importScripts("../constants.js",
 			  "../lib/sha256.js",
-			  "../lib/ecc.min.js",
+			  "../lib/ecc.js",
 			  "../lib/aes.js");
 
 onmessage = function(e) {

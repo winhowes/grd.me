@@ -120,8 +120,8 @@ exports.Intercept = {
 	init: function(workerArray, detachWorker){
 		pageMod.PageMod({
 			include: ["data:*"],
-			contentScriptFile: [data.url("lib/jquery-2.1.3.min.js"),
-								data.url("lib/linkify.min.js"),
+			contentScriptFile: [data.url("lib/jquery-2.1.3.js"),
+								data.url("lib/linkify.js"),
 								data.url("lib/aes.js"),
 								data.url("constants.js"),
 								data.url("observer.js"),

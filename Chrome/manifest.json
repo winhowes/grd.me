@@ -15,8 +15,8 @@
   "background": {
     "scripts": [
       "src/bg/background.js",
-      "src/inject/lib/jquery-2.1.3.min.js",
-      "src/inject/lib/ecc.min.js"
+      "src/inject/lib/jquery-2.1.3.js",
+      "src/inject/lib/ecc.js"
     ],
     "persistent": true
   },
@@ -44,10 +44,10 @@
       "js": [
         "src/inject/lib/aes.js",
         "src/inject/lib/sha256.js",
-        "src/inject/lib/ecc.min.js",
-        "src/inject/lib/jquery-2.1.3.min.js",
-        "src/inject/lib/mousetrap.min.js",
-        "src/inject/lib/linkify.min.js",
+        "src/inject/lib/ecc.js",
+        "src/inject/lib/jquery-2.1.3.js",
+        "src/inject/lib/mousetrap.js",
+        "src/inject/lib/linkify.js",
         "src/inject/constants.js",
         "src/inject/intercept.js",
         "src/inject/frameComm.js",
