@@ -55,20 +55,6 @@ function uniq(arr) {
     return out;
 }
 
-/** Write a file
- * data: the file data
- * name: the name of the file
- * succes: a success callback
- * fail: a failure callback
-*/
-function writeKeychain(data, name, success, fail){
-	let promise = OS.File.writeAtomic(name, data, {
-		tmpPath: name + ".tmp",
-		noOverwrite: true
-	});
-	promise.then(success).catch(fail);
-}
-
 /** Verify imported keychain is an actual keychain and merge it
  * text: the JSON stringified keychain to be imported
 */
@@ -185,19 +171,7 @@ keyManager.port.on("exportKeychain", function(passwordObj){
 			break;
 		case "file":
 		default:
-			let i = 0;
-			let encoder = new TextEncoder();
-			let array = encoder.encode(exported);
-			let name = "Grd\ Me\ Keychain.json";
-			let success = function(){
-				keyManager.port.emit("exportCreated");
-			};
-			let fail = function(){
-				i++;
-				name = "Grd\ Me\ Keychain\ " + i + ".json";
-				writeKeychain(array, name, success, fail);
-			}
-			writeKeychain(array, name, success, fail);
+			keyManager.port.emit("downloadFile", exported);
 			break;
 	}
 });

@@ -832,6 +832,18 @@ $("#importKeychainPassword").on("submit", function(e){
 	pass.val("");
 });
 
+self.port.on("downloadFile", function(data){
+	window.URL = window.URL || window.webkitURL;
+    var file = new Blob([data], {type: 'application/json'}),
+    a = document.createElement('a');
+    a.href = window.URL.createObjectURL(file);
+    a.download = 'Grd Me Keychain.json';
+	document.body.appendChild(a);
+	a.click();
+	a.remove();
+	showFlash("exportCreated");
+});
+
 self.port.on("mergeKeychain", function(keys){
 	closePopup();
 	keys = JSON.parse(keys);
@@ -855,10 +867,6 @@ self.port.on("mergeKeychain", function(keys){
 
 self.port.on("exportCopied", function(){
 	showFlash("exportCopied");
-});
-
-self.port.on("exportCreated", function(){
-	showFlash("exportCreated");
 });
 
 self.port.on("importKeychainError", function(){

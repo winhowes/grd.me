@@ -5,12 +5,17 @@
 		<link href="keyManager.css" media="screen" rel="stylesheet" type="text/css">
 	</head>
 	<body>
-		<div id="publishFail" class="indicator">Failed to Publish Key</div>
+		<div id="publishFail" class="indicator_error">Failed to Publish Key</div>
 		<div id="publishSuccess" class="indicator">Key Published</div>
-		<div id="revokeFail" class="indicator">Failed to Revoke Key</div>
+		<div id="revokeFail" class="indicator_error">Failed to Revoke Key</div>
 		<div id="revokeSuccess" class="indicator">Key Revoked</div>
-		<div id="shareKeyFail" class="indicator">Failed to Share Key</div>
+		<div id="shareKeyFail" class="indicator_error">Failed to Share Key</div>
 		<div id="shareKeySuccess" class="indicator">Key Shared</div>
+		<div id="exportCopied" class="indicator">Keychain Copied to Clipboard</div>
+		<div id="exportCreated" class="indicator">Keychain Exported to File</div>
+		<div id="exportFail" class="indicator_error">Failed to Export Keychain</div>
+		<div id="importKeychainSuccess" class="indicator">Keychain Imported</div>
+		<div id="importKeychainError" class="indicator_error">Failed to import Keychain</div>
 		<div id="onlyPubWarning">We recommend shift-selecting another key which contains a private key so that you will be able to read messages that you encrypt.</div>
 		<div class="help_links">
 			<a href="https://grd.me/#feedback" target="_blank">Feedback</a>
@@ -34,11 +39,18 @@
 			<div id="keyExistsError" class="error">This key is already in your keychain</div>
 		</form>
 		<div class="header">
-			<div>
+			<div class="flex_container">
 				<span>
 					<a id="encryptKeychain">Encrypt Keychain</a>
 				</span>
+				<span>
+					<a id="exportKeychain">Export Keychain</a>
+				</span>
+				<span>
+					<a id="importKeychain">Import Keychain</a>
+				</span>
 			</div>
+			<div class="small space"></div>
 			Your Keys <span>(shift-select for multiple active keys)</span>:
 		</div>
 		</div>
@@ -113,6 +125,25 @@
 			<div class="error"></div>
 			<button type="button" class="cancel btn white">Cancel</button>
 			<button type="submit" class="btn blue">Encrypt</button>
+		</form>
+		<form id="exportKeychainPopup" class="popup">
+			<div class="title">Optionally enter a password to encrypt your exported keychain:</div>
+			<input placeholder="Passphrase" type="password" class="keyChainPassword">
+			<div class="space"></div>
+			<button type="submit" class="btn blue wide">Export to File</button>
+			<button type="button" class="btn blue wide" id="exportToClipboard">Export to Clipboard</button>
+			<button type="button" class="cancel btn white wide">Cancel</button>
+		</form>
+		<form id="importKeychainPopup" class="popup">
+			<button type="button" class="btn blue wide" id="openImportFile">Import from File</button>
+			<button type="button" class="btn blue wide" id="importFromClipboard">Import from Clipboard</button>
+			<button type="button" class="cancel btn white wide">Cancel</button>
+		</form>
+		<form id="importKeychainPassword" class="popup">
+			<div class="title">Enter your passphrase to decrypt your keychain:</div>
+			<input placeholder="Passphrase" type="password" class="keyChainPassword">
+			<input type="hidden">
+			<button type="submit" class="btn blue">Decrypt</button>
 		</form>
 		<input type="hidden" id="pubKey">
 		<input type="hidden" id="privKey">

@@ -27,6 +27,7 @@
   },
   "permissions": [
     "clipboardWrite",
+    "clipboardRead",
     "https://grd.me/",
     "notifications",
     "storage",

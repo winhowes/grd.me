@@ -7,6 +7,29 @@ hasPrivateKey = false,
 hasOthersPubKey = false,
 keyChain = [];
 
+/** Show a flash message
+ * id: id of the flash message (has class indicator)
+*/
+function showFlash(id){
+	$("#"+id).stop(true).css("top", "-20px").animate({
+		top: 0
+	}).delay(2500).animate({
+		top : "-20px"
+	});
+}
+
+/** Close the open popups and the overlay */
+function closePopup(){
+	$("#overlay, .popup").stop(true).fadeOut("fast");
+}
+
+/** Open a popup with the given id
+ * id: the id of the popup
+*/
+function openPopup(id){
+	$("#"+id+", #overlay").stop(true).fadeIn();
+}
+
 /** Generate an ECC pub/priv keypair */
 function generateECCKeys() {
 	var curve = 384;
@@ -178,13 +201,10 @@ function setActiveKeys(indices){
  * keyObj: a key object
 */
 function addKey(keyObj){
-	chrome.storage.local.get("keys", function(keys){
-		keys = keys.keys;
-		keys.push(keyObj);
-		chrome.extension.getBackgroundPage().keyObj.keys.push(keyObj);
-		chrome.storage.local.set({'keys': keys}, function(){
-			displayKeys();
-		});
+	keyChain.push(keyObj);
+	chrome.extension.getBackgroundPage().keyObj.keys.push(keyObj);
+	chrome.storage.local.set({'keys': keyChain}, function(){
+		displayKeys();
 	});
 	if(keyObj.key.priv && !keyObj.key.published){
 		$.ajax({
@@ -260,7 +280,7 @@ function toggleInputBlock(block){
  * confirm: if true, will show the confirm input, otherwise hides it
 */
 function showEncryptKeyChainPopup(confirm){
-	$("#encryptForm, #overlay").stop(true).fadeIn();
+	openPopup("encryptForm");
 	$("#encryptForm input.keyChainPassword").val("").focus();
 	var confirmInput = $("#encryptForm input.confirmKeyChainPassword").toggle(confirm);
 	var error = $("#encryptForm .error").stop(true).hide();
@@ -272,7 +292,7 @@ function showEncryptKeyChainPopup(confirm){
 
 /** Open the decrypt keychain popup */
 function showDecryptKeyChainPopup(){
-	$("#decryptForm, #overlay").stop(true).fadeIn();
+	openPopup("decryptForm");
 	$("#decryptForm input.keyChainPassword").focus();
 }
 
@@ -345,7 +365,7 @@ function decryptKeychain(password){
 function sharedKeyPage2(){
 	$("#shareFormMain1").hide();
 	$("#shareFormMain2").show();
-	keyList = $("<ul></ul>");
+	var keyList = $("<ul></ul>");
 	var count = 0;
 	for(var i=0; i<keyChain.length; i++){
 		if(keyChain[i].key.pub && !keyChain[i].key.priv){
@@ -381,7 +401,7 @@ function acceptableSharedKeysPopup(keys){
 					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
 		}
 		$("#acceptableSharedKeys ul").html(list.html());
-		$("#overlay, #acceptableSharedKeys").show();
+		openPopup("acceptableSharedKeys");
 	}
 }
 
@@ -445,7 +465,7 @@ function displayKeys(){
 						[$("<button>", {class: "revoke red btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Revoke"}),
 						$("<button>", {class: "publish blue btn", pub: keys[i].key.pub, priv: keys[i].key.priv, text: "Republish Public Key"})] :
 						typeof keys[i].key !== "object" && i? $("<button>", {class: "share blue btn", key: keys[i].key, text: "Share Key"}) : "")
-			);
+				);
 			}
 			keyList.html(newKeyList.html());
 			chrome.storage.local.get("activeKeys", function(activeKeys){
@@ -472,11 +492,7 @@ function publishResult(obj){
 	if(!obj.success){
 		$("#keyList").find("li[index='"+obj.index+"']").find(".publish").removeClass("disabled").prop("disabled", false);
 	}
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
+	showFlash(id);
 }
 
 /** Indicate whether a key was revoked or failed to be revoked
@@ -488,11 +504,7 @@ function revokeResult(obj){
 	if(!obj.success){
 		$("#keyList").find("li[index='"+obj.index+"']").find(".revoke").removeClass("disabled").prop("disabled", false);
 	}
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
+	showFlash(id);
 }
 
 /** Indicate whether a key was shared or failed to be shared
@@ -500,11 +512,7 @@ function revokeResult(obj){
 */
 function shareKeyResult(success){
 	var id = success? "#shareKeySuccess" : "#shareKeyFail";
-	$(id).stop(true).css("top", "-20px").animate({
-		top: 0
-	}).delay(2500).animate({
-		top : "-20px"
-	});
+	showFlash(id);
 }
 
 /** Update the known uids */
@@ -512,6 +520,308 @@ function getUIDS(){
 	chrome.storage.local.get("uids", function(uidsArr){
 		uids = (uidsArr && uidsArr.uids) || [];
 	});
+}
+
+/** Verify and add a key to the keychain
+ * keyVal: the key, either a string or object
+ * description: a description of the key
+ * isECC: boolean indicating whether or not the key is for ECC
+ * showError: boolean indicating whether or not to show errors on fail
+*/
+function verifyAddKey(keyVal, description, isECC, showError){
+	if(showError){
+		$(".error").stop(true).hide();
+	}
+	try{
+		var key = isECC && typeof keyVal !== "object" ? JSON.parse(keyVal) : keyVal;
+	}
+	catch(e){
+		if(keyVal[0] != '"' && keyVal[0] != "'"){
+			try{
+				var key = JSON.parse('"' + keyVal + '"');
+			}
+			catch(e){
+				if(showError){
+					$("#pubKeyError").fadeIn();
+				}
+				return false;
+			}
+		}
+		else{
+			if(showError){
+				$("#pubKeyError").fadeIn();
+			}
+			return false;
+		}
+	}
+	if(!key || !description){
+		if(showError){
+			$("#description").focus();
+			$("#addKeyError").fadeIn();
+		}
+		return false;
+	}
+	if(isECC){
+		if(typeof key !== "object"){
+			key = key.split(",");
+			key = {
+				pub: $.trim(key[0]),
+				priv: key[1]? $.trim(key[1]) : undefined
+			};
+		}
+		var hexRegex = /[^A-F0-9]/gi;
+		var plaintext = "Hello World";
+		if(key.priv){
+			/* Check that it's a valid public/private key */
+			try{
+				var pub = key.pub.replace(hexRegex, "");
+				var priv = key.priv.replace(hexRegex, "");
+				var ciphertext = ecc.encrypt(pub, plaintext);
+				if(plaintext != ecc.decrypt(priv, ciphertext)){
+					throw true;
+				}
+			}
+			catch(e){
+				if(showError){
+					$("#pubKeyError").fadeIn();
+				}
+				return false;
+			}
+			key = {
+				pub: pub,
+				priv: priv,
+				published: false
+			}
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub &&
+				   keyChain[i].key.priv === key.priv){
+					if(showError){
+						$("#keyExistsError").fadeIn();
+					}
+					return false;
+				}
+			}
+		}
+		else{
+			try{
+				key.pub = key.pub.replace(hexRegex, "");
+				if(!key.pub){
+					throw true;
+				}
+				ecc.encrypt(key.pub, plaintext);
+			}
+			catch(e){
+				if(showError){
+					$("#pubKeyError").fadeIn();
+				}
+				return false;
+			}
+			key = {pub: key.pub};
+			for(var i = 0; i<keyChain.length; i++){
+				if(keyChain[i].key.pub === key.pub && !keyChain[i].key.priv){
+					if(showError){
+						$("#keyExistsError").fadeIn();
+					}
+					return false;
+				}
+			}
+		}
+	}
+	else if(key.length<6){
+		if(showError){
+			$("#key").focus();
+			$("#keyLengthError").fadeIn();
+		}
+		return false;
+	}
+	else {
+		for(var i = 0; i<keyChain.length; i++){
+			if(keyChain[i].key === key){
+				if(showError){
+					$("#keyExistsError").fadeIn();
+				}
+				return false;
+			}
+		}
+	}
+	if(showError){
+		$("#key").val("").focus();
+		$("#description").val("");
+	}
+	addKey({
+		key: key,
+		description: description
+	});
+	return true;
+}
+
+/** Decrypt the imported keychain
+ * passwordObj: an object containing the text to be decrypted and the password to decrypt with
+*/
+function decryptImportKeychain(passwordObj){
+	var password = passwordObj.pass;
+	try{
+		var text = JSON.parse(passwordObj.text);
+		plaintext = CryptoJS.AES.decrypt(text.file, password);
+		plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+		if(!plaintext){
+			throw true;
+		}
+		verifyMergeImportKeychain(JSON.stringify({
+			encrypted: false,
+			file: plaintext
+		}));
+	}
+	catch(e){
+		importKeychainError();
+	}
+}
+
+/** Import a keychain
+ * type: either "clipboard", "open" (for import file window), or "file" for file import
+*/
+function importKeychain(type){
+	function readImportedFile(){
+		if(fileChooser.files.length){
+			var file = fileChooser.files[0],
+			reader = new FileReader();
+			
+			reader.onload = (function(theFile){
+				return function(e){
+					if(reader.result){
+						verifyMergeImportKeychain(reader.result);
+					}
+					else {
+						importKeychainError();
+					}
+				};
+			})(file);
+			
+			reader.readAsText(file);
+		}
+		fileChooser.remove();
+	}
+	
+	switch(type){
+		case "clipboard":
+			verifyMergeImportKeychain(chrome.extension.getBackgroundPage().getClipboard());
+			break;
+		case "open":
+			chrome.tabs.create({'url': chrome.extension.getURL('/src/browser_action/upload.html')});
+			break;
+		case "file":
+		default:
+			var fileChooser = document.createElement('input');
+			fileChooser.type = 'file';
+			fileChooser.value = '';
+			fileChooser.addEventListener('change', function(){
+				clearInterval(importKeychain.interval);
+				readImportedFile();
+			}, false);
+			fileChooser.click();
+			
+			importKeychain.interval = setInterval(function(){
+				if(fileChooser.files.length){
+					clearInterval(importKeychain.interval);
+				readImportedFile();
+				}
+			}, 2000);
+			break;
+	}
+}
+
+/** Open the import password window
+ * text: the text to be decrypted
+*/
+function getImportPassword(text){
+	closePopup();
+	openPopup("importKeychainPassword");
+	$("#importKeychainPassword .keyChainPassword").focus();
+	$("#importKeychainPassword input[type='hidden']").val(text);
+}
+
+/** Merge imported keychain with existing keychain
+ * keys: the array of keys to be imported
+*/
+function mergeKeychain(keys){
+	closePopup();
+	keys = JSON.parse(keys);
+	for(var i=0; i<keys.length; i++){
+		var notFound = true;
+		if(!keys[i].key || !keys[i].description){
+			continue;
+		}
+		for(var j=0; j<keyChain.length; j++){
+			if(keys[i].key === keyChain[j].key && (keys[i].key.priv || keys[i].description == keyChain[j].description)){
+				notFound = false;
+				break;
+			}
+		}
+		if(notFound){
+			verifyAddKey(keys[i].key, keys[i].description, !!keys[i].key.pub, false);
+		}
+	}
+	showFlash("importKeychainSuccess");
+}
+
+/** Verify imported keychain is an actual keychain and merge it
+ * text: the JSON stringified keychain to be imported
+*/
+function verifyMergeImportKeychain(text){
+	try{
+		text = JSON.parse(text);
+		if(!text){
+			throw true;
+		}
+		if(text.encrypted){
+			getImportPassword(JSON.stringify(text));
+		}
+		else if(text.file){
+			mergeKeychain(text.file);
+		}
+		else{
+			throw true;
+		}
+	}
+	catch(e){
+		importKeychainError();
+	}
+}
+
+/** Show a import keychain error */
+function importKeychainError(){
+	closePopup();
+	showFlash("importKeychainError");
+}
+
+/** Export the keychain
+ * passwordObj: an object containing the type of export and the password to export under
+*/
+function exportKeychain(passwordObj){
+	var password = passwordObj.pass;
+	var jsonKeys = JSON.stringify(keyChain);
+	var exported = JSON.stringify({
+		encrypted: !!password,
+		file: password? CryptoJS.AES.encrypt(jsonKeys, password).toString() : jsonKeys
+	});
+	switch(passwordObj.type){
+		case "clipboard":
+			chrome.extension.getBackgroundPage().setClipboard(exported);
+			showFlash("exportCopied");
+			break;
+		case "file":
+		default:
+			window.URL = window.URL || window.webkitURL;
+			var file = new Blob([exported], {type: 'application/json'}),
+			a = document.createElement('a');
+			a.href = window.URL.createObjectURL(file);
+			a.download = 'Grd Me Keychain.json';
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			showFlash("exportCreated");
+			break;
+	}
 }
 
 /** Handle searching for a public key by uid */
@@ -525,7 +835,7 @@ $("#searchUIDForm").on("submit", function(e){
 	$("#searchResults").html("");
 	$("#searchLoading").show();
 	$("#searchResultsContainer").find(".title").text(text);
-	$("#overlay, #searchResultsContainer").fadeIn();
+	openPopup("searchResultsContainer");
 	$.ajax({
 		url: "https://grd.me/key/get",
 		type: "GET",
@@ -584,115 +894,16 @@ $("#searchResults, #shareFormMain1, #shareFormMain2").on("click", ".showHideKey"
 	$("#description").focus().val($(this).attr("uid"));
 	$("#ecc").prop('checked', true);
 	$("#addKey").trigger("submit");
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Add a key to the key list */
 $("#addKey").on("submit", function(e){
 	e.preventDefault();
-	$(".error").stop(true).hide();
-	var keyVal = $.trim($("#key").val());
-	try{
-		var key = $("#ecc").is(":checked")? JSON.parse(keyVal) : keyVal;
-	}
-	catch(e){
-		if(keyVal[0] != '"' && keyVal[0] != "'"){
-			try{
-				var key = JSON.parse('"'+keyVal+'"');
-			}
-			catch(e){
-				$("#pubKeyError").fadeIn();
-				return;
-			}
-		}
-		else{
-			$("#pubKeyError").fadeIn();
-			return;
-		}
-	}
-	var description = $.trim($("#description").val());
-	if(!key || !description){
-		$("#description").focus();
-		$("#addKeyError").fadeIn();
-		return;
-	}
-	if($("#ecc").is(":checked")){
-		if(typeof key !== "object"){
-			key = key.split(",");
-			key = {
-				pub: $.trim(key[0]),
-				priv: key[1]? $.trim(key[1]) : undefined
-			};
-		}
-		var hexRegex = /[^A-F0-9]/gi;
-		var plaintext = "Hello World";
-		if(key.priv){
-			/* Check that it's a valid public/private key */
-			try{
-				var pub = key.pub.replace(hexRegex, "");
-				var priv = key.priv.replace(hexRegex, "");
-				var ciphertext = ecc.encrypt(pub, plaintext);
-				if(plaintext != ecc.decrypt(priv, ciphertext)){
-					throw true;
-				}
-			}
-			catch(e){
-				$("#pubKeyError").fadeIn();
-				return;
-			}
-			key = {
-				pub: pub,
-				priv: priv,
-				published: false
-			}
-			for(var i = 0; i<keyChain.length; i++){
-				if(keyChain[i].key.pub === key.pub &&
-				   keyChain[i].key.priv === key.priv){
-					$("#keyExistsError").fadeIn();
-					return;
-				}
-			}
-		}
-		else{
-			try{
-				key.pub = key.pub.replace(hexRegex, "");
-				if(!key.pub){
-					throw true;
-				}
-				ecc.encrypt(key.pub, plaintext);
-			}
-			catch(e){
-				$("#pubKeyError").fadeIn();
-				return;
-			}
-			key = {pub: key.pub};
-			for(var i = 0; i<keyChain.length; i++){
-				if(keyChain[i].key.pub === key.pub && !keyChain[i].key.priv){
-					$("#keyExistsError").fadeIn();
-					return;
-				}
-			}
-		}
-	}
-	else if(key.length<6){
-		$("#key").focus();
-		$("#keyLengthError").fadeIn();
-		return;
-	}
-	else {
-		for(var i = 0; i<keyChain.length; i++){
-			if(keyChain[i].key === key){
-				$("#keyExistsError").fadeIn();
-				return;
-			}
-		}
-	}
-	$("#key").val("").focus();
-	$("#description").val("");
-	addKey({
-		key: key,
-		description: description
-	});
+	var keyVal = $("#key").val().trim(),
+	description = $("#description").val().trim(),
+	isECC = $("#ecc").is(":checked");
+	verifyAddKey(keyVal, description, isECC, true);
 });
 
 /** Handle checing the pub/priv checkbox. If appropriate, generate a ecc key */
@@ -725,7 +936,7 @@ $("#keyGen").on("click", function(){
 $("#keyList").on("click", ".delete", function(e){
 	e.stopImmediatePropagation();
 	$("#pubKeyIndex").val($(this).parent().attr("index"));
-	$("#deleteForm, #overlay").stop(true).fadeIn();
+	openPopup("deleteForm");
 })
 /** Handle selecting different keys to be active */
 .on("click", "li", function(e){
@@ -771,7 +982,7 @@ $("#keyList").on("click", ".delete", function(e){
 /** Handle clicking the publish button in the key list */
 .on("click", ".publish", function(e){
 	e.stopImmediatePropagation();
-	$("#publishForm, #overlay").stop(true).fadeIn();
+	openPopup("publishForm");
 	$("#uidError").hide();
 	$("#uid").focus();
 	$("#pubKey").val($(this).attr("pub"));
@@ -781,7 +992,7 @@ $("#keyList").on("click", ".delete", function(e){
 /** Handle clicking the revoke button in the key list */
 .on("click", ".revoke", function(e){
 	e.stopImmediatePropagation();
-	$("#revokeForm, #overlay").stop(true).fadeIn();
+	openPopup("revokeForm");
 	$("#pubKey").val($(this).attr("pub"));
 	$("#privKey").val($(this).attr("priv"));
 	$("#pubKeyIndex").val($(this).parent().attr("index"));
@@ -797,7 +1008,7 @@ $("#onlyPubWarning").on("click", function(){
 $("#deleteForm").on("submit", function(e){
 	e.preventDefault();
 	deleteKey($("#pubKeyIndex").val());
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Revoke the key */
@@ -810,7 +1021,7 @@ $("#revokeForm").on("submit", function(e){
 	}
 	$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".revoke").addClass("disabled").prop("disabled", true);
 	revokeKey(key);
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Publish the key */
@@ -858,7 +1069,7 @@ $("#publishForm").on("submit", function(e){
 					}
 					$("#keyList").find("li[index='"+$("#pubKeyIndex").val()+"']").find(".publish").addClass("disabled").prop("disabled", true);
 					publishKey(key);
-					$("#overlay").trigger("click");
+					closePopup();
 				}
 				else {
 					$("#existsError").stop(true).fadeIn();
@@ -876,12 +1087,12 @@ $("#publishForm").on("submit", function(e){
 
 /** Clicking the overlay closes the overlay and appropriate popups */
 $("#overlay").on("click", function(){
-	$("#overlay, .popup").stop(true).fadeOut("fast");
+	closePopup();
 });
 
 /** Close the overlay on clicking a cancel btn */
 $(".cancel").on("click", function(){
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Show/hide a key in the key list */
@@ -934,7 +1145,7 @@ $("#keyList").on("click", ".showHideKey", function(e){
 /** Handle clicking he share button in the key list */
 .on("click", ".share", function(e){
 	e.stopImmediatePropagation();
-	$("#shareForm, #overlay").stop(true).fadeIn();
+	openPopup("shareForm");
 	$(".shareFormMessage").hide();
 	if(!hasPrivateKey){
 		$("#noPrivateKey").show();
@@ -989,7 +1200,7 @@ $("#shareFormMain2").on("click", ".continue", function(e){
 			sendSig: JSON.stringify(ecc.sign(fromKey.priv, sharedKey)),
 			rand: getRandomString(64)
 	});
-	$("#overlay").trigger("click");
+	closePopup();
 });
 
 /** Select which key to encrypt shared key with */
@@ -1009,7 +1220,7 @@ $("#acceptableSharedKeys").on("click", ".remove", function(){
 	$(this).parents("li").fadeOut("fast", function(){
 		$(this).remove();
 		if(!$("#acceptableSharedKeys").find("li").length){
-			$("#overlay").trigger("click");
+			closePopup();
 		}
 	});
 })
@@ -1064,7 +1275,60 @@ $("#encryptForm, #decryptForm").on("submit", function(e){
 	else {
 		decryptKeychain(pass);
 	}
-	$("#overlay").trigger("click");
+	closePopup();
+});
+
+$("#exportKeychain").on("click", function(){
+	openPopup("exportKeychainPopup");
+});
+
+$("#importKeychain").on("click", function(){
+	openPopup("importKeychainPopup");
+});
+
+$("#importFromClipboard").on("click", function(){
+	$("#importKeychainPopup").trigger("submit", ["clipboard"]);
+});
+
+$("#openImportFile").on("click", function(){
+	$("#importKeychainPopup").trigger("submit", ["open"]);
+});
+
+$("#importKeychainPopup").on("submit", function(e, type){
+	e.preventDefault();
+	importKeychain(type || "file");
+});
+
+$("#exportToClipboard").on("click", function(){
+	$("#exportKeychainPopup").trigger("submit", ["clipboard"]);
+});
+
+$("#exportKeychainPopup").on("submit", function(e, type){
+	e.preventDefault();
+	closePopup();
+	type = type || "file";
+	var pass = $(this).find("input.keyChainPassword");
+	exportKeychain({
+		type: type,
+		pass: pass.val().trim()
+	});
+	pass.val("");
+});
+
+$("#importKeychainPassword").on("submit", function(e){
+	e.preventDefault();
+	var pass = $(this).find(".keyChainPassword");
+	if(!pass.val().trim()){
+		pass.val("").focus();
+		return;
+	}
+	closePopup();
+	var text = $(this).find("input[type='hidden']").val();
+	decryptImportKeychain({
+		text: text,
+		pass: pass.val().trim()
+	});
+	pass.val("");
 });
 
 (function(){

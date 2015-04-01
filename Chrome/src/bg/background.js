@@ -35,6 +35,31 @@ function detachWorker(worker, workerArray) {
 	}
 }
 
+/** Copy text to clipboard
+ * text: the text to be copied
+*/
+function setClipboard(text){
+	var input = document.createElement('textarea');
+	document.body.appendChild(input);
+	input.value = text;
+	input.focus();
+	input.select();
+	document.execCommand('Copy');
+	input.remove();
+}
+
+/** Get Clipboard content */
+function getClipboard(){
+	var input = document.createElement('textarea');
+	document.body.appendChild(input);
+	input.focus();
+	input.select();
+	document.execCommand('Paste');
+	var val = input.value;
+	input.remove();
+	return val;
+}
+
 /** Handle interception of https://decrypt.grd.me/UID iframes */
 var Intercept = (function(){
 	/** Read a packaged file
@@ -180,13 +205,7 @@ function main(keys, activeKeys){
 		
 		port.onMessage.addListener(function(msg) {
 			if (msg.id == "copy_ciphertext"){
-				var input = document.createElement('textarea');
-				document.body.appendChild(input);
-				input.value = msg.text;
-				input.focus();
-				input.select();
-				document.execCommand('Copy');
-				input.remove();
+				setClipboard(msg.text);
 			}
 			else if (msg.id == "secureText"){
 				securePopup = true;
