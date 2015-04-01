@@ -6,7 +6,7 @@
   "author": "Winston Howes",
   "homepage": "https://grd.me",
   "license": "MIT",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "permissions": {"private-browsing": true},
   "icon": "data/icons/icon48.png",
   "icon64": "data/icons/icon64.png",
