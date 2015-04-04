@@ -138,7 +138,7 @@ function acceptableSharedKeysPopup(keys){
 	if(keys.length){
 		var list = $("<ul></ul>");
 		for(var i=0; i<keys.length; i++){
-			var key = $.trim($("<i></i>").text(keys[i].key).html());
+			var key = keys[i].key;
 			list.append($("<li>")
 				.append($("<form>").attr({key: key, index: i})
 					.append($("<div>", {text: "Key: " + key}))

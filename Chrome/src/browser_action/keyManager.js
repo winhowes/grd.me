@@ -392,10 +392,10 @@ function acceptableSharedKeysPopup(keys){
 	if(keys.length){
 		var list = $("<ul></ul>");
 		for(var i=0; i<keys.length; i++){
-			var key = $.trim(sanitize(keys[i].key));
+			var key = keys[i].key;
 			list.append($("<li>")
 				.append($("<form>").attr({key: key, index: i})
-					.append($("<div>", {text: "Key: "+key}))
+					.append($("<div>", {text: "Key: " + key}))
 					.append($("<input>", {placeholder: "Description", maxlength: 50, value: sanitize(keys[i].from)}))
 					.append($("<button>", {class: "blue btn", type: "submit", text: "Add"}))
 					.append($("<button>", {class: "red btn remove", type: "button", text: "Ignore"}))));
