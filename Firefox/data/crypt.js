@@ -185,9 +185,7 @@ function getRandomString(length) {
 	var rand = "";
 	window.crypto.getRandomValues(randArray);
 	for (var i = 0; i < randArray.length; i++) {
-		var character = String.fromCharCode((randArray[i] % 42) + 48);
-		character = (randArray[i] % 2) ? character : character.toLowerCase();
-		rand += character;
+		rand += String.fromCharCode((randArray[i] % 87) + 40);
 	}
 	return rand;
 }
