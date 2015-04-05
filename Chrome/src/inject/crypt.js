@@ -178,7 +178,7 @@ function getRandomString(length) {
 	var rand = "";
 	window.crypto.getRandomValues(randArray);
 	for (var i = 0; i < randArray.length; i++) {
-		rand += String.fromCharCode((randArray[i] % 87) + 40);
+		rand += String.fromCharCode((randArray[i] % 94) + 33);
 	}
 	return rand;
 }
