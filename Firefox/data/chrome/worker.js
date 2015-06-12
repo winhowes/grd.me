@@ -39,10 +39,11 @@ function recheckDecryption(text, returnObj, keyList){
 		returnObj.plaintext = pre + decryptText(ciphertext, keyList) + post;
 	}
 	if(returnObj.plaintext.length){
-		return text.substring(0, text.indexOf(returnObj.plaintext+"")) +
-					startTag +
-					returnObj.ciphertext +
-					text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length);
+		var index = Math.max(text.indexOf(returnObj.plaintext+""), 0);
+		return text.substring(0, index) +
+				startTag +
+				returnObj.ciphertext.trim() +
+				text.substring(index + (returnObj.plaintext+"").length).trimLeft();
 	}
 	return text.replace(UNABLE_TO_DECRYPT + " " + UNABLE_startTag, startTag);
 }

@@ -495,17 +495,19 @@ function decryptInterval(){
 						if(parent.text().indexOf(endTag)>0){
 							var text = parent.text();
 							/* Handle the case of ciphertext in plaintext */
-							while(returnObj.plaintext.indexOf(startTag)+1 && returnObj.plaintext.indexOf(endTag)+1){
+							while(returnObj.plaintext.indexOf(startTag) + 1 && returnObj.plaintext.indexOf(endTag) + 1){
 								var pre = returnObj.plaintext.substring(0, returnObj.plaintext.indexOf(startTag)),
 								ciphertext = returnObj.plaintext.substring(returnObj.plaintext.indexOf(startTag) + startTag.length, returnObj.plaintext.indexOf(endTag)),
 								post = returnObj.plaintext.substring(returnObj.plaintext.indexOf(endTag) + endTag.length);
-								returnObj.plaintext = pre+decryptText(ciphertext)+post;
+								returnObj.plaintext = pre + decryptText(ciphertext) + post;
 							}
 							if(returnObj.plaintext.length){
-								parent.text(text.substring(0, text.indexOf(returnObj.plaintext+""))+
-											startTag+
-											returnObj.ciphertext+
-											text.substring(text.indexOf(returnObj.plaintext+"") + (returnObj.plaintext+"").length));
+								var index = Math.max(text.indexOf(returnObj.plaintext+""), 0);
+								parent.text(text.substring(0, index) +
+											startTag +
+											returnObj.ciphertext.trim() +
+											text.substring(index + (returnObj.plaintext+"").length).trimLeft()
+										);
 							}
 							else {
 								parent.text(text.replace(UNABLE_TO_DECRYPT+" "+UNABLE_startTag, startTag));

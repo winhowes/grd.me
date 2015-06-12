@@ -574,7 +574,7 @@ ul {
 }
 
 .loading_icon {
-	background-image: url("icons/loader.gif");
+	background-image: url("images/loader.gif");
 	height: 11px;
 	width: 43px;
 }
