@@ -5,6 +5,9 @@ latestRequest = 0,
 pubKeyMap = {},
 hasPrivateKey = false,
 hasOthersPubKey = false,
+preferences = {
+	curve: 384
+},
 keyChain = [];
 
 /** Show a flash message
@@ -32,8 +35,7 @@ function openPopup(id){
 
 /** Generate an ECC pub/priv keypair */
 function generateECCKeys() {
-	var curve = 384;
-	var keys = ecc.generate(ecc.ENC_DEC, curve);
+	var keys = ecc.generate(ecc.ENC_DEC, preferences.curve);
 	return {pub: keys.enc, priv: keys.dec};
 }
 
@@ -1375,6 +1377,15 @@ $("#importKeychainPassword").on("submit", function(e){
 	chrome.storage.local.get("acceptableSharedKeys", function(keys){
 		keys = keys.acceptableSharedKeys;
 		acceptableSharedKeysPopup(keys);
+	});
+	
+	/** Get the ECC Curve */
+	chrome.storage.sync.get({
+		eccCurve: 384
+	  }, function(items) {
+		if(!isNaN(parseInt(items.eccCurve))) {
+			preferences.curve = parseInt(items.eccCurve);
+		}
 	});
 	
 	displayKeys();

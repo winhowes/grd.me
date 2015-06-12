@@ -36,7 +36,7 @@ port.onMessage.addListener(function(msg) {
 	}
 });
 
-/** Get the decrypt Indicator */
+/** Get the decrypt Indicator and sandboxDecrypt preference */
 chrome.storage.sync.get({
     decryptIndicator: false,
 	sandboxDecrypt: false
