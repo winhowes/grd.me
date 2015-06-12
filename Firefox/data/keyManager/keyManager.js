@@ -6,6 +6,9 @@ latestRequest = 0,
 pubKeyMap = {},
 hasPrivateKey = false,
 hasOthersPubKey = false,
+preferences = {
+	curve: 384
+},
 keyChain = [];
 
 /** Show a flash message
@@ -33,8 +36,7 @@ function openPopup(id){
 
 /** Generate an ECC pub/priv keypair */
 function generateECCKeys() {
-	var curve = 384;
-	var keys = ecc.generate(ecc.ENC_DEC, curve);
+	var keys = ecc.generate(ecc.ENC_DEC, preferences.curve);
 	return {pub: keys.enc, priv: keys.dec};
 }
 
@@ -1056,6 +1058,14 @@ self.port.on("checkSharedKey", function(data){
 		}
 		catch(e){}
 	}
+});
+
+
+/** Called when the curve for ECC changes
+ * curve: the new curve to use
+*/
+self.port.on("curve", function(curve) {
+	preferences.curve = curve;
 });
 
 /** Panel shown. Call function to open acceptable shared keys popup

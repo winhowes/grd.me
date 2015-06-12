@@ -10,6 +10,7 @@ var data = require("sdk/self").data;
 var fp = Cc["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
 var notifications = require("sdk/notifications");
 var Panel = require("sdk/panel").Panel;
+var preferences = require("sdk/simple-prefs");
 var Request = require("sdk/request").Request;
 var ss = require("sdk/simple-storage");
 var timers = require("sdk/timers");
@@ -89,6 +90,10 @@ var button = require("sdk/ui/button/toggle").ToggleButton({
 	label: "Grd Me Key Manager",
 	icon: data.url("icons/icon64.png"),
 	onChange: handleChange
+});
+
+preferences.on("eccCurve", function(){
+	keyManager.port.emit("curve", preferences.prefs.eccCurve);
 });
 
 var keyManager = Panel({

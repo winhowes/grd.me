@@ -6,7 +6,7 @@
   "author": "Winston Howes",
   "homepage": "https://grd.me",
   "license": "MIT",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "permissions": {"private-browsing": true},
   "icon": "data/icons/icon48.png",
   "icon64": "data/icons/icon64.png",
@@ -23,5 +23,20 @@
 	"description": "By default, when Grd Me decrypts a message it inserts the decryption right back into the webpage. Turning this on prevents the webpage from reading your decrypted text. This is experimental solely due to performance reasons.",
 	"type": "bool",
 	"value": false
+  },
+  {
+	"name": "eccCurve",
+	"title": "ECC Curve",
+	"description": "Select what curve you would like to encrypt on for asymetric encryption",
+	"type": "menulist",
+	"options": [{
+	  "label": "c384",
+	  "value": "384"
+	},
+	{
+	  "label": "c256",
+	  "value": "256"
+	}],
+	"default": "1"
   }]
 }
