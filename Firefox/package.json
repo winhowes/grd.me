@@ -27,7 +27,7 @@
   {
 	"name": "eccCurve",
 	"title": "ECC Curve",
-	"description": "Select what curve you would like to encrypt on for asymetric encryption",
+	"description": "Select what curve you would like to encrypt on for ecc asymmetric encryption",
 	"type": "menulist",
 	"options": [{
 	  "label": "c384",
