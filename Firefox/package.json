@@ -30,12 +30,16 @@
 	"description": "Select what curve you would like to encrypt on for ecc asymmetric encryption.",
 	"type": "menulist",
 	"options": [{
-	  "label": "c384",
+	  "label": "384",
 	  "value": "384"
 	},
 	{
-	  "label": "c256",
+	  "label": "256",
 	  "value": "256"
+	},
+	{
+	  "label": "25519",
+	  "value": "25519"
 	}],
 	"default": "1"
   }]
