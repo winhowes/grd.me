@@ -502,11 +502,13 @@ function decryptInterval(){
 								returnObj.plaintext = pre + decryptText(ciphertext) + post;
 							}
 							if(returnObj.plaintext.length){
-								var index = Math.max(text.indexOf(returnObj.plaintext+""), 0);
+								text = text.trimLeft();
+								returnObj.plaintext = returnObj.plaintext.trimLeft();
+								var index = Math.max(text.indexOf(returnObj.plaintext), 0);
 								parent.text(text.substring(0, index) +
 											startTag +
 											returnObj.ciphertext.trim() +
-											text.substring(index + (returnObj.plaintext+"").length).trimLeft()
+											text.substring(index + returnObj.plaintext.length).trimLeft()
 										);
 							}
 							else {
