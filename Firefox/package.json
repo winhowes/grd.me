@@ -36,6 +36,10 @@
 	{
 	  "label": "NIST P-256",
 	  "value": "256"
+	},
+	{
+	  "label": "NIST P-224",
+	  "value": "224"
 	}],
 	"default": "1"
   }]
