@@ -325,9 +325,10 @@ function encrypt(shortEncrypt){
 	else {
 		document.execCommand("selectAll");
 		
-		if(!$(active).attr("contenteditable")){
+		var te = document.createEvent('TextEvent');
+		
+		if(!$(active).attr("contenteditable") && te.initTextEvent){
 			window.requestAnimationFrame(function(){
-				var te = document.createEvent('TextEvent');
 				te.initTextEvent('textInput', true, true, window, ciphertext);
 				document.activeElement.dispatchEvent(te);
 			});
