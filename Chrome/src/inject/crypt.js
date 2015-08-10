@@ -45,7 +45,7 @@ chrome.storage.sync.get({
 	sandboxDecrypt = items.sandboxDecrypt;
 });
 
-setTimeout(function(){
+window.requestAnimationFrame(function(){
 	container = $("<i>");
 	$("<grdme>").attr("title", "Decrypted with Grd Me").css({
 		"width": "15px",
@@ -64,7 +64,7 @@ setTimeout(function(){
 	}).on("mouseleave", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "");
 	});
-}, 0);
+});
 
 /** Get the unique selector for qn element
  * elem: the element for which to get the selector
@@ -278,11 +278,11 @@ function encrypt(shortEncrypt){
 	else {
 		document.execCommand("selectAll");
 		
-		setTimeout(function(){
+		window.requestAnimationFrame(function(){
 			var te = document.createEvent('TextEvent');
 			te.initTextEvent('textInput', true, true, window, ciphertext);
 			document.activeElement.dispatchEvent(te);
-		}, 0);
+		});
 	}
 }
 
@@ -491,7 +491,7 @@ function decryptInterval(){
 				var parent = elem.parent().parent().parent();
 				parent = endsWith(window.location.hostname, "facebook.com") ? (elem.parents(".UFICommentBody").length? elem.parents(".UFICommentBody") : elem.parents(".userContent").length? elem.parents(".userContent") : parent) : parent;
 				parent.on("click", function(){
-					setTimeout(function(){
+					window.requestAnimationFrame(function(){
 						if(parent.text().indexOf(endTag)>0){
 							var text = parent.text();
 							/* Handle the case of ciphertext in plaintext */
@@ -516,7 +516,7 @@ function decryptInterval(){
 							}
 							decrypt(parent);
 						}
-					}, 0);
+					});
 				});
 			}
 		});
@@ -524,7 +524,7 @@ function decryptInterval(){
 }
 
 /** Check for changes to the dom before running decryptInterval **/
-setTimeout(initObserver.bind(this, decryptInterval), 50);
+window.requestAnimationFrame(initObserver.bind(this, decryptInterval));
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
 	if(keyList.length){

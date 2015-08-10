@@ -58,7 +58,7 @@ self.port.on("preparedIframe", function(uid){
 });
 
 /** Create the grdMe lock icon and establish the frame secret */
-setTimeout(function(){
+requestAnimationFrame(function(){
 	container = $("<i>");
 	$("<grdme>").attr("title", "Decrypted with Grd Me").css({
 		"width": "15px",
@@ -77,7 +77,7 @@ setTimeout(function(){
 	}).on("mouseleave", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "");
 	});
-}, 0);
+});
 
 /** Prepare a function to be called back and return its index
  * func: the callback function
@@ -325,6 +325,15 @@ function encrypt(shortEncrypt){
 	else {
 		document.execCommand("selectAll");
 		
+		if(!$(active).attr("contenteditable")){
+			window.requestAnimationFrame(function(){
+				var te = document.createEvent('TextEvent');
+				te.initTextEvent('textInput', true, true, window, ciphertext);
+				document.activeElement.dispatchEvent(te);
+			});
+			return;
+		}
+		
 		setTimeout(function(){
 			simulateKeyPress("\b");
 		}, 0);
@@ -515,7 +524,7 @@ function decryptInterval(){
 				parent.on("click", function(){
 					elem.parents("[crypto_mark='true']").attr("crypto_mark", false);
 					var inFlight = false;
-					setTimeout(function(){
+					window.requestAnimationFrame(function(){
 						if(parent.text().indexOf(endTag)>0 && !inFlight){
 							inFlight = true;
 							self.port.emit("recheckDecryption", {
@@ -528,7 +537,7 @@ function decryptInterval(){
 								})
 							});
 						}
-					}, 0);
+					});
 				});
 			}
 		});
@@ -536,12 +545,14 @@ function decryptInterval(){
 };
 
 /** Check for changes to the dom before running decryptInterval **/
-setTimeout(initObserver.bind(this, decryptInterval), 50);
+window.requestAnimationFrame(initObserver.bind(this, decryptInterval));
 
 /** Bind the keyboard shortcuts **/
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
-	if(keyList.length){
+	var active = document.activeElement;
+	if(keyList.length && (active.value || $(active).attr("contenteditable"))){
+		e.preventDefault();
 		encrypt();
 	}
 });
