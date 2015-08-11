@@ -533,6 +533,7 @@ function decryptInterval(){
 initObserver(decryptInterval);
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
+	var active = document.activeElement;
 	if(keyList.length && (active.value || $(active).attr("contenteditable"))){
 		e.preventDefault();
 		encrypt();
