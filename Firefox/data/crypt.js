@@ -546,7 +546,7 @@ function decryptInterval(){
 };
 
 /** Check for changes to the dom before running decryptInterval **/
-window.requestAnimationFrame(initObserver.bind(this, decryptInterval));
+initObserver(decryptInterval);
 
 /** Bind the keyboard shortcuts **/
 

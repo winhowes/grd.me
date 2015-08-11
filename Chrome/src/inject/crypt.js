@@ -524,7 +524,7 @@ function decryptInterval(){
 }
 
 /** Check for changes to the dom before running decryptInterval **/
-window.requestAnimationFrame(initObserver.bind(this, decryptInterval));
+initObserver(decryptInterval);
 
 Mousetrap.bindGlobal(['mod+e'], function(e) {
 	if(keyList.length){
