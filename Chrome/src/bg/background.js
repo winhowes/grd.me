@@ -141,7 +141,6 @@ var Intercept = (function(){
 	
 	chrome.webRequest.onBeforeRequest.addListener(
 		function(details) {
-			console.log(emojifyCss);
 			var uid = details.url.slice(baseURL.length);
 			return {redirectUrl: "data:text/html;charset=utf-8," + encodeURIComponent(
 				metaTag +
