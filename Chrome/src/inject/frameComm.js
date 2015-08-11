@@ -28,6 +28,7 @@ function receiveMessage(event){
 			$("[grdMeUID='"+data.uid+"']").children(":not(iframe[grdMeFrameUID='"+data.uid+"'])").hide();
 			$("iframe[grdMeFrameUID='"+data.uid+"']").show();
 			msg(data.uid, {id: "decryptIndicator", decryptIndicator: decryptIndicator});
+			msg(data.uid, {id: "emojis", emojis: emojis});
 		}
 		else if(data.id == "adjustHeight"){
 			$("iframe[grdMeFrameUID='"+data.uid+"']").height(data.height);

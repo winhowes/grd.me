@@ -2,28 +2,34 @@
 
 const padding = 5;
 
-var decryptIndicator = true, locationObj, uid;
+var decryptIndicator = true,
+	emojis = true,
+	locationObj,
+	uid;
 
 /** Receive a message from the content scripts */
 function receiveMessage(event) {
 	try{
-		if(event.data.to != frameOrigin){
+		if (event.data.to != frameOrigin) {
 			return;
 		}
 		var data = event.data.encrypted;
 		data = CryptoJS.AES.decrypt(data, FRAME_SECRET);
 		data = data.toString(CryptoJS.enc.Utf8);
-		if(!data){
+		if (!data) {
 			return;
 		}
 		data = JSON.parse(data);
-		if(data.id == "decryptCallback"){
+		if (data.id === "decryptCallback") {
 			$("body").trigger("callback", [data.returnId, data.plaintext]);
 		}
-		else if(data.id == "decryptIndicator"){
+		else if (data.id === "decryptIndicator") {
 			decryptIndicator = data.decryptIndicator;
 		}
-		else if(data.id == "frameVerified"){
+		else if (data.id === "emojis") {
+			emojis = data.emojis;
+		}
+		else if (data.id === "frameVerified") {
 			frameVerified(data.data);
 		}
 	}
@@ -137,11 +143,15 @@ function sanitize(str){
 	return $("<i>", {text: str}).html();
 }
 
-/** linkify and fix line breaks in plaintext
+/** emojify, linkify and fix line breaks in plaintext
  * plaintext: the plaintext to modify
 */
 function setupPlaintext(plaintext){
-	return linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
+	var formattedStr = linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
+	if (emojis) {
+		formattedStr = emojify.replace(formattedStr);
+	}
+	return formattedStr;
 }
 
 /** Get the unique selector for qn element
@@ -149,7 +159,7 @@ function setupPlaintext(plaintext){
 */
 function getUniqueSelector(elem){
 	if(elem.nodeName.toLowerCase() === "body" || elem.nodeName.toLowerCase() === "html"){
-		return "[grdMeUID='"+uid+"']";
+		return '[grdMeUID="'+uid+'"]';
 	}
     var parent = elem.parentNode;
     var selector = '>' + elem.nodeName + ':nth-child(' + ($(elem).index() + 1) + ')';
@@ -157,7 +167,7 @@ function getUniqueSelector(elem){
         selector = '>' + parent.nodeName + ':nth-child(' + ($(parent).index() + 1) + ')' + selector;
         parent = parent.parentNode;
     }
-    return "[grdMeUID='"+uid+"']" + selector;
+    return '[grdMeUID="'+uid+'"]' + selector;
 }
 
 /** Get all events for an element

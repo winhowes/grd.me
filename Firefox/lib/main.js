@@ -50,15 +50,19 @@ exports.main = function(options){
 	KeyManager.init(workers);
 	Intercept.init(workers, detachWorker);
 	var secureTextPanel = require("secureTextPanel").secureTextPanel;
-	
+
 	pageMod.PageMod({
 		include: ["*"],
+		contentStyleFile: [
+			data.url("lib/emojify.css")
+		],
 		contentScriptFile: [data.url("lib/aes.js"),
 							data.url('lib/ecc.js'),
 							data.url('lib/sha256.js'),
 							data.url("lib/jquery-2.1.3.js"),
 							data.url("lib/mousetrap.js"),
 							data.url("lib/linkify.js"),
+							data.url("lib/emojify.js"),
 							data.url("constants.js"),
 							data.url("frameComm.js"),
 							data.url("observer.js"),
@@ -67,32 +71,34 @@ exports.main = function(options){
 		contentScriptOptions: {
 			active: ss.storage.activeKeys,
 			keys: ss.storage.keys,
+			emojis: preferences.prefs.emojis,
 			decryptIndicator: preferences.prefs.decryptIndicator,
 			sandboxDecrypt: preferences.prefs.sandboxDecrypt
 		},
 		attachTo: attachTo,
 		onAttach: function(worker){
 			workers.push(worker);
-			
+
 			worker.on('detach', function(){
 				detachWorker(this, workers);
 			});
-			
+
 			/** Send worker the latest info */
+			worker.port.emit("emojis", preferences.prefs.emojis);
 			worker.port.emit("decryptIndicator", preferences.prefs.decryptIndicator);
 			worker.port.emit("sandboxDecrypt", preferences.prefs.sandboxDecrypt);
 			worker.port.emit("secret", {active: ss.storage.activeKeys, keys: ss.storage.keys});
-			
+
 			var {Cu} = require("chrome");
 			var {Worker} = Cu.import(data.url("chrome/dummy.jsm"));
 			Cu.unload(data.url("chrome/dummy.jsm"));
-			
+
 			var webWorker = new Worker(data.url("chrome/worker.js"));
-			
+
 			webWorker.onmessage = function(event){
 				worker.port.emit("callback", JSON.parse(event.data));
 			};
-			
+
 			/** Send a message to the webworker
 			 * id: the id of the messsage
 			 * data: any data to send to the worker
@@ -101,28 +107,28 @@ exports.main = function(options){
 				data.keyList = ss.storage.keys;
 				webWorker.postMessage(JSON.stringify({id: id, data: data}));
 			}
-			
+
 			worker.port.on("newTab", function(href){
 				tabs.open(href);
 			});
-			
+
 			worker.port.on("prepareIframe", function(data){
 				Intercept.add(data.uid, data.location, data.secret, data.message);
 				worker.port.emit("preparedIframe", data.uid);
 			});
-			
+
 			worker.port.on("decrypt", function(data){
 				sendWebWorkerMessage("decrypt", data);
 			});
-			
+
 			worker.port.on("recheckDecryption", function(data){
 				sendWebWorkerMessage("recheckDecryption", data);
 			});
-			
+
 			worker.port.on("copy_ciphertext", function(text){
 				clipboard.set(text, "text");
 			});
-			
+
 			worker.port.on("message_add", function(obj){
 				var addMessageRequest = Request({
 					url: "https://grd.me/message/add",
@@ -136,7 +142,7 @@ exports.main = function(options){
 					}
 				}).post();
 			});
-			
+
 			worker.port.on("message_get", function(obj){
 				var getMessageRequest = Request({
 					url: "https://grd.me/message/get",
@@ -156,7 +162,7 @@ exports.main = function(options){
 					}
 				}).get();
 			});
-			
+
 			worker.port.on("secureText", function(){
 				secureTextPanel.show();
 			});

@@ -2,6 +2,7 @@
 
 var secrets = [],
 keyList = [],
+emojis = true,
 decryptIndicator = false,
 sandboxDecrypt = false,
 panelMode = false;
@@ -39,8 +40,10 @@ port.onMessage.addListener(function(msg) {
 /** Get the decrypt Indicator and sandboxDecrypt preference */
 chrome.storage.sync.get({
     decryptIndicator: false,
-	sandboxDecrypt: false
+	sandboxDecrypt: false,
+	emojis: true,
   }, function(items) {
+	emojis = items.emojis;
 	decryptIndicator = items.decryptIndicator;
 	sandboxDecrypt = items.sandboxDecrypt;
 });
@@ -95,7 +98,6 @@ function setupChildren(parent){
 		else{
 			var selector = getUniqueSelector(elements[i], parent);
 		}
-		console.log(getCSS(elements[i]));
 		cssArr.push({
 			selector: selector,
 			css: css
@@ -199,11 +201,15 @@ function clearAttributes(html) {
 	return html.replace(/<(\w+)(.|[\r\n])*?>/g, '<$1>');
 }
 
-/** linkify and fix line breaks in plaintext
+/** emojify, linkify and fix line breaks in plaintext
  * plaintext: the plaintext to modify
 */
 function setupPlaintext(plaintext){
-	return linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
+	var formattedStr = linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
+	if (emojis) {
+		formattedStr = emojify.replace(formattedStr);
+	}
+	return formattedStr;
 }
 
 /** Encrypt the active element's text/value

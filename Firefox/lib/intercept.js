@@ -17,7 +17,7 @@ Cu.import("resource://gre/modules/Services.jsm");
  * content: the content to be encoded and inserted into the html string
 */
 function divWrap(id, content){
-	return "<div id='"+id+"'>"+encodeURIComponent(content)+"</div>";
+	return '<div id="'+id+'">'+encodeURIComponent(content)+'</div>';
 }
 
 /** Get the info for a frame with a particular uid and secret
@@ -120,8 +120,12 @@ exports.Intercept = {
 	init: function(workerArray, detachWorker){
 		pageMod.PageMod({
 			include: ["data:*"],
+			contentStyleFile: [
+				data.url("lib/emojify.css")
+			],
 			contentScriptFile: [data.url("lib/jquery-2.1.3.js"),
 								data.url("lib/linkify.js"),
+								data.url("lib/emojify.js"),
 								data.url("lib/aes.js"),
 								data.url("constants.js"),
 								data.url("observer.js"),

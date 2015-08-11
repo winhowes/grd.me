@@ -42,5 +42,12 @@
 	  "value": "224"
 	}],
 	"default": "1"
+  },
+  {
+	"name": "emojis",
+	"title": "Emojis",
+	"description": "Enable emojis in decrypted messages.",
+	"type": "bool",
+	"value": true
   }]
 }

@@ -92,9 +92,16 @@ var Intercept = (function(){
 		return "<script>" + content + "</script>";
 	}
 	
+	/** Wrap some css in style tags
+	 * content: the content to be wrapped
+	*/
+	function styleWrap(content){
+		return "<style>" + content + "</style>";
+	}
+	
 	var uidMap = {},
 	baseURL = "https://decrypt.grd.me/",
-	metaTag, jquery, aes, linkify, constants, observer, intercept;
+	metaTag, jquery, aes, linkify, emojify, emojifyCss, constants, observer, intercept;
 	
 	getFile('/src/inject/utf8Meta.phtml', function(response){
 		metaTag = response;
@@ -112,6 +119,14 @@ var Intercept = (function(){
 		linkify = scriptWrap(response);
 	});
 	
+	getFile('/src/inject/lib/emojify.js', function(response){
+		emojify = scriptWrap(response);
+	});
+	
+	getFile('/src/inject/lib/emojify.css', function(response){
+		emojifyCss = styleWrap(response);
+	});
+	
 	getFile('/src/inject/constants.js', function(response){
 		constants = scriptWrap(response);
 	});
@@ -126,12 +141,15 @@ var Intercept = (function(){
 	
 	chrome.webRequest.onBeforeRequest.addListener(
 		function(details) {
+			console.log(emojifyCss);
 			var uid = details.url.slice(baseURL.length);
 			return {redirectUrl: "data:text/html;charset=utf-8," + encodeURIComponent(
 				metaTag +
 				jquery +
 				aes +
 				linkify +
+				emojify +
+				emojifyCss +
 				constants +
 				observer +
 				scriptWrap(
