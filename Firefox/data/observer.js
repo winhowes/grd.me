@@ -16,7 +16,7 @@ var initObserver = (function(){
 	return function(callback){
 		var observer = new MutationObserver(function(mutations) {
 			clearTimeout(otherDecryptTimeout);
-			otherDecryptTimeout = setTimeout(callback, 100);
+			otherDecryptTimeout = setTimeout(callback, 50);
 		});
 		
 		observer.observe(document.body, config);
