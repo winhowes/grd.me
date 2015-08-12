@@ -1,7 +1,7 @@
 {
   "name": "Grd Me",
   "short_name": "Grd Me",
-  "version": "2.2.3",
+  "version": "2.2.4",
   "manifest_version": 2,
   "description": "Grd Me (/ɡärd mē/) is an open source browser plugin that provides encrypted communication across any web platform.",
   "homepage_url": "https://grd.me",
