@@ -68,14 +68,6 @@
          /* :-1: */ thumbsdown: /:\-1:/g
                 };
 
-                if (defaultConfig.ignore_emoticons) {
-                    emoticons = {
-             /* :..: */ named: /:([a-z0-9A-Z_-]+):/,
-             /* :+1: */ thumbsup: /:\+1:/g,
-             /* :-1: */ thumbsdown: /:\-1:/g
-                    };
-                }
-
                 return Object.keys(emoticons).map(function(key) {
                     return [emoticons[key], key];
                 });
@@ -112,49 +104,6 @@
             /* Returns true if the given char is whitespace */
             function isWhitespace(s) {
                 return s === ' ' || s === '\t' || s === '\r' || s === '\n' || s === '' || s === String.fromCharCode(160);
-            }
-
-            var modeToElementTagType = {
-                'img': 'img',
-                'sprite': 'span',
-                'data-uri': 'span'
-            };
-
-            /* Given a match in a node, replace the text with an image */
-            function insertEmojicon(args) {
-                var emojiElement = null;
-
-
-                if(args.replacer){
-                    emojiElement = args.replacer.apply({
-                            config: defaultConfig
-                        },
-                        [':' + args.emojiName + ':', args.emojiName]
-                    );
-                }
-                else {
-                    var elementType = defaultConfig.tag_type || modeToElementTagType[defaultConfig.mode];
-                    emojiElement = args.win.document.createElement(elementType);
-
-                    if (elementType !== 'img') {
-                        emojiElement.setAttribute('class', 'emoji emoji-' + args.emojiName);
-                    } else {
-                        emojiElement.setAttribute('align', 'absmiddle');
-                        emojiElement.setAttribute('alt', ':' + args.emojiName + ':');
-                        emojiElement.setAttribute('class', 'emoji');
-                        emojiElement.setAttribute('src', defaultConfig.img_dir + '/' + args.emojiName + '.png');
-                    }
-
-                    emojiElement.setAttribute('title', ':' + args.emojiName + ':');
-                }
-
-                args.node.splitText(args.match.index);
-                args.node.nextSibling.nodeValue = args.node.nextSibling.nodeValue.substr(
-                    args.match[0].length,
-                    args.node.nextSibling.nodeValue.length
-                );
-                emojiElement.appendChild(args.node.splitText(args.match.index));
-                args.node.parentNode.insertBefore(emojiElement, args.node.nextSibling);
             }
 
             /* Given an regex match, return the name of the matching emoji */
@@ -218,9 +167,8 @@
                 }
             };
 
-            function emojifyString (htmlString, replacer) {
+            function emojifyString (htmlString) {
                 if(!htmlString) { return htmlString; }
-                if(!replacer) { replacer = defaultReplacer; }
 
                 emoticonsProcessed = initEmoticonsProcessed();
                 emojiMegaRe = initMegaRe();
@@ -233,7 +181,7 @@
                     var input = arguments[arguments.length - 1];
                     var emojiName = validator.validate(matches, index, input);
                     if(emojiName) {
-                        return replacer.apply({
+                        return defaultReplacer.apply({
                                 config: defaultConfig
                             },
                             [arguments[0], emojiName]
@@ -245,20 +193,7 @@
 
             }
 
-            return {
-                // Sane defaults
-                defaultConfig: defaultConfig,
-                emojiNames: namedEmoji,
-                setConfig: function (newConfig) {
-                    Object.keys(defaultConfig).forEach(function(f) {
-                        if(f in newConfig) {
-                            defaultConfig[f] = newConfig[f];
-                        }
-                    });
-                },
-
-                replace: emojifyString
-            };
+            return emojifyString;
         })();
 
         return emojify;

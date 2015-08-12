@@ -185,7 +185,7 @@ function sanitize(str){
 function setupPlaintext(plaintext){
 	var formattedStr = linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
 	if (emojis) {
-		formattedStr = emojify.replace(formattedStr);
+		formattedStr = emojify(formattedStr);
 	}
 	return formattedStr;
 }

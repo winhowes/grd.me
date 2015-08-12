@@ -145,7 +145,7 @@ function sanitize(str){
 function setupPlaintext(plaintext){
 	var formattedStr = linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
 	if (emojis) {
-		formattedStr = emojify.replace(formattedStr);
+		formattedStr = emojify(formattedStr);
 	}
 	return formattedStr;
 }
@@ -188,13 +188,13 @@ function clean(html) {
 		j = strip;
 		strip = false;
 	}
-	
+
 	var strip = false,
 	lastQuote = false,
 	tag = false;
 	const prefix = "grdme",
 	sandbox = " sandbox=''";
-	
+
 	for(var i=0; i<html.length; i++){
 		if(html[i] === "<" && html[i+1] && isValidTagChar(html[i+1])) {
 			i++;
@@ -274,7 +274,7 @@ function stripScripts(html) {
 		});
 	}
 	catch(e){}
-	
+
 	self.port.on("frameVerified", function(obj){
 		var messageCSS = obj.messageCSS,
 		stylesheetCSS = obj.stylesheetCSS,
@@ -282,16 +282,16 @@ function stripScripts(html) {
 		fonts = obj.fonts,
 		messageText = obj.messageText;
 		locationObj = obj.locationObj;
-		
+
 		$("html").css(messageCSS);
 		var container = $("body").append(clean(messageText)).css(messageCSS);
-		
+
 		var style = $("<style>", {type: "text/css"});
-		
+
 		for(var i=0; i<fonts.length; i++){
 			style.append(fonts[i]);
 		}
-		
+
 		if(stylesheetCSS.length){
 			for(i=0; i<stylesheetCSS.length; i++){
 				for(var pseudo in stylesheetCSS[i].css){
@@ -315,9 +315,9 @@ function stripScripts(html) {
 				$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
 			}
 		}
-		
+
 		$(document.head).append(style);
-		
+
 		$("html").bind(getAllEvents($("html").get(0)), function(e){
 			msg({
 				id: "event",
@@ -327,7 +327,7 @@ function stripScripts(html) {
 				}
 			});
 		});
-		
+
 		$("body").on("click", "a", function(e){
 			e.preventDefault();
 			if($(this).attr("href")){
@@ -338,45 +338,45 @@ function stripScripts(html) {
 				});
 			}
 		});
-		
+
 		$("html, body").css({
 			padding: 0,
 			margin: 0,
 			height: "auto"
 		});
-		
+
 		container.on("mouseover", "grdme", function(){
 			$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
 		}).on("mouseleave", "grdme", function(){
 			$(this).next("grdme_decrypt").css("font-weight", "");
 		});
-		
+
 		checkHeight();
 		setInterval(checkHeight, 500);
-		
+
 		fixReferences();
-		
+
 		callbackWrap = (function(){
 			var callbackChain = [];
 			$("body").on("callback", function(e, returnId, data){
 				(typeof callbackChain[returnId] == "function") && callbackChain[returnId](data);
 			});
-			
+
 			return function(func){
 				return callbackChain.push(func) - 1;
 			}
 		}());
-		
+
 		initObserver(decryptInterval);
-		
+
 		msg({id: "ready"});
 	});
-	
+
 	self.port.on("frameFailed", function(){
 		if(uid.length && FRAME_SECRET.length){
 			console.log("Error Decrypting");
 		}
 	});
-	
+
 	window.addEventListener("message", receiveMessage, false);
 }());

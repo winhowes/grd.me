@@ -59,9 +59,9 @@ window.requestAnimationFrame(function(){
 		"background-image": "url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAAAXNSR0IArs4c6QAAAAlwSFlzAAALEwAACxMBAJqcGAAAAVlpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IlhNUCBDb3JlIDUuNC4wIj4KICAgPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICAgICAgPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIKICAgICAgICAgICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iPgogICAgICAgICA8dGlmZjpPcmllbnRhdGlvbj4xPC90aWZmOk9yaWVudGF0aW9uPgogICAgICA8L3JkZjpEZXNjcmlwdGlvbj4KICAgPC9yZGY6UkRGPgo8L3g6eG1wbWV0YT4KTMInWQAAAs9JREFUKBVtU01IVFEUPve+efPmR0XT/sykSERTSXJTUakEwRhtAmsRKEW1iBCCKKhFbyot2hQu2rQJoyAjgkxTbDFGbZLQRZgK6cJIBcefZubNz3v3ns59jlbQ2VzeOec753zfOY/BmjV3a/DypKi9MdC6IrQHtkCGAJIxxn0c7VyPc27kTugNZPMUjLlYRAaMYaijb+P4smdM08VFzc7024wXFPhhwUp7W1OCXWsN6WVmY6MD2XyPCw67RTDm+Io17iyX6L7XkfaQQ7GYiu83+1/MJllbZMgqos85CIdVU+QquGZSswVNwGM5kO/6OvsM9c4neCEgFObpBjH5Y1lweN2DthA1VxrjrqOtKa3ew7v1mXwdzZRXrPrNm24Rd+wGqOcREscQiHxTfsnnR6ODVRxsZynOMtE4DE0ITQc+7ZPWU7eogtLgBEYWMZniB4u+YIunotwv0TnIPV5w5E9ILTrAdAOEdA7FM/YtSotBViMaW20EoPbeh+vp4m1XZSaBmLRskUoIKUjYDOmcTqQdIWDG8tw/0vG+/MLWL5rCuJzrWrpKU0VF7ZgTBCZRAOc6Rym9aI9zTosBoNa2SPDgie8rcnhkdr5wHXy8q2WOSTlJyyZRUfBAHujCeTXRVlfpN1gv6H5F0UFhE4b9OFYfWFgFd6NmAmRY0hpmxJOCElHSacEWleAg2wz0TYZKBy+Xn9xDoUvjDWMRtXAIRJeegWUBaJwRTxCM76zpHL4kHdwOijtR5CIDeZp8rvKh2RVczUohOs/qh8O9sqKqScSjaapoONEkJMamkBmazQIbvMF0tHvy7tFTYNJxmUwqwTB7blA2+vE0fPs6wJlhgEcHmYonkHP6M3K9/tRCT8OO6TNuV9rVv2aarvLKWRsePF/5ZCK+6/EUll5+92uPOXh2PVl1/a+pAuqPIdtn9uytuh3pOWC+rV7NJf9fDZTvN2MXRNKRmI9oAAAAAElFTkSuQmCC)"
 	}).appendTo(container);
 	DECRYPTED_MARK = container.html();
-	
+
 	FRAME_SECRET = getRandomString(64);
-	
+
 	$("body").on("mouseover", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "bold");
 	}).on("mouseleave", "grdme", function(){
@@ -207,14 +207,14 @@ function clearAttributes(html) {
 function setupPlaintext(plaintext){
 	var formattedStr = linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
 	if (emojis) {
-		formattedStr = emojify.replace(formattedStr);
+		formattedStr = emojify(formattedStr);
 	}
 	return formattedStr;
 }
 
 /** Encrypt the active element's text/value
  * shortEncrypt: a boolean indicating whether or not to do short encryption. Defaults to false.
- * 
+ *
  * Short encryption is where the ciphertext is uploaded to grd me servers and an id is
  * inserted in it's place which is used to lookup the ciphertext.
 */
@@ -250,7 +250,7 @@ function encrypt(shortEncrypt){
 	for(var i=0; i<secrets.length; i++){
 		ciphertext += (typeof secrets[i] === "object" ? ecc.encrypt(secrets[i].pub, plaintext) : CryptoJS.AES.encrypt(plaintext, secrets[i])) + "|";
 	}
-	ciphertext = ciphertext.slice(0, - 1); 
+	ciphertext = ciphertext.slice(0, - 1);
 	ciphertext += endTag;
 	ciphertext = ciphertext.replace(/\+/g, ")").replace(/\//g, "(");
 	if(shortEncrypt){
@@ -283,7 +283,7 @@ function encrypt(shortEncrypt){
 	}
 	else {
 		document.execCommand("selectAll");
-		
+
 		window.requestAnimationFrame(function(){
 			var te = document.createEvent('TextEvent');
 			te.initTextEvent('textInput', true, true, window, ciphertext);
@@ -302,7 +302,7 @@ function decrypt(elem, callback){
 		elem.html(val.substring(0, index1) + sanitize(UNABLE_TO_DECRYPT+" "+UNABLE_startTag+val.substring(val.indexOf(startTag)+startTag.length).replace(endTag, UNABLE_endTag)));
 		callback({endTagFound: index2>0, plaintext: plaintext, ciphertext: ciphertext});
 	}
-	
+
 	/** Insert plaintext into page and call callback
 	 * plaintext: the decrypted text
 	 * ciphertext: the encrypted text/nonce text
@@ -346,11 +346,11 @@ function decrypt(elem, callback){
 		}
 		callback({endTagFound: index2>0, plaintext: sanitize(plaintext), ciphertext: ciphertext});
 	}
-	
+
 	if(elem.attr("crypto_mark") == "inFlight"){
 		return;
 	}
-	
+
 	var val = elem.text();
 	if(val.toLowerCase().indexOf(endTag)>0 && endsWith(window.location.hostname, "facebook.com")){
 		elem.parent().find('.text_exposed_hide').remove();
@@ -361,14 +361,14 @@ function decrypt(elem, callback){
 	var html = elem.html();
 	var index1 = val.toLowerCase().indexOf(startTag);
 	var index2 = val.toLowerCase().indexOf(endTag);
-	
+
 	if(index2<0 && callback && elem.parent(':contains("'+endTag+'"):not([contenteditable="true"])').length){
 		decrypt(elem.parent().attr("crypto_mark", false));
 		return;
 	}
-	
+
 	callback = callback || function(){};
-	
+
 	/* This checks the case of the start tag being broken by html elements */
 	if(index1>0 && html.indexOf(startTag)<0 && strip(html).indexOf(startTag)>0){
 		var string, character = startTag.slice(-1), index = html.indexOf(character)+1;
@@ -383,7 +383,7 @@ function decrypt(elem, callback){
 		}
 		html = html.substring(0, html.indexOf(character)+preCounter) + strip(string) + html.substring(index);
 	}
-	
+
 	/* This checks the case of the end tag being broken by html elements */
 	if(index2>0 && html.indexOf(endTag)<0 && strip(html).indexOf(endTag)>0){
 		var string, index = html.indexOf(startTag)+startTag.length, character = endTag.slice(-1);
@@ -393,7 +393,7 @@ function decrypt(elem, callback){
 		}
 		html = html.substring(0, html.indexOf(startTag)+startTag.length) + strip(string) + html.substring(index);
 	}
-	
+
 	if(index2>0 && elem.attr("crypto_mark") == "false"){
 		val = strip(html);
 		val = html.substring(0, html.indexOf(startTag)) + val.substring(val.indexOf(startTag), val.indexOf(endTag)) + html.substring(html.indexOf(endTag));
