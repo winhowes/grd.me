@@ -62,7 +62,7 @@ window.requestAnimationFrame(function(){
 
 	FRAME_SECRET = getRandomString(64);
 
-	$("body").on("mouseover", "grdme", function(){
+	$("body").on("mouseenter", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "bold");
 	}).on("mouseleave", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "");
