@@ -12,13 +12,15 @@ var initObserver = (function(){
 		attributes: true,
 		attributeFilter: ['contenteditable', 'crypto_mark']
 	};
-	
+
 	return function(callback){
 		var observer = new MutationObserver(function(mutations) {
 			clearTimeout(otherDecryptTimeout);
-			otherDecryptTimeout = setTimeout(callback, 50);
+			otherDecryptTimeout = setTimeout(function() {
+				callback();
+			}, 50);
 		});
-		
+
 		observer.observe(document.body, config);
 		callback();
 	};

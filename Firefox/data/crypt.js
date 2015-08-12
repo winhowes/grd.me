@@ -245,22 +245,22 @@ function decryptMark(plaintext){
 */
 function simulateKeyPress(character, target) {
 	var charCode = character.charCodeAt(0);
-	target = target || unsafeWindow.document.activeElement;
+	target = target || document.activeElement;
 
-	var evt = unsafeWindow.document.createEvent("KeyboardEvent");
-	evt.initKeyEvent("keydown", true, true, unsafeWindow,
+	var evt = document.createEvent("KeyboardEvent");
+	evt.initKeyEvent("keydown", true, true, null,
                     0, 0, 0, 0,
                     charCode, charCode);
 	target.dispatchEvent(evt);
 
-	evt = unsafeWindow.document.createEvent("KeyboardEvent");
-	evt.initKeyEvent("keypress", true, true, unsafeWindow,
+	evt = document.createEvent("KeyboardEvent");
+	evt.initKeyEvent("keypress", true, true, null,
                     0, 0, 0, 0,
                     charCode, charCode);
 	target.dispatchEvent(evt);
 
-	evt = unsafeWindow.document.createEvent("KeyboardEvent");
-	evt.initKeyEvent("keyup", true, true, unsafeWindow,
+	evt = document.createEvent("KeyboardEvent");
+	evt.initKeyEvent("keyup", true, true, null,
                     0, 0, 0, 0,
                     charCode, charCode);
 	target.dispatchEvent(evt);
@@ -363,15 +363,10 @@ function encrypt(shortEncrypt){
 			target.textContent = ciphertext;
 			range = document.createRange();
 			range.selectNodeContents(target);
-			range.collapse(false);
+			range.collapse();
 			selection = window.getSelection();
 			selection.removeAllRanges();
 			selection.addRange(range);
-			var evt = unsafeWindow.document.createEvent("KeyboardEvent");
-			evt.initKeyEvent("keydown", true, true, unsafeWindow,
-							0, 0, 0, 0,
-							39, 39);
-			target.dispatchEvent(evt);
 		}, 10);
 	}
 }

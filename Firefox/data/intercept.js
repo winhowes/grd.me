@@ -53,10 +53,10 @@ var callbackWrap;
 
 /** Scan for any crypto on the page and decypt if possible */
 function decryptInterval(){
-	var elements = $(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"]):not(textarea):not(input):not(script)');
+	var elements = $(':contains("' + startTag + '"):not([crypto_mark="true"]):not([contenteditable="true"]):not(textarea):not(input):not(script)');
 	elements.each(function(i, e){
 		var elem = $(e);
-		if(elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
+		if(elem.find(':contains("' + startTag + '"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
 			elem.attr('crypto_mark', true);
 			return;
 		}
@@ -116,7 +116,7 @@ function decryptMark(plaintext){
 /** Fix all references **/
 function fixReferences(){
 	var refs = ["href", "src"];
-	for(var j=0; j<refs.length; j++){
+	for(var j = 0; j < refs.length; j++){
 		var key = refs[j];
 		$("["+key+"]").each(function(i, e){
 			if($(e).attr(key).trim().indexOf("http://") && $(e).attr(key).trim().indexOf("https://")){
@@ -195,12 +195,12 @@ function clean(html) {
 	const prefix = "grdme",
 	sandbox = " sandbox=''";
 
-	for(var i=0; i<html.length; i++){
-		if(html[i] === "<" && html[i+1] && isValidTagChar(html[i+1])) {
+	for(var i = 0; i < html.length; i++){
+		if(html[i] === "<" && html[i + 1] && isValidTagChar(html[i + 1])) {
 			i++;
 			tag = false;
 			/* Enter element */
-			for(var j=i; j<html.length; j++){
+			for(var j = i; j < html.length; j++){
 				if(!lastQuote && html[j] === ">"){
 					if(strip) {
 						stripHTML();
@@ -225,12 +225,12 @@ function clean(html) {
 					lastQuote = false;
 					continue;
 				}
-				if(!lastQuote && html[j-1] === "=" && (html[j] === "'" || html[j] === '"')){
+				if(!lastQuote && html[j - 1] === "=" && (html[j] === "'" || html[j] === '"')){
 					lastQuote = html[j];
 				}
 				/* Find on statements */
-				if(!lastQuote && html[j-2] === " " && html[j-1] === "o" && html[j] === "n"){
-					strip = j-2;
+				if(!lastQuote && html[j - 2] === " " && html[j - 1] === "o" && html[j] === "n"){
+					strip = j - 2;
 				}
 				if(strip && html[j] === " " && !lastQuote){
 					stripHTML();
@@ -288,12 +288,12 @@ function stripScripts(html) {
 
 		var style = $("<style>", {type: "text/css"});
 
-		for(var i=0; i<fonts.length; i++){
+		for(var i = 0; i < fonts.length; i++){
 			style.append(fonts[i]);
 		}
 
 		if(stylesheetCSS.length){
-			for(i=0; i<stylesheetCSS.length; i++){
+			for(i = 0; i < stylesheetCSS.length; i++){
 				for(var pseudo in stylesheetCSS[i].css){
 					var pseudoClass = pseudo !== "normal"? pseudo : ""
 					style.append(document.createTextNode(stylesheetCSS[i].selector + pseudoClass + "{"));
@@ -311,7 +311,7 @@ function stripScripts(html) {
 			}
 		}
 		else {
-			for(i=0; i<childrenCSS.length; i++){
+			for(i = 0; i < childrenCSS.length; i++){
 				$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
 			}
 		}
@@ -345,14 +345,16 @@ function stripScripts(html) {
 			height: "auto"
 		});
 
-		container.on("mouseover", "grdme", function(){
+		container.on("mouseenter", "grdme", function(){
 			$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
 		}).on("mouseleave", "grdme", function(){
 			$(this).next("grdme_decrypt").css("font-weight", "");
 		});
 
 		checkHeight();
-		setInterval(checkHeight, 500);
+		setInterval(function() {
+			checkHeight();
+		}, 500);
 
 		fixReferences();
 

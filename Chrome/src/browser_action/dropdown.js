@@ -1,9 +1,9 @@
 /** This file handles search dropdowns */
 
 var dropdowns = (function(){
-	
+
 	var blurred = true;
-	
+
 	/** Sets up dropdown results for an input field
 	 * 	input: a jQuery object of the input field
 	 * 	container: a jQuery object of a <ul> container to contain the dropdown results
@@ -58,7 +58,7 @@ var dropdowns = (function(){
 		}).parents("form").on("submit", function(){
 			container.html("").css("border", 0);
 		});
-		
+
 		container.on("click", "li", function(){
 			input.val($.trim($(this).text()));
 			container.html("").css("border", 0);
@@ -69,11 +69,11 @@ var dropdowns = (function(){
 			}
 		}).on("mousedown", "li", function(){
 			blurred = false;
-		}).on("mouseover", "li", function(){
+		}).on("mouseenter", "li", function(){
 			container.find(".active").removeClass("active");
 			$(this).addClass(".active");
 			$(this).addClass("active");
-		}).on("mouseout", function(){
+		}).on("mouseleave", function(){
 			container.find(".active").removeClass("active");
 			container.find("li").first().addClass("active");
 		});

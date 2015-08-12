@@ -736,7 +736,9 @@
          */
         function _resetSequenceTimer() {
             clearTimeout(_resetTimer);
-            _resetTimer = setTimeout(_resetSequences, 1000);
+            _resetTimer = setTimeout(function() {
+              _resetSequences();
+            }, 1000);
         }
 
         /**
@@ -788,7 +790,9 @@
 
                 // weird race condition if a sequence ends with the key
                 // another sequence begins with
-                setTimeout(_resetSequences, 10);
+                setTimeout(function() {
+                  _resetSequences();
+                }, 10);
             }
 
             // loop through keys one at a time and bind the appropriate callback

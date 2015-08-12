@@ -336,13 +336,15 @@ function frameVerified(obj){
 		height: "auto"
 	});
 
-	container.on("mouseover", "grdme", function(){
+	container.on("mouseenter", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
 	}).on("mouseleave", "grdme", function(){
 		$(this).next("grdme_decrypt").css("font-weight", "");
 	});
 
-	setInterval(checkHeight, 500);
+	setInterval(function() {
+		checkHeight();
+	}, 500);
 
 	fixReferences();
 
