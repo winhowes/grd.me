@@ -367,6 +367,11 @@ function encrypt(shortEncrypt){
 			selection = window.getSelection();
 			selection.removeAllRanges();
 			selection.addRange(range);
+			var evt = document.createEvent("KeyboardEvent");
+-			evt.initKeyEvent("keydown", true, true, null,
+-							0, 0, 0, 0,
+-							39, 39);
+-			target.dispatchEvent(evt);
 		}, 10);
 	}
 }
