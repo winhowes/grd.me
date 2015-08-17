@@ -3,7 +3,7 @@
 /** Begins running the observer
  * callback: the function to call when a change is observed and when the observer is set up
 */
-var initObserver = (function(){
+var initObserver = (function() {
 	var otherDecryptTimeout = false,
 	config = {
 		subtree: true,
@@ -13,7 +13,7 @@ var initObserver = (function(){
 		attributeFilter: ['contenteditable', 'crypto_mark']
 	};
 
-	return function(callback){
+	return function(callback) {
 		var observer = new MutationObserver(function(mutations) {
 			clearTimeout(otherDecryptTimeout);
 			otherDecryptTimeout = setTimeout(function() {
