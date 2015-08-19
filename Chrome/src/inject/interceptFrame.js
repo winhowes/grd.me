@@ -22,18 +22,14 @@ function receiveMessage(event) {
 		data = JSON.parse(data);
 		if (data.id === "decryptCallback") {
 			$("body").trigger("callback", [data.returnId, data.plaintext]);
-		}
-		else if (data.id === "decryptIndicator") {
+		} else if (data.id === "decryptIndicator") {
 			decryptIndicator = data.decryptIndicator;
-		}
-		else if (data.id === "emojis") {
+		} else if (data.id === "emojis") {
 			emojis = data.emojis;
-		}
-		else if (data.id === "frameVerified") {
+		} else if (data.id === "frameVerified") {
 			frameVerified(data.data);
 		}
-	}
-	catch(e){}
+	} catch(e){}
 }
 
 /** Send data to parent window
@@ -55,11 +51,11 @@ function msg(data) {
 var callbackWrap;
 
 /** Scan for any crypto on the page and decypt if possible */
-function decryptInterval(){
+function decryptInterval() {
 	var elements = $(':contains("'+startTag+'"):not([crypto_mark="true"]):not([contenteditable="true"]):not(textarea):not(input):not(script)');
-	elements.each(function(i, e){
+	elements.each(function(i, e) {
 		var elem = $(e);
-		if(elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length){
+		if (elem.find(':contains("'+startTag+'"):not([crypto_mark="true"])').length || elem.parents('[contenteditable="true"]').length) {
 			elem.attr('crypto_mark', true);
 			return;
 		}
@@ -68,12 +64,12 @@ function decryptInterval(){
 }
 
 /** Checks the height of the body and adjusts the frame height to match */
-var checkHeight = (function(){
+var checkHeight = (function() {
 	var lastBodyHeight = 0;
-	return function(){
+	return function() {
 		var outerHeight = $("body").outerHeight();
 		//TODO: find out why they are off by 5
-		if(Math.abs(lastBodyHeight - outerHeight) > padding){
+		if (Math.abs(lastBodyHeight - outerHeight) > padding) {
 			lastBodyHeight = outerHeight;
 			msg({
 				id: "adjustHeight",
@@ -86,14 +82,14 @@ var checkHeight = (function(){
 /** Parse out the encrypted text and send it to be decrypted
  * elem: the element containing encrypted text
 */
-function encryptParse(elem){
+function encryptParse(elem) {
 	elem.attr("crypto_mark", true);
 	var text = elem.text();
 	text = text.slice(text.indexOf(startTag) + startTag.length);
-	if(text.indexOf(endTag) + 1){
+	if (text.indexOf(endTag) + 1) {
 		text = text.slice(0, text.indexOf(endTag));
 	}
-	msg({id: "decrypt", ciphertext: text, returnId: callbackWrap(function(plaintext){
+	msg({id: "decrypt", ciphertext: text, returnId: callbackWrap(function(plaintext) {
 		var html = elem.html();
 		html = html.slice(0, html.indexOf(startTag)) + decryptMark(setupPlaintext(plaintext)) + (html.indexOf(endTag) + 1 ? html.slice(html.indexOf(endTag) + endTag.length) : "");
 		elem.attr("crypto_mark", "").html(html);
@@ -105,8 +101,8 @@ function encryptParse(elem){
  * plaintext: the text to be marked
  * NOTE: the plaintext is already sanitzed when this is called
 */
-function decryptMark(plaintext){
-	if(decryptIndicator){
+function decryptMark(plaintext) {
+	if (decryptIndicator) {
 		var wrapper = $("<i>").append($("<grdme_decrypt>").html(plaintext));
 		var mark = DECRYPTED_MARK? DECRYPTED_MARK : $("<i>").append($("grdme").first().clone()).html();
 		if(!DECRYPTED_MARK){
@@ -118,16 +114,15 @@ function decryptMark(plaintext){
 }
 
 /** Fix all references **/
-function fixReferences(){
+function fixReferences() {
 	var refs = ["href", "src"];
-	for(var j=0; j<refs.length; j++){
+	for (var j = 0; j < refs.length; j++) {
 		var key = refs[j];
-		$("["+key+"]").each(function(i, e){
-			if($(e).attr(key).trim().indexOf("http://") && $(e).attr(key).trim().indexOf("https://")){
-				if($(e).attr(key).trim().charAt(0) === "/"){
+		$("["+key+"]").each(function(i, e) {
+			if ($(e).attr(key).trim().indexOf("http://") && $(e).attr(key).trim().indexOf("https://")) {
+				if ($(e).attr(key).trim().charAt(0) === "/") {
 					$(e).attr(key, locationObj.host + $(e).attr(key));
-				}
-				else {
+				} else {
 					$(e).attr(key, locationObj.full + $(e).attr(key));
 				}
 			}
@@ -139,14 +134,14 @@ function fixReferences(){
 /** Sanitize a string
  * str: the string to sanitize
 */
-function sanitize(str){
+function sanitize(str) {
 	return $("<i>", {text: str}).html();
 }
 
 /** emojify, linkify and fix line breaks in plaintext
  * plaintext: the plaintext to modify
 */
-function setupPlaintext(plaintext){
+function setupPlaintext(plaintext) {
 	var formattedStr = linkify(sanitize(plaintext).replace(/\n/g, "<br>"));
 	if (emojis) {
 		formattedStr = emojify(formattedStr);
@@ -157,17 +152,17 @@ function setupPlaintext(plaintext){
 /** Get the unique selector for qn element
  * elem: the element for which to get the selector
 */
-function getUniqueSelector(elem){
-	if(elem.nodeName.toLowerCase() === "body" || elem.nodeName.toLowerCase() === "html"){
+function getUniqueSelector(elem) {
+	if (elem.nodeName.toLowerCase() === "body" || elem.nodeName.toLowerCase() === "html") {
 		return '[grdMeUID="'+uid+'"]';
 	}
-    var parent = elem.parentNode;
-    var selector = '>' + elem.nodeName + ':nth-child(' + ($(elem).index() + 1) + ')';
-    while (parent && parent.nodeName.toLowerCase() !== 'body') {
-        selector = '>' + parent.nodeName + ':nth-child(' + ($(parent).index() + 1) + ')' + selector;
-        parent = parent.parentNode;
-    }
-    return '[grdMeUID="'+uid+'"]' + selector;
+  var parent = elem.parentNode;
+  var selector = '>' + elem.nodeName + ':nth-child(' + ($(elem).index() + 1) + ')';
+  while (parent && parent.nodeName.toLowerCase() !== 'body') {
+      selector = '>' + parent.nodeName + ':nth-child(' + ($(parent).index() + 1) + ')' + selector;
+      parent = parent.parentNode;
+  }
+  return '[grdMeUID="'+uid+'"]' + selector;
 }
 
 /** Get all events for an element
@@ -187,7 +182,7 @@ function getAllEvents(element) {
  * html: the string to be cleaned
 */
 function clean(html) {
-	function stripHTML(){
+	function stripHTML() {
 		html = html.slice(0, strip) + html.slice(j);
 		j = strip;
 		strip = false;
@@ -199,20 +194,20 @@ function clean(html) {
 	const prefix = "grdme",
 	sandbox = " sandbox=''";
 
-	for(var i=0; i<html.length; i++){
-		if(html[i] === "<" && html[i+1] && isValidTagChar(html[i+1])) {
+	for (var i = 0; i < html.length; i++) {
+		if (html[i] === "<" && html[i+1] && isValidTagChar(html[i+1])) {
 			i++;
 			tag = false;
 			/* Enter element */
-			for(var j=i; j<html.length; j++){
-				if(!lastQuote && html[j] === ">"){
-					if(strip) {
+			for (var j = i; j < html.length; j++) {
+				if (!lastQuote && html[j] === ">") {
+					if (strip) {
 						stripHTML();
 					}
 					/* sandbox iframes */
-					if(tag === "iframe"){
+					if (tag === "iframe") {
 						var index = html.slice(i, j).toLowerCase().indexOf("sandbox");
-						if(index > 0) {
+						if (index > 0) {
 							html = html.slice(0, i+index) + prefix + html.slice(i+index);
 							j += prefix.length;
 						}
@@ -222,21 +217,21 @@ function clean(html) {
 					i = j;
 					break;
 				}
-				if(!tag && html[j] === " "){
+				if (!tag && html[j] === " ") {
 					tag = html.slice(i, j).toLowerCase();
 				}
-				if(lastQuote === html[j]){
+				if (lastQuote === html[j]) {
 					lastQuote = false;
 					continue;
 				}
-				if(!lastQuote && html[j-1] === "=" && (html[j] === "'" || html[j] === '"')){
+				if (!lastQuote && html[j-1] === "=" && (html[j] === "'" || html[j] === '"')) {
 					lastQuote = html[j];
 				}
 				/* Find on statements */
-				if(!lastQuote && html[j-2] === " " && html[j-1] === "o" && html[j] === "n"){
+				if (!lastQuote && html[j-2] === " " && html[j-1] === "o" && html[j] === "n") {
 					strip = j-2;
 				}
-				if(strip && html[j] === " " && !lastQuote){
+				if (strip && html[j] === " " && !lastQuote) {
 					stripHTML();
 				}
 			}
@@ -270,7 +265,7 @@ function stripScripts(html) {
 /** The callback function for when the fram is verified
  * obj: an object containing the stylesheet CSS and font info
 */
-function frameVerified(obj){
+function frameVerified(obj) {
 	stylesheetCSS = obj.stylesheetCSS || [],
 	fonts = obj.fonts || [],
 
@@ -279,37 +274,36 @@ function frameVerified(obj){
 
 	var style = $("<style>", {type: "text/css"});
 
-	for(var i=0; i<fonts.length; i++){
+	for (var i = 0; i < fonts.length; i++) {
 		style.append(fonts[i]);
 	}
 
-	if(stylesheetCSS.length){
-		for(i=0; i<stylesheetCSS.length; i++){
-			for(var pseudo in stylesheetCSS[i].css){
-				var pseudoClass = pseudo !== "normal"? pseudo : ""
+	if (stylesheetCSS.length) {
+		for (i = 0; i < stylesheetCSS.length; i++) {
+			for (var pseudo in stylesheetCSS[i].css) {
+				var pseudoClass = pseudo !== "normal" ? pseudo : ""
 				style.append(document.createTextNode(stylesheetCSS[i].selector + pseudoClass + "{"));
-				for(key in stylesheetCSS[i].css[pseudo]){
+				for (key in stylesheetCSS[i].css[pseudo]) {
 					var value = $.trim(stylesheetCSS[i].css[pseudo][key]);
 					/* Make sure there's no JS */
-					if($.trim(value.toLowerCase().replace("url(", "")
-							   .replace("'", "").replace('"', "")
-							   .replace("/*", "").replace("*/", "")).indexOf("javascript")){
+					if ($.trim(value.toLowerCase().replace("url(", "")
+							.replace("'", "").replace('"', "")
+							.replace("/*", "").replace("*/", "")).indexOf("javascript")) {
 						style.append(document.createTextNode(key + ":" + value + ";"));
 					}
 				}
 				style.append(document.createTextNode("}"));
 			}
 		}
-	}
-	else {
-		for(i=0; i<childrenCSS.length; i++){
+	} else {
+		for (i = 0; i < childrenCSS.length; i++) {
 			$("body "+childrenCSS[i].selector).css(childrenCSS[i].css);
 		}
 	}
 
 	$(document.head).append(style);
 
-	$("html").bind(getAllEvents($("html").get(0)), function(e){
+	$("html").bind(getAllEvents($("html").get(0)), function(e) {
 		msg({
 			id: "event",
 			event: {
@@ -319,9 +313,9 @@ function frameVerified(obj){
 		});
 	});
 
-	$("body").on("click", "a", function(e){
+	$("body").on("click", "a", function(e) {
 		e.preventDefault();
-		if($(this).attr("href")){
+		if ($(this).attr("href")) {
 			msg({
 				id: "click",
 				href: $(this).attr("href"),
@@ -336,9 +330,9 @@ function frameVerified(obj){
 		height: "auto"
 	});
 
-	container.on("mouseenter", "grdme", function(){
-		$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700? 700 : 400);
-	}).on("mouseleave", "grdme", function(){
+	container.on("mouseenter", "grdme", function() {
+		$(this).next("grdme_decrypt").css("font-weight", $(this).next("grdme_decrypt").css("font-weight") < 700 ? 700 : 400);
+	}).on("mouseleave", "grdme", function() {
 		$(this).next("grdme_decrypt").css("font-weight", "");
 	});
 
@@ -348,13 +342,13 @@ function frameVerified(obj){
 
 	fixReferences();
 
-	callbackWrap = (function(){
+	callbackWrap = (function() {
 		var callbackChain = [];
-		$("body").on("callback", function(e, returnId, data){
+		$("body").on("callback", function(e, returnId, data) {
 			(typeof callbackChain[returnId] == "function") && callbackChain[returnId](data);
 		});
 
-		return function(func){
+		return function(func) {
 			return callbackChain.push(func) - 1;
 		}
 	}());
@@ -364,7 +358,7 @@ function frameVerified(obj){
 	msg({id: "ready"});
 }
 
-$(function(){
+$(function() {
 	frameVerified({});
 });
 
