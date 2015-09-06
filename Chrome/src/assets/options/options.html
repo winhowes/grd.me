@@ -1,0 +1,52 @@
+<!Doctype html>
+<html>
+	<head>
+		<title>Grd Me Options</title>
+		<link href="options.css" media="screen" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div>
+			<label>
+				<input type="checkbox" id="decryptIndicator">
+				Decrypt Indicator:
+				<span class="description">
+					The Grd Me lock icon (<i class="icon"></i>) will be displayed in front of any successfully decrypted text. You may need to refresh open pages to see this.
+				</span>
+			</label>
+		</div>
+		<div>
+			<label>
+				<input type="checkbox" id="sandboxDecrypt">
+				Sandboxed Decryption (Experimental):
+				<span class="description">
+					By default, when Grd Me decrypts a message it inserts the decryption right back into the webpage. Turning this on prevents the webpage from reading your decrypted text. This is experimental solely due to performance reasons.
+				</span>
+			</label>
+		</div>
+		<div>
+			<label>
+				<select id="eccCurve">
+					<option value="384">NIST P-384</option>
+					<option value="256">NIST P-256</option>
+					<option value="224">NIST P-224</option>
+				</select>
+				ECC Curve
+				<span class="description">
+					Select what curve you would like to encrypt on for ECC asymmetric encryption.
+				</span>
+			</label>
+		</div>
+		<div>
+			<label>
+				<input type="checkbox" id="emojis">
+				Emojis:
+				<span class="description">
+					Enable emojis in decrypted messages.
+				</span>
+			</label>
+		</div>
+		<div id="status"></div>
+		<script src="../inject/lib/jquery-2.1.3.js"></script>
+		<script src="options.js"></script>
+	</body>
+</html>

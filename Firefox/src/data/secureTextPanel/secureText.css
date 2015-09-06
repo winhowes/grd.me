@@ -1,0 +1,30 @@
+* {
+	font-family: Arial;
+}
+textarea {
+	width: calc(100% - 10px);
+	height: 180px;
+	resize: none;
+	padding: 5px;
+}
+
+#instructions {
+	height: 15px;
+	margin-top: 5px;
+	font-size: 11px;
+}
+
+#clipboard {
+	background: #FFF9D7;
+	border: 1px solid #E2C822;
+	text-align: center;
+	padding: 10px;
+	font-size: 15px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 150px;
+	height: 40px;
+	margin: -15px -75px;
+	line-height: 20px;
+}

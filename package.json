@@ -1,0 +1,42 @@
+{
+  "name": "grd.me",
+  "version": "2.2.7",
+  "description": "Grd Me (/ɡärd mē/) is an open source browser plugin that provides encrypted communication across any web platform.",
+  "main": "gulpfile.js",
+  "dependencies": {
+    "babel-eslint": "^4.0.10",
+    "eslint": "^1.2.1",
+    "gulp": "^3.9.0",
+    "gulp-babel": "^5.2.1",
+    "gulp-eslint": "^1.0.0",
+    "jpm": "^1.0.1"
+  },
+  "devDependencies": {
+    "del": "^1.2.1",
+    "gulp-help": "^1.6.0",
+    "gulp-plumber": "^1.0.1",
+    "gulp-shell": "^0.4.2",
+    "gulp-zip": "^3.0.2",
+    "mkdirp": "^0.5.1",
+    "run-sequence": "^1.1.2"
+  },
+  "scripts": {
+    "test": "gulp test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/winhowes/grd.me.git"
+  },
+  "keywords": [
+    "communication",
+    "encryption",
+    "privacy",
+    "security"
+  ],
+  "author": "Winston Howes",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/winhowes/grd.me/issues"
+  },
+  "homepage": "https:grd.me"
+}
