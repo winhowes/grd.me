@@ -18,11 +18,28 @@ const globals = (() => {
 	 * @param [callback] A function which takes the active keys as it's first parameter
 	*/
 	function getActiveKeys(keys, callback) {
-		chrome.storage.local.get('activeKeys', (storedActiveKeys) => {
-			let activeKeys = storedActiveKeys && storedActiveKeys.activeKeys;
-			if ((!activeKeys || !activeKeys.length) && keys.length && keys[0].key) {
+		chrome.storage.local.get(['activeKeys', 'activeKeysIndices'], (items) => {
+			let activeKeys = items && items.activeKeys;
+			if ((!activeKeys || !activeKeys.length) && !items.activeKeysIndices.length && keys.length && keys[0].key) {
 				activeKeys = [keys[0].key];
-				chrome.storage.local.set({'activeKeys': activeKeys}, () => {
+				chrome.storage.local.set({
+					'activeKeys': activeKeys,
+					'activeKeysIndices': [0],
+				}, () => {
+					if (callback) {
+						callback(activeKeys);
+					}
+				});
+			} else if ((!activeKeys || !activeKeys.length) && items.activeKeysIndices.length && keys.length && keys[0].key) {
+				activeKeys = [];
+				for (let i = 0; i < items.activeKeysIndices.length; i++) {
+					if (keys[items.activeKeysIndices[i]]) {
+						activeKeys.push(keys[items.activeKeysIndices[i]].key);
+					}
+				}
+				chrome.storage.local.set({
+					'activeKeys': activeKeys,
+				}, () => {
 					if (callback) {
 						callback(activeKeys);
 					}

@@ -145,17 +145,20 @@ var KeyManager = (function () {
 			if (!indices.length) {
 				return;
 			}
-			chrome.storage.local.get('keys', function (storedKeys) {
-				var keys = storedKeys.keys;
+			chrome.storage.local.get('keys', function (items) {
+				var keys = items.keys;
 				var activeKeys = [];
-				if (!keys[indices]) {
+				if (typeof keys !== 'object') {
 					// This should only happen if the keychain is encrypted
 					return;
 				}
 				for (var i = 0; i < indices.length; i++) {
 					activeKeys.push(keys[indices[i]].key);
 				}
-				chrome.storage.local.set({ 'activeKeys': activeKeys });
+				chrome.storage.local.set({
+					'activeKeys': activeKeys,
+					'activeKeysIndices': indices
+				});
 				var workers = chrome.extension.getBackgroundPage().globals.workerManager.workers.slice(0);
 				chrome.extension.getBackgroundPage().globals.keyList.activeKeys = activeKeys.slice(0);
 				for (var i = 0; i < workers.length; i++) {
@@ -405,15 +408,9 @@ var KeyManager = (function () {
 						}).append($('<a>', { 'class': 'showHideKey', text: 'Show Key' })).append($('<div>', { 'class': 'key fullToggle', text: 'Key: ' }).append($('<span>').append(getKeyText(keys[i].key)))).append($('<div>', { 'class': 'description', text: keys[i].description }).append(i ? $('<i>', { 'class': 'pencil' }) : '')).append(i ? $('<form>', { 'class': 'descriptionForm' }).append($('<input>', { placeholder: 'Description', maxlength: 50 })) : $('<span>', { 'class': 'not_secure', text: '[Not Secure]' })).append(i && !keys[i].key.published ? $('<div>', { 'class': 'delete', text: 'x' }) : '').append($('<div>', { 'class': 'activeIndicator' })).append(actionBtn));
 					}
 					keyList.html(newKeyList.html());
-					chrome.storage.local.get('activeKeys', function (storedActiveKeys) {
-						var activeKeys = storedActiveKeys.activeKeys;
-						for (var i = 0; i < activeKeys.length; i++) {
-							for (var j = 0; j < keys.length; j++) {
-								if (JSON.stringify(activeKeys[i]) === JSON.stringify(keys[j].key)) {
-									$('#keyList [index="' + j + '"]').addClass('active');
-									break;
-								}
-							}
+					chrome.storage.local.get('activeKeysIndices', function (items) {
+						for (var i = 0; i < items.activeKeysIndices.length; i++) {
+							$('#keyList [index="' + items.activeKeysIndices[i] + '"]').addClass('active');
 						}
 					});
 				}

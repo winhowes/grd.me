@@ -122,17 +122,20 @@ class KeyManager {
 		if (!indices.length) {
 			return;
 		}
-		chrome.storage.local.get('keys', (storedKeys) => {
-			const keys = storedKeys.keys;
+		chrome.storage.local.get('keys', (items) => {
+			const keys = items.keys;
 			const activeKeys = [];
-			if (!keys[indices]) {
+			if (typeof keys !== 'object') {
 				// This should only happen if the keychain is encrypted
 				return;
 			}
 			for (let i = 0; i < indices.length; i++) {
 				activeKeys.push(keys[indices[i]].key);
 			}
-			chrome.storage.local.set({'activeKeys': activeKeys});
+			chrome.storage.local.set({
+				'activeKeys': activeKeys,
+				'activeKeysIndices': indices,
+			});
 			const workers = chrome.extension.getBackgroundPage().globals.workerManager.workers.slice(0);
 			chrome.extension.getBackgroundPage().globals.keyList.activeKeys = activeKeys.slice(0);
 			for (let i = 0; i < workers.length; i++) {
@@ -399,15 +402,9 @@ class KeyManager {
 					.append(actionBtn));
 				}
 				keyList.html(newKeyList.html());
-				chrome.storage.local.get('activeKeys', (storedActiveKeys) => {
-					const activeKeys = storedActiveKeys.activeKeys;
-					for (let i = 0; i < activeKeys.length; i++) {
-						for (let j = 0; j < keys.length; j++) {
-							if (JSON.stringify(activeKeys[i]) === JSON.stringify(keys[j].key)) {
-								$('#keyList [index="' + j + '"]').addClass('active');
-								break;
-							}
-						}
+				chrome.storage.local.get('activeKeysIndices', (items) => {
+					for (let i = 0; i < items.activeKeysIndices.length; i++) {
+						$('#keyList [index="' + items.activeKeysIndices[i] + '"]').addClass('active');
 					}
 				});
 			}
