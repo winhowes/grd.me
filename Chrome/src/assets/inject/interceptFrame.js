@@ -115,17 +115,20 @@ $(() => {
 	}
 
 	/** Strips scripts from a string of html
-	 * @param html String of html to be stripped
+	 * @param originalHTML String of html to be stripped
 	*/
-	function stripScripts(html) {
-		const div = document.createElement('div');
-		const scripts = div.getElementsByTagName('script');
-		let i = scripts.length;
-		div.innerHTML = html;
-		while (i--) {
-			scripts[i].parentNode.removeChild(scripts[i]);
+	function stripScripts(originalHTML) {
+		let html = originalHTML;
+		let lowerHTML = html.toLowerCase();
+		let index1 = lowerHTML.indexOf('<script');
+		let index2 = lowerHTML.indexOf('>', lowerHTML.indexOf('</script', index1));
+		while (index1 !== -1) {
+			html = html.substring(0, index1) + html.substring(index2 + 1);
+			lowerHTML = html.toLowerCase();
+			index1 = lowerHTML.indexOf('<script');
+			index2 = lowerHTML.indexOf('>', lowerHTML.indexOf('</script', index1));
 		}
-		return div.innerHTML;
+		return html;
 	}
 
 	/** Removes javascript from html string

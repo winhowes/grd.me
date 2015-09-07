@@ -379,7 +379,7 @@ var CryptoManager = (function () {
 		}
 
 		/** Strip html tags from string
-   * @param html String to have it's html tags removed
+   * @param html String of trusted html to have tags removed
   */
 	}, {
 		key: '_strip',
