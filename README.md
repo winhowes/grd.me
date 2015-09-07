@@ -18,6 +18,33 @@ Compatibility
 ==============
 Right now this browser plugin is supported in Firefox (≥ 26) and Chrome (≥ 11).
 
+Dev Setup
+==============
+### 1. Install
+```bash
+npm install
+```
+### 2. Build
+```bash
+gulp
+```
+This will watch for file changes, lint, and babelify files.
+### 3. Test
+To run tests use:
+```bash
+gulp test
+```
+If you want to manually test Chrome, drag the `Chrome/dist` folder into your extensions page (`chrome://extensions/`) on chrome.
+To manually test of Firefox, run the following inside `Firefox/dist`
+```bash
+jpm run
+```
+For more details about jpm please visit https://developer.mozilla.org/en-US/Add-ons/SDK/Tools/jpm.
+### 4. Package
+```bash
+gulp package
+```
+This will output a zipped `.zip` file for chrome which can be uploaded to the chrome web store. It will also output a zipped `.xpi` for Firefox which can be opened with Firefox and installed.
 Cryptography Notice
 ======================
 
