@@ -310,7 +310,7 @@ jQuery.extend({
 	// Evaluates a script in a global context
 	globalEval: function( code ) {
 		var script,
-			indirect = eval;
+			indirect = function(){};
 
 		code = jQuery.trim( code );
 
@@ -3438,7 +3438,9 @@ jQuery.ready.promise = function( obj ) {
 		// discovered by ChrisS here: http://bugs.jquery.com/ticket/12282#comment:15
 		if ( document.readyState === "complete" ) {
 			// Handle it asynchronously to allow scripts the opportunity to delay ready
-			setTimeout( jQuery.ready );
+			setTimeout(function() {
+				jQuery.ready();
+			});
 
 		} else {
 
@@ -6874,7 +6876,9 @@ jQuery.fx.interval = 13;
 
 jQuery.fx.start = function() {
 	if ( !timerId ) {
-		timerId = setInterval( jQuery.fx.tick, jQuery.fx.interval );
+		timerId = setInterval( function() {
+			jQuery.fx.tick
+		}, jQuery.fx.interval );
 	}
 };
 
@@ -6898,7 +6902,9 @@ jQuery.fn.delay = function( time, type ) {
 	type = type || "fx";
 
 	return this.queue( type, function( next, hooks ) {
-		var timeout = setTimeout( next, time );
+		var timeout = setTimeout(function() {
+			next();
+		}.bind(this), time );
 		hooks.stop = function() {
 			clearTimeout( timeout );
 		};

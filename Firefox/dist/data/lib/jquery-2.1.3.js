@@ -312,7 +312,7 @@
 		// Evaluates a script in a global context
 		globalEval: function globalEval(code) {
 			var script,
-			    indirect = eval;
+			    indirect = function indirect() {};
 
 			code = jQuery.trim(code);
 
@@ -3309,7 +3309,9 @@
 			// discovered by ChrisS here: http://bugs.jquery.com/ticket/12282#comment:15
 			if (document.readyState === "complete") {
 				// Handle it asynchronously to allow scripts the opportunity to delay ready
-				setTimeout(jQuery.ready);
+				setTimeout(function () {
+					jQuery.ready();
+				});
 			} else {
 
 				// Use the handy event callback
@@ -6676,7 +6678,9 @@
 
 	jQuery.fx.start = function () {
 		if (!timerId) {
-			timerId = setInterval(jQuery.fx.tick, jQuery.fx.interval);
+			timerId = setInterval(function () {
+				jQuery.fx.tick;
+			}, jQuery.fx.interval);
 		}
 	};
 
@@ -6699,7 +6703,9 @@
 		type = type || "fx";
 
 		return this.queue(type, function (next, hooks) {
-			var timeout = setTimeout(next, time);
+			var timeout = setTimeout((function () {
+				next();
+			}).bind(this), time);
 			hooks.stop = function () {
 				clearTimeout(timeout);
 			};
