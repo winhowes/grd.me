@@ -313,7 +313,7 @@
 		globalEval: function globalEval(code) {
 			var script,
 			    indirect = function indirect() {};
-			console.log('JQUERY WINSTON HERE');
+
 			code = jQuery.trim(code);
 
 			if (code) {
@@ -6668,7 +6668,7 @@
 	jQuery.fx.start = function () {
 		if (!timerId) {
 			timerId = setInterval(function () {
-				jQuery.fx.tick;
+				jQuery.fx.tick();
 			}, jQuery.fx.interval);
 		}
 	};
