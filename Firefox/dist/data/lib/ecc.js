@@ -1,7 +1,8 @@
 // Simple wrapper around SJCL's ECC Implementation - v0.3.0 - https://github.com/jpillora/eccjs
+// Jaime Pillora <dev@jpillora.com> - MIT/BSD(sljc) Copyright 2014
 "use strict";
 
-(function (window, undefined) {
+var ecc = (function (window, undefined) {
   /** @fileOverview Javascript cryptography implementation.
   *
   * Crush to remove comments, shorten variable names and
@@ -3745,5 +3746,6 @@
 
   //publicise
   if (typeof module !== 'undefined' && module.exports) module.exports = ecc;else window.ecc = ecc;
+
+  return ecc;
 })(typeof window !== 'undefined' ? window : {});
-// Jaime Pillora <dev@jpillora.com> - MIT/BSD(sljc) Copyright 2014

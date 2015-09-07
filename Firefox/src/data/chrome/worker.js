@@ -24,9 +24,11 @@
 					try {
 						if (typeof keyList[j].key === 'object' && keyList[j].key.priv) {
 							plaintext = ecc.decrypt(keyList[j].key.priv, ciphertext[i]);
-						} else {
+						} else if ( typeof keyList[j].key !== 'object' ) {
 							plaintext = CryptoJS.AES.decrypt(ciphertext[i], keyList[j].key);
 							plaintext = plaintext.toString(CryptoJS.enc.Utf8);
+						} else {
+							continue;
 						}
 						if (plaintext.trim().length) {
 							return plaintext;
