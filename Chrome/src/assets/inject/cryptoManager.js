@@ -296,17 +296,16 @@ class CryptoManager {
 				try {
 					if (typeof this.keyList[j].key === 'object' && this.keyList[j].key.priv) {
 						plaintext = ecc.decrypt(this.keyList[j].key.priv, ciphertext[i]);
-						validDecryption = true;
-					} else if ( typeof keyList[j].key !== 'object' ) {
-						plaintext = CryptoJS.AES.decrypt(ciphertext[i], keyList[j].key);
+					} else if ( typeof this.keyList[j].key !== 'object' ) {
+						plaintext = CryptoJS.AES.decrypt(ciphertext[i], this.keyList[j].key);
 						plaintext = plaintext.toString(CryptoJS.enc.Utf8);
-						validDecryption = true;
 					} else {
 						continue;
 					}
 					if (!plaintext.trim()) {
-						throw new Error();
+						throw Error();
 					}
+					validDecryption = true;
 					break;
 				} catch(e) {
 					validDecryption = false;
