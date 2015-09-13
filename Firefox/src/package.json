@@ -10,7 +10,7 @@
   "permissions": {
     "private-browsing": true
   },
-  "icon": "data/icons/icon48.png",
+  "icon": "icon.png",
   "preferences": [
     {
       "name": "decryptIndicator",
