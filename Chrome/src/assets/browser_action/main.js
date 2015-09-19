@@ -11,7 +11,7 @@
 	let latestRequest = 0;
 
 	/** Generate a random string
-	 * length: the length of the random string
+	 * @param length Length of the random string
 	*/
 	function getRandomString(length) {
 		const randArray = new Uint32Array(length);
@@ -24,7 +24,7 @@
 	}
 
 	/** Sanitize a string
-	 * str: the string to sanitize
+	 * @param str String to sanitize
 	*/
 	function sanitize(str) {
 		return $('<i>', {text: str}).html();
@@ -55,7 +55,7 @@
 	}
 
 	/** Panel shown. Display any acceptable shared keys
-	 * keys: an array of acceptable shared keys that need approval
+	 * @param keys Array of acceptable shared keys that need approval
 	*/
 	function acceptableSharedKeysPopup(keys) {
 		if (keys.length) {
