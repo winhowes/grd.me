@@ -218,7 +218,7 @@ class KeyManager {
 			if (keyVal[0] !== '"' && keyVal[0] !== '\'') {
 				try {
 					key = JSON.parse('"' + keyVal + '"');
-				} catch(err) {
+				} catch (err) {
 					if (showError) {
 						$('#pubKeyError').fadeIn();
 					}
