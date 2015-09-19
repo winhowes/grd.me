@@ -48,7 +48,7 @@ button.on('change', (state) => {
 });
 
 /** Get rid of duplicate elements in an array
- * arr: the array to do such to
+ * @param arr Array to rid of duplicates
 */
 function uniq(arr) {
 	const seen = {};
@@ -385,7 +385,7 @@ keyManager.on('show', () => {
 
 exports.keyManager = {
 	/** Initialize the key manager
-	 * workerArray: the workers array
+	 * @param workerArray Array of workers
 	*/
 	init: (workerArray) => {
 		workers = workerArray;
