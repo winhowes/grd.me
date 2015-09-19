@@ -78,8 +78,14 @@ function requestListener(event) {
 */
 function responseListener(event) {
 	event.subject.QueryInterface(Ci.nsIHttpChannel);
+	let csp;
 	try {
-		let csp = event.subject.getResponseHeader('content-security-policy');
+		csp = event.subject.getResponseHeader('content-security-policy');
+	} catch (e) {
+		// No CSP exists
+		return;
+	}
+	try {
 		const rules = csp.split(';');
 		let frameFound = false;
 		let defaultFound = false;
