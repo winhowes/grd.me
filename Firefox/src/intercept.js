@@ -160,10 +160,10 @@ exports.Intercept = {
 		});
 	},
 	/** Add a uid to the array
-	 * uid: the unique id of a message
-	 * location: an object containing the host, origin, and full location of the frame's parent
-	 * secret: the window's symmetric key
-	 * message: the message object containing both the text and css object
+	 * @param uid The unique id of a message
+	 * @param location Object containing the host, origin, and full location of the frame's parent
+	 * @param secret The window's symmetric key
+	 * @param message The message object containing both the text and css object
 	*/
 	add: (uid, location, secret, message) => {
 		const endings = ['?', '#'];
