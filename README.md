@@ -24,6 +24,10 @@ Dev Setup
 ```bash
 npm install
 ```
+If you don't have `jpm` for the Firefox addon-sdk you can install with:
+```bash
+npm install -g jpm
+```
 ### 2. Build
 ```bash
 gulp
