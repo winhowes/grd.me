@@ -106,7 +106,7 @@ function responseListener(event) {
 		csp = rules.join(';');
 
 		event.subject.setResponseHeader('content-security-policy', csp, false);
-	} catch(e) {
+	} catch (e) {
 		console.error('Error updating CSP');
 	}
 }

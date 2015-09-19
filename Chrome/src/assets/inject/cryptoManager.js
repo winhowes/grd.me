@@ -307,7 +307,7 @@ class CryptoManager {
 					}
 					validDecryption = true;
 					break;
-				} catch(e) {
+				} catch (e) {
 					validDecryption = false;
 				}
 			}

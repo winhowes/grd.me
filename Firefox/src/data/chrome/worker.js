@@ -33,7 +33,7 @@
 						if (plaintext.trim().length) {
 							return plaintext;
 						}
-					} catch(e) {
+					} catch (e) {
 						console.log('INFO failed to decrypt with given key', e);
 					}
 				}

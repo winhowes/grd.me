@@ -73,7 +73,7 @@ class FrameComm {
 					});
 				}
 			}
-		}	catch(e) {
+		}	catch (e) {
 			console.log('INFO unable to receive and decrypt message - this usually happens when the message comes from someone other than grd me.', e);
 		}
 	}

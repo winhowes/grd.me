@@ -98,7 +98,7 @@ class Intercept {
 						}
 					}
 				}
-			} catch(e) {
+			} catch (e) {
 				console.error('Error getting fonts', e);
 			}
 		}

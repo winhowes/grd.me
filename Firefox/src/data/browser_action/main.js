@@ -138,7 +138,7 @@
 										.append(revoked ? $('<div>', {class: 'timestamp', text: 'Revoked: ' + data.keys[i].revoked_at}) : '')
 										.append($('<div>', {class: 'timestamp', text: 'Created: ' + data.keys[i].created_at})));
 							}
-						} catch(e) {
+						} catch (e) {
 							console.error('Error verifying key', e);
 						}
 					}
@@ -438,7 +438,7 @@
 							   ecc.verify(data.keys[i].pub, JSON.parse(data.keys[i].sig), data.uid.toLowerCase())) {
 								notFound = false;
 							}
-						} catch(e) {
+						} catch (e) {
 							console.error('Error verifying key', e);
 						}
 					}

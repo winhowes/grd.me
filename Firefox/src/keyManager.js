@@ -86,7 +86,7 @@ function mergeImportKeychain(JSONtext) {
 		} else {
 			throw Error();
 		}
-	} catch(e) {
+	} catch (e) {
 		importKeychainError();
 	}
 }
@@ -145,7 +145,7 @@ keyManager.port.on('decryptKeychain', (passwordObj) => {
 		}
 		ss.storage.keys = JSON.parse(plaintext);
 		ss.storage.encryptedKeys = false;
-	} catch(e) {
+	} catch (e) {
 		console.error('Error decrypting keychain', e);
 	}
 	keyManager.refreshKeys();
@@ -186,7 +186,7 @@ keyManager.port.on('decryptImportKeychain', (passwordObj) => {
 			encrypted: false,
 			file: plaintext,
 		}));
-	} catch(e) {
+	} catch (e) {
 		importKeychainError();
 	}
 });

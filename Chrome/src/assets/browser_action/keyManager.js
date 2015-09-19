@@ -214,7 +214,7 @@ class KeyManager {
 		let key;
 		try {
 			key = isECC && typeof keyVal !== 'object' ? JSON.parse(keyVal) : keyVal;
-		} catch(e) {
+		} catch (e) {
 			if (keyVal[0] !== '"' && keyVal[0] !== '\'') {
 				try {
 					key = JSON.parse('"' + keyVal + '"');
@@ -259,7 +259,7 @@ class KeyManager {
 					if (plaintext !== ecc.decrypt(priv, ciphertext)) {
 						throw new Error();
 					}
-				} catch(e) {
+				} catch (e) {
 					if (showError) {
 						$('#pubKeyError').fadeIn();
 					}
@@ -286,7 +286,7 @@ class KeyManager {
 						throw new Error();
 					}
 					ecc.encrypt(key.pub, plaintext);
-				} catch(e) {
+				} catch (e) {
 					if (showError) {
 						$('#pubKeyError').fadeIn();
 					}
@@ -490,7 +490,7 @@ class KeyManager {
 					this.display();
 				});
 			});
-		} catch(e) {
+		} catch (e) {
 			this.display();
 		}
 	}
@@ -511,7 +511,7 @@ class KeyManager {
 				encrypted: false,
 				file: plaintext,
 			}));
-		} catch(e) {
+		} catch (e) {
 			this.importKeychainError();
 		}
 	}
@@ -618,7 +618,7 @@ class KeyManager {
 			} else {
 				throw new Error();
 			}
-		} catch(e) {
+		} catch (e) {
 			console.error('Error importing keychain: ', e);
 			this.importKeychainError();
 		}

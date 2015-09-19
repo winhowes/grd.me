@@ -11,7 +11,7 @@ $(() => {
 			secret: FRAME_SECRET,
 			uid: uid,
 		});
-	} catch(e) {
+	} catch (e) {
 		console.error('Error sending verify frame message', e);
 	}
 
@@ -39,7 +39,7 @@ $(() => {
 				} else if (data.id === 'emojis') {
 					cryptoManager.preferences.emojis = data.emojis;
 				}
-			} catch(e) {
+			} catch (e) {
 				console.error('Error receiving response from frameComm', e);
 			}
 		}

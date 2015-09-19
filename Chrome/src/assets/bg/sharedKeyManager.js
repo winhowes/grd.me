@@ -125,13 +125,13 @@ class SharedKeyManager {
 											receiveSig: JSON.stringify(ecc.sign(keyChain[j].key.priv, data.received[i].sharedKey)),
 										}, index);
 									}
-								} catch(e) {
+								} catch (e) {
 									console.error('Error checking shared key', e);
 								}
 							}
 						}
 					}
-				} catch(e) {
+				} catch (e) {
 					console.error('Error checking shared key', e);
 				}
 			}
@@ -154,7 +154,7 @@ class SharedKeyManager {
 							sharedKey: data.sent[i].sharedKey,
 						});
 					}
-				} catch(e) {
+				} catch (e) {
 					console.error('Error checking shared key', e);
 				}
 			}

@@ -36,7 +36,7 @@ $(() => {
 				} else if (data.id === 'emojis') {
 					cryptoManager.preferences.emojis = data.emojis;
 				}
-			} catch(e) {
+			} catch (e) {
 				console.error('Error', e);
 			}
 		}

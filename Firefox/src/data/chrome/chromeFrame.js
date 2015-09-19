@@ -113,7 +113,7 @@
 						}
 					}
 				}
-			} catch(e) {
+			} catch (e) {
 				console.error('Error getting fonts');
 			}
 		}
@@ -187,7 +187,7 @@
 				css: setupChildren(element),
 				fonts: getFonts(),
 			});
-		} catch(e) {
+		} catch (e) {
 			sendAsyncMessage('grdMe@grd.me:get-frame-css:' + uid, {
 				css: [],
 				fonts: [],

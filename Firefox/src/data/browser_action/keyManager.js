@@ -33,11 +33,11 @@ class KeyManager {
 		let key;
 		try {
 			key = isECC && typeof keyVal !== 'object' ? JSON.parse(keyVal) : keyVal;
-		} catch(e) {
+		} catch (e) {
 			if (keyVal[0] !== '"' && keyVal[0] !== '\'') {
 				try {
 					key = JSON.parse('"' + keyVal + '"');
-				} catch(e) {
+				} catch (e) {
 					if (showError) {
 						$('#pubKeyError').fadeIn();
 					}
@@ -81,7 +81,7 @@ class KeyManager {
 						priv: priv,
 						published: false,
 					};
-				} catch(e) {
+				} catch (e) {
 					if (showError) {
 						$('#pubKeyError').fadeIn();
 					}
@@ -103,7 +103,7 @@ class KeyManager {
 						throw new Error();
 					}
 					ecc.encrypt(key.pub, plaintext);
-				} catch(e) {
+				} catch (e) {
 					if (showError) {
 						$('#pubKeyError').fadeIn();
 					}
@@ -184,13 +184,13 @@ class KeyManager {
 										receiveSig: JSON.stringify(ecc.sign(this.keyChain[j].key.priv, data.received[i].sharedKey)),
 									}, index);
 								}
-							} catch(e) {
+							} catch (e) {
 								console.error('Error acknowledging shared key', e);
 							}
 						}
 					}
 				}
-			} catch(e) {
+			} catch (e) {
 				console.error('Error verifying shared key', e);
 			}
 		}
@@ -208,7 +208,7 @@ class KeyManager {
 				if (ecc.verify(data.sent[i].toKey, sig, data.sent[i].sharedKey)) {
 					this.port.emit('deleteSharedKeyRequest', {fromKey: data.sent[i].fromKey, sharedKey: data.sent[i].sharedKey});
 				}
-			} catch(e) {
+			} catch (e) {
 				console.error('Error verifying shared key');
 			}
 		}
