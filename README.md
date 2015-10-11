@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/winhowes/grd.me.svg?branch=master)](https://travis-ci.org/winhowes/grd.me)
+
 Grd Me
 ======
 
