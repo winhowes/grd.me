@@ -1,0 +1,31 @@
+<!Doctype html>
+<html>
+	<head>
+		<title>Messaging Tab</title>
+		<link href="popup.css" media="screen" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+                <form id="message">
+                        <div>
+				<textarea id="messageText" style="resize:none;height:329px;width:592px" placeholder="Enter Mesage Here..."></textarea>
+			</div>
+			<p style="margin-bottom: 6px;">Recipients:</p>
+			</div>
+				<select name=recipientGroup style="width: 526px;height: 27px;margin-right: 6px;">
+					<option name=one value=one> COMP 523 </option>
+					<option name=two value=two selected> Nihilist History Reading Group </option>
+					<option name=three value=three> COMP 530 </option>
+				</select>
+        	                <button class="blue btn">Encrypt</button>
+			</div>
+		</form>
+		<script src="/assets/inject/lib/jquery-2.1.3.js"></script>
+		<script src="/assets/inject/lib/aes.js"></script>
+		<script src="/assets/inject/lib/sha256.js"></script>
+		<script src="dropdown.js"></script>
+		<script src="uidManager.js"></script>
+		<script src="popupManager.js"></script>
+		<script src="keyManager.js"></script>
+		<script src="main.js"></script>
+	</body>
+</html>
