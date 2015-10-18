@@ -8,10 +8,8 @@ const mkdirp = require('mkdirp');
 const zip = require('gulp-zip');
 const shell = require('gulp-shell');
 
-const firefoxSrc = 'Firefox/src';
 const chromeSrc = 'Chrome/src';
 
-const firefoxDist = 'Firefox/dist';
 const chromeDist = 'Chrome/dist';
 
 function babelifyJS(src, dest) {
@@ -31,41 +29,24 @@ function jsLint(src) {
 }
 
 gulp.task('clean', function(cb) {
-  del([firefoxDist, chromeDist], { force: true }, function(err, paths) {
+  del([chromeDist], { force: true }, function(err, paths) {
     if (err) {
       console.error('Error', err);
     }
     console.log('Removing\n\t\t', paths.join('\n\t\t'));
-    console.log('Creating', firefoxDist);
-    mkdirp(firefoxDist, function() {
-      console.log('Creating', chromeDist);
-        mkdirp(chromeDist, cb);
-    });
+    console.log('Creating', chromeDist);
+    mkdirp(chromeDist, cb);
   });
 });
 
-gulp.task('build', ['lint', 'build:firefox', 'build:chrome']);
+gulp.task('build', ['lint', 'build:chrome']);
 
 gulp.task('lint', ['lint:js']);
 
-gulp.task('lint:js', ['lint:js:firefox', 'lint:js:chrome']);
-
-gulp.task('lint:js:firefox', function() {
-  return jsLint(firefoxSrc + '/**/*.js');
-});
+gulp.task('lint:js', ['lint:js:chrome']);
 
 gulp.task('lint:js:chrome', function() {
   return jsLint(chromeSrc + '/**/*.js');
-});
-
-gulp.task('build:firefox', function() {
-  babelifyJS(firefoxSrc + '/lib/*.js', firefoxDist + '/lib');
-  babelifyJS(firefoxSrc + '/data/**/*.js', firefoxDist + '/data');
-  babelifyJS(firefoxSrc + '/*.js', firefoxDist);
-
-  return gulp.src(firefoxSrc + '/**/*.{css,gif,html,jsm,json,phtml,png}')
-    .pipe(plumber())
-    .pipe(gulp.dest(firefoxDist));
 });
 
 gulp.task('build:chrome', function() {
@@ -77,10 +58,7 @@ gulp.task('build:chrome', function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch(firefoxSrc + '/**/*.js', ['lint:js:firefox']);
   gulp.watch(chromeSrc + '/**/*.js', ['lint:js:chrome']);
-
-  gulp.watch(firefoxSrc + '/**/*', ['build:firefox']);
   return gulp.watch(chromeSrc + '/**/*', ['build:chrome']);
 });
 
@@ -96,10 +74,6 @@ gulp.task('package', function() {
           .pipe(zip('Chrome.zip'))
           .pipe(gulp.dest('./'));
 });
-
-gulp.task('test', shell.task([
-  './test-ff.sh',
-]));
 
 gulp.task('default', function() {
   runSequence(
