@@ -2,9 +2,9 @@
 	font-family: Arial;
 }
 
-body {
-	width: 300px;
-	height: 400px;
+body{
+	width:300px;
+	height:300px;
 }
 
 body#uploadPageContainer {
@@ -73,12 +73,16 @@ input:not([type='checkbox']) {
 	width: calc(100% - 35px);
 }
 
-input:focus, input:hover, textarea:focus, textarea:hover {
+input:focus,
+input:hover,
+textarea:focus,
+textarea:hover {
     box-shadow: 0px 5px 4px -2px rgba(0, 0, 0, 0.05) inset;
     -webkit-box-shadow: 0px 5px 4px -2px rgba(0, 0, 0, 0.05) inset;
 }
 
-input:focus, textarea:focus {
+input:focus,
+textarea:focus {
     border-color: #2292ee;
     outline: none;
 }
@@ -115,6 +119,7 @@ button{
     cursor: pointer;
     -webkit-appearance: none;
 }
+
 .btn{
     font-family: inherit;
     font-size: 100%;
@@ -126,7 +131,11 @@ button{
     border-radius: 2px;
     box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, .1);
 }
-.btn:hover, .btn:focus, .text_to_btn:hover, .text_to_btn:focus{
+
+.btn:hover,
+.btn:focus,
+.text_to_btn:hover,
+.text_to_btn:focus{
     box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, .4);
     filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#1a000000',GradientType=0);
     background-image: -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(40%, rgba(0,0,0, 0.05)), to(rgba(0,0,0, 0.10)));
@@ -135,13 +144,20 @@ button{
     background-image: -o-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
     background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
 }
+
 .btn:focus{
     outline: 0;
 }
-.btn:active, .text_to_btn:active{
+
+.btn:active,
+.text_to_btn:active{
     box-shadow: 0 0 0 1px rgba(0,0,0, 0.20) inset, 0 0 6px rgba(0,0,0, 0.25) inset;
 }
-.btn.disabled, .btn.disabled:hover, .btn.disabled:focus, .btn.disabled:active{
+
+.btn.disabled,
+.btn.disabled:hover,
+.btn.disabled:focus,
+.btn.disabled:active{
     border: none;
     background-image: none;
     filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
@@ -152,34 +168,43 @@ button{
     cursor: not-allowed;
     box-shadow: none;
 }
+
 .btn::-moz-focus-inner{
     padding: 0;
     border: 0;
 }
+
 .btn.wide {
 	width: 100%;
 	margin: 3px auto;
 }
+
 .blue.btn {
     background-color: #1f8dd6;
 }
+
 .lightBlue.btn{
     background-color: #34a7ff;
 }
+
 .red.btn {
 	background-color: #d61f1f;
 }
+
 .orange.btn {
     background-color: #FF9500;
 }
+
 .silver.btn {
     background-color: #EAEFF2;
     color: #777;
 }
+
 .white.btn {
     background-color: #fff;
     color: #777;
 }
+
 .text_to_btn{
     cursor: pointer;
     display: inline-block;
@@ -187,10 +212,16 @@ button{
     border: 1px solid rgba(0, 0, 0, 0);
     padding: 2px;
 }
-.text_to_btn:hover, .text_to_btn:focus, .text_to_btn:active{
+
+.text_to_btn:hover,
+.text_to_btn:focus,
+.text_to_btn:active{
     border: 1px solid #999;
 }
-.text_to_btn.blue:hover, .text_to_btn.blue:focus, .text_to_btn.blue:active{
+
+.text_to_btn.blue:hover,
+.text_to_btn.blue:focus,
+.text_to_btn.blue:active{
     color: #FFF;
     background: none repeat scroll 0% 0% #1a75bb;
 }
@@ -303,7 +334,8 @@ ul {
 	display: block;
 }
 
-.delete, .activeIndicator {
+.delete,
+.activeIndicator {
 	position: absolute;
 	right: 0px;
 	top: 50%;
@@ -650,4 +682,39 @@ ul {
 
 .descriptionForm {
 	display: none;
+}
+
+ul#menu {
+    padding: 0;
+    margin-bottom: 11px;
+}
+
+ul#menu li {
+    display: inline;
+    /* margin-right: 3px; */
+    width: 150px;
+}
+
+ul#menu li a {
+    background-color: #1f8dd6;
+    text-decoration: none;
+    font-size: 100%;
+    padding: 0.5em 1em;
+    color: #FFF;
+    /* border-radius: 2px; */
+    width: 150px;
+}
+
+ul#menu li a:hover {
+    box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, .4);
+    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#1a000000',GradientType=0);
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(transparent), color-stop(40%, rgba(0,0,0, 0.05)), to(rgba(0,0,0, 0.10)));
+    background-image: -webkit-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+    background-image: -moz-linear-gradient(top, rgba(0,0,0, 0.05) 0%, rgba(0,0,0, 0.10));
+    background-image: -o-linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+    background-image: linear-gradient(transparent, rgba(0,0,0, 0.05) 40%, rgba(0,0,0, 0.10));
+}
+
+#groupmembers li {
+	list-style-type: disc;
 }

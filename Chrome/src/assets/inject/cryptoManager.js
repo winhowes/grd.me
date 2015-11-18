@@ -2,8 +2,8 @@
 
 class CryptoManager {
 	constructor() {
-		this.START_TAG = '~~grdme~~';
-		this.END_TAG = '~~!grdme~~';
+		this.START_TAG = '((GrdMe!';
+		this.END_TAG = '))';
 		this.UNABLE_TO_DECRYPT = '[Unable to decrypt message]';
 		this.UNABLE_START_TAG = '[start tag]';
 		this.UNABLE_END_TAG = '[end tag]';
