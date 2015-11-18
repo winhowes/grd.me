@@ -1,0 +1,47 @@
+<!Doctype html>
+<html>
+    <head>
+        <title>Grd Me Key Management</title>
+        <link href="popup.css" media="screen" rel="stylesheet" type="text/css">
+        <link href="bootstrap/css/bootstrap.css" rel="stylesheet" type="text/css">
+        <script src="bootstrap/js/bootstrap.js"></script>
+    </head>
+    <body>
+        <nav id="nav"></nav>
+        <div id="newgroup">
+            <button class="blue btn" id="addgroup">Add new group</button>
+            <div id="groupadd">
+            </div>
+        </div>
+        <div>
+            <p>Groups:</p>
+            <ul id="groups">
+            </ul>
+        </div>
+        <div id ="nogroup">
+            <p>Ungrouped contacts (delete by clicking):</p>
+        </div>
+        <div>
+            <ul id="contactlist"></ul>
+        </div>
+        <div id="contacts">
+            <button class="blue btn" id="addcontact">Add contact</button>
+            <div id="newcontact">
+            </div>
+        </div>
+        <div>
+            <p id="debug"></p>
+        </div>
+        <script src="/assets/inject/lib/jquery-2.1.3.js"></script>
+        <script src="/assets/inject/lib/ecc.js"></script>
+        <script src="/assets/inject/lib/aes.js"></script>
+        <script src="/assets/inject/lib/sha256.js"></script>
+        <script src="dropdown.js"></script>
+        <script src="uidManager.js"></script>
+        <script src="popupManager.js"></script>
+        <script src="keyManager.js"></script>
+        <script src="main.js"></script>
+        <script src="navbar.js"></script>
+        <script src="group.js"></script>
+    </body>
+</html>
